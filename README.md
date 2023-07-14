@@ -30,3 +30,7 @@ Send a sample request:
 ```
 curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907472;-0.3240966796875,51.51515248101072?overview=false&alternatives=false&steps=false&annotations=nodes'
 ```
+
+## Calculating routes
+
+Install node, `npm i`, then `npm run route`
