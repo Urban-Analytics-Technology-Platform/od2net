@@ -10,6 +10,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "dependencies": {
+    "cli-progress": "^3.12.0",
     "node-fetch": "^3.3.1"
   }
 }

@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import fetch from "node-fetch";
+import { SingleBar } from "cli-progress";
 
 main();
 
@@ -31,8 +32,26 @@ async function nodesForRequest(url) {
 async function main() {
   let urls = generateRequestUrls();
 
+  // Maps from two OSM node IDs to a count of routes crossing. Stringifies keys, because JS.
+  let countPerEdge = {};
+
+  let progress = new SingleBar();
+  progress.start(urls.length, 0);
   for (let url of urls) {
+    progress.increment();
     let nodes = await nodesForRequest(url);
-    console.log(`Got ${nodes.length} nodes`);
+    for (let i = 0; i < nodes.length - 1; i++) {
+      let key = `${nodes[i]},${nodes[i + 1]}`;
+      countPerEdge[key] ||= 0;
+      countPerEdge[key]++;
+    }
+  }
+  progress.stop();
+
+  // Print most common segments
+  let commonEdges = Object.entries(countPerEdge).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  for (let [key, count] of commonEdges) {
+    let [node1, node2] = key.split(",");
+    console.log(`${count} trips from https://www.openstreetmap.org/node/${node1} to https://www.openstreetmap.org/node/${node2}`);
   }
 }
