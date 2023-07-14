@@ -36,3 +36,13 @@ curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907
 Install node, `npm i`, then `npm run route`. View `output.geojson` to see segment-level counts for routes.
 
 It'll be slow the first time you run this, generating a 300 MB file for London. Reasonably fast after that.
+
+## Viewing the output
+
+Use [the overline viewer](https://github.com/acteng/overline/blob/master/rust/viewer.html) for now.
+
+## TODO
+
+- [ ] Optionally remove direction
+- [ ] Make a new, faster viewer
+- [ ] Generate more interesting requests
