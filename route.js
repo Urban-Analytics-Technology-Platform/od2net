@@ -29,6 +29,14 @@ async function nodesForRequest(url) {
   return json.routes[0].legs[0].annotation.nodes;
 }
 
+// Uses Overpass to get the coordinates of an OSM node.
+async function osmNodeCoordinates(node) {
+  let url = `https://overpass-api.de/api/interpreter?data=[out:json]; node(${node}); out;`;
+  let resp = await fetch(url);
+  let json = await resp.json();
+  return [json.elements[0].lon, json.elements[0].lat];
+}
+
 async function main() {
   let urls = generateRequestUrls();
 
@@ -36,6 +44,7 @@ async function main() {
   let countPerEdge = {};
 
   let progress = new SingleBar();
+  console.log(`Calculating routes`);
   progress.start(urls.length, 0);
   for (let url of urls) {
     progress.increment();
@@ -48,10 +57,32 @@ async function main() {
   }
   progress.stop();
 
-  // Print most common segments
+  // Turn the most common segments into GJ (slowly, relying on Overpass)
   let commonEdges = Object.entries(countPerEdge).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  let gj = {
+    type: "FeatureCollection",
+    features: []
+  };
+  console.log(`Turning route network into geometry`);
+  progress.start(commonEdges.length, 0);
   for (let [key, count] of commonEdges) {
+    progress.increment();
     let [node1, node2] = key.split(",");
-    console.log(`${count} trips from https://www.openstreetmap.org/node/${node1} to https://www.openstreetmap.org/node/${node2}`);
+    let pos1 = await osmNodeCoordinates(node1);
+    let pos2 = await osmNodeCoordinates(node2);
+    gj.features.push({
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: [pos1, pos2],
+      },
+      properties: {
+        count,
+        node1: `https://www.openstreetmap.org/node/${node1}`,
+        node2: `https://www.openstreetmap.org/node/${node2}`,
+      }
+    });
   }
+  progress.stop();
+  fs.writeFileSync("output.geojson", JSON.stringify(gj));
 }
