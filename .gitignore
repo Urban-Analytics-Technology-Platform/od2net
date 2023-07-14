@@ -2,3 +2,4 @@
 osrm/*
 node_modules
 output.geojson
+nodes.json

@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import fetch from "node-fetch";
 import { SingleBar } from "cli-progress";
+import { createOSMStream } from 'osm-pbf-parser-node';
 
 main();
 
@@ -29,15 +30,34 @@ async function nodesForRequest(url) {
   return json.routes[0].legs[0].annotation.nodes;
 }
 
-// Uses Overpass to get the coordinates of an OSM node.
-async function osmNodeCoordinates(node) {
-  let url = `https://overpass-api.de/api/interpreter?data=[out:json]; node(${node}); out;`;
-  let resp = await fetch(url);
-  let json = await resp.json();
-  return [json.elements[0].lon, json.elements[0].lat];
+async function buildNodeLookupTable(path) {
+  let nodes = {};
+  let count = 0;
+  for await (let item of createOSMStream(path, { withTags: false })) {
+    if (item.type == "node") {
+      nodes[item.id] = [item.lon, item.lat];
+      count++;
+      if (count % 100000 == 0) {
+        console.log(`Scraped ${count} nodes`);
+      }
+    }
+  }
+  return nodes;
 }
 
 async function main() {
+  // Create the node lookup if needed, or load it
+  let nodes;
+  try {
+    console.log(`Loading node lookup table`);
+    nodes = JSON.parse(fs.readFileSync("nodes.json"));
+  } catch (err) {
+    console.log(`Node lookup table not there, building it...`);
+    nodes = await buildNodeLookupTable("osrm/london.osm.pbf");
+    console.log(`Saving node lookup table for next time...`);
+    fs.writeFileSync("nodes.json", JSON.stringify(nodes));
+  }
+
   let urls = generateRequestUrls();
 
   // Maps from two OSM node IDs to a count of routes crossing. Stringifies keys, because JS.
@@ -57,19 +77,15 @@ async function main() {
   }
   progress.stop();
 
-  // Turn the most common segments into GJ (slowly, relying on Overpass)
-  let commonEdges = Object.entries(countPerEdge).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  console.log(`Turning route network into geometry`);
   let gj = {
     type: "FeatureCollection",
     features: []
   };
-  console.log(`Turning route network into geometry`);
-  progress.start(commonEdges.length, 0);
-  for (let [key, count] of commonEdges) {
-    progress.increment();
+  for (let [key, count] of Object.entries(countPerEdge)) {
     let [node1, node2] = key.split(",");
-    let pos1 = await osmNodeCoordinates(node1);
-    let pos2 = await osmNodeCoordinates(node2);
+    let pos1 = nodes[node1];
+    let pos2 = nodes[node2];
     gj.features.push({
       type: "Feature",
       geometry: {
@@ -83,6 +99,5 @@ async function main() {
       }
     });
   }
-  progress.stop();
   fs.writeFileSync("output.geojson", JSON.stringify(gj));
 }
