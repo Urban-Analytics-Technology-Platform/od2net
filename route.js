@@ -5,6 +5,37 @@ import { createOSMStream } from 'osm-pbf-parser-node';
 
 main();
 
+async function main() {
+  console.log(`Calculating routes`);
+  console.time(`Calculating routes`);
+  let countPerEdge = await calculateRoutes();
+  console.timeEnd(`Calculating routes`);
+
+  await generateRouteNetwork(countPerEdge);
+}
+
+// Returns countPerEdge
+async function calculateRoutes() {
+  // Maps from two OSM node IDs to a count of routes crossing. Stringifies keys, because JS.
+  let countPerEdge = {};
+
+  let urls = generateRequestUrls();
+
+  let progress = new SingleBar();
+  progress.start(urls.length, 0);
+  for (let url of urls) {
+    progress.increment();
+    let nodes = await nodesForRequest(url);
+    for (let i = 0; i < nodes.length - 1; i++) {
+      let key = `${nodes[i]},${nodes[i + 1]}`;
+      countPerEdge[key] ||= 0;
+      countPerEdge[key]++;
+    }
+  }
+  progress.stop();
+  return countPerEdge;
+}
+
 function generateRequestUrls() {
   let requests = JSON.parse(fs.readFileSync("input/requests.geojson"));
   let urls = [];
@@ -30,52 +61,20 @@ async function nodesForRequest(url) {
   return json.routes[0].legs[0].annotation.nodes;
 }
 
-async function buildNodeLookupTable(path) {
-  let nodes = {};
-  let count = 0;
-  for await (let item of createOSMStream(path, { withTags: false })) {
-    if (item.type == "node") {
-      nodes[item.id] = [item.lon, item.lat];
-      count++;
-      if (count % 100000 == 0) {
-        console.log(`Scraped ${count} nodes`);
-      }
-    }
-  }
-  return nodes;
-}
-
-async function main() {
+async function generateRouteNetwork(countPerEdge) {
   // Create the node lookup if needed, or load it
   let nodes;
   try {
     console.log(`Loading node lookup table`);
+    console.time(`Loading node lookup table`);
     nodes = JSON.parse(fs.readFileSync("nodes.json"));
+    console.timeEnd(`Loading node lookup table`);
   } catch (err) {
     console.log(`Node lookup table not there, building it...`);
     nodes = await buildNodeLookupTable("osrm/london.osm.pbf");
     console.log(`Saving node lookup table for next time...`);
     fs.writeFileSync("nodes.json", JSON.stringify(nodes));
   }
-
-  let urls = generateRequestUrls();
-
-  // Maps from two OSM node IDs to a count of routes crossing. Stringifies keys, because JS.
-  let countPerEdge = {};
-
-  let progress = new SingleBar();
-  console.log(`Calculating routes`);
-  progress.start(urls.length, 0);
-  for (let url of urls) {
-    progress.increment();
-    let nodes = await nodesForRequest(url);
-    for (let i = 0; i < nodes.length - 1; i++) {
-      let key = `${nodes[i]},${nodes[i + 1]}`;
-      countPerEdge[key] ||= 0;
-      countPerEdge[key]++;
-    }
-  }
-  progress.stop();
 
   console.log(`Turning route network into geometry`);
   let gj = {
@@ -100,4 +99,19 @@ async function main() {
     });
   }
   fs.writeFileSync("output.geojson", JSON.stringify(gj));
+}
+
+async function buildNodeLookupTable(path) {
+  let nodes = {};
+  let count = 0;
+  for await (let item of createOSMStream(path, { withTags: false })) {
+    if (item.type == "node") {
+      nodes[item.id] = [item.lon, item.lat];
+      count++;
+      if (count % 100000 == 0) {
+        console.log(`Scraped ${count} nodes`);
+      }
+    }
+  }
+  return nodes;
 }
