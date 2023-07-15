@@ -6,11 +6,7 @@ import { createOSMStream } from 'osm-pbf-parser-node';
 main();
 
 async function main() {
-  console.log(`Calculating routes`);
-  console.time(`Calculating routes`);
   let countPerEdge = await calculateRoutes();
-  console.timeEnd(`Calculating routes`);
-
   await generateRouteNetwork(countPerEdge);
 }
 
@@ -20,19 +16,21 @@ async function calculateRoutes() {
   let countPerEdge = {};
 
   let urls = generateRequestUrls();
+  console.log(`Calculating ${urls.length} routes`);
+  console.time(`Calculating routes`);
+  let requests = urls.map(url => nodesForRequest(url));
 
-  let progress = new SingleBar();
-  progress.start(urls.length, 0);
-  for (let url of urls) {
-    progress.increment();
-    let nodes = await nodesForRequest(url);
+  // TODO This requires everything to succeed
+  let responses = await Promise.all(requests);
+  for (let nodes of responses) {
     for (let i = 0; i < nodes.length - 1; i++) {
       let key = `${nodes[i]},${nodes[i + 1]}`;
       countPerEdge[key] ||= 0;
       countPerEdge[key]++;
     }
   }
-  progress.stop();
+  console.timeEnd(`Calculating routes`);
+
   return countPerEdge;
 }
 
