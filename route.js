@@ -12,8 +12,8 @@ async function main() {
 
 // Returns countPerEdge
 async function calculateRoutes() {
-  // Maps from two OSM node IDs to a count of routes crossing. Stringifies keys, because JS.
-  let countPerEdge = {};
+  // Maps from two OSM node IDs to a count of routes crossing
+  let countPerEdge = new Map();
 
   let urls = generateRequestUrls();
   console.log(`Calculating ${urls.length} routes`);
@@ -25,8 +25,8 @@ async function calculateRoutes() {
   for (let nodes of responses) {
     for (let i = 0; i < nodes.length - 1; i++) {
       let key = `${nodes[i]},${nodes[i + 1]}`;
-      countPerEdge[key] ||= 0;
-      countPerEdge[key]++;
+      let count = countPerEdge.get(key) ?? 0;
+      countPerEdge.set(key, count + 1);
     }
   }
   console.timeEnd(`Calculating routes`);
@@ -79,8 +79,8 @@ async function generateRouteNetwork(countPerEdge) {
     type: "FeatureCollection",
     features: []
   };
-  for (let [key, count] of Object.entries(countPerEdge)) {
-    let [node1, node2] = key.split(",");
+  for (let [key, count] of countPerEdge) {
+    let [node1, node2] = key;
     let pos1 = nodes[node1];
     let pos2 = nodes[node2];
     gj.features.push({
