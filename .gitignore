@@ -1,5 +1,6 @@
 *.swp
 osrm/*
-node_modules
+node_modules/
 output.geojson
 nodes.json
+target/
