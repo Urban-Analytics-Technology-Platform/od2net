@@ -83,3 +83,11 @@ Use [the overline viewer](https://github.com/acteng/overline/blob/master/rust/vi
 - [ ] Optionally remove direction
 - [ ] Make a new, faster viewer
 - [ ] Generate more interesting requests
+
+## Perf
+
+For all of England, OSRM needed:
+
+- 8G disk
+- about 16 minutes
+- peak RAM around 10GB
