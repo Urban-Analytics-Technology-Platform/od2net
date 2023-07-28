@@ -21,6 +21,9 @@ References / inspiration:
 - Docker
 - Node
 - [geoq](https://github.com/worace/geoq) (little tricky to install)
+- ogr2ogr with OSM support
+
+One goal is to write as little new code as possible; reuse existing tools that're good.
 
 ## Part 1: Generating origin/destination requests
 
@@ -37,6 +40,12 @@ cat buildings.geojson | geoq centroid | geoq gj fc > centroids.geojson
 
 - Note centroid is overkill; any arbitrary point on the building would be fine. OSRM is going to snap it to a road anyway.
 - All these intermediate serialization steps are pointless. Call odjitter as a library?
+
+Or in one shot...
+
+```shell
+ogr2ogr -f GeoJSON -progress -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' building_centroids.json osrm/london.osm.pbf
+```
 
 ## Generating requests
 
