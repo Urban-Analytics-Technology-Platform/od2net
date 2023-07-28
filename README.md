@@ -45,6 +45,7 @@ Or in one shot...
 
 ```shell
 ogr2ogr -f GeoJSON -progress -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' building_centroids.json osrm/london.osm.pbf
+ogr2ogr -f GeoJSON -progress -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE amenity = "school"' schools_centroids.json osrm/london.osm.pbf
 ```
 
 ## Generating requests
