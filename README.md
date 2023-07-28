@@ -20,6 +20,7 @@ References / inspiration:
 - osmium
 - Docker
 - Node
+- [geoq](https://github.com/worace/geoq) (little tricky to install)
 
 ## Part 1: Generating origin/destination requests
 
@@ -30,16 +31,14 @@ Let's work in London and model people travelling from home to school. The origin
 wget http://download.geofabrik.de/europe/great-britain/england/greater-london-latest.osm.pbf -O london.osm.pbf
 # Select all building ways. 35MB, a few seconds to extract
 osmium tags-filter london.osm.pbf w/building -o buildings.osm.pbf
-# 
-osmium export buildings.osm.pbf --geometry-types=polygon -o buildings.geojson
+osmium export buildings.osm.pbf --geometry-types=polygon -o buildings.geojsonseq -x print_record_separator=false
+cat buildings.geojson | geoq centroid | geoq gj fc > centroids.geojson
 ```
 
-- TODO: We want to drop tags and transform to centroids
 - Note centroid is overkill; any arbitrary point on the building would be fine. OSRM is going to snap it to a road anyway.
 - All these intermediate serialization steps are pointless. Call odjitter as a library?
 
 ## Generating requests
-
 
 ```shell
 odjitter disaggregate \
