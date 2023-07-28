@@ -45,7 +45,10 @@ Let's work in London and model people travelling from home to school. The origin
 mkdir -p data
 cd data
 wget http://download.geofabrik.de/europe/great-britain/england/greater-london-latest.osm.pbf -O london.osm.pbf
-wget https://ramp0storage.blob.core.windows.net/nationaldata-v2/GIS/MSOA_2011_Pop20.geojson -O msoa_zones.geojson
+wget https://ramp0storage.blob.core.windows.net/nationaldata-v2/GIS/MSOA_2011_Pop20.geojson -O all_msoa_zones.geojson
+
+# Clip zones to London
+ogr2ogr -f GeoJSON -spat -0.4792 51.2737 0.28346 51.70269 msoa_zones.geojson all_msoa_zones.geojson
 
 ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' origin_subpoints.geojson london.osm.pbf
 ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE amenity = "school"' destination_subpoints.geojson london.osm.pbf
@@ -63,8 +66,6 @@ odjitter disaggregate \
   --zone-name-key MSOA11CD \
   --output-path requests.geojson
 ```
-
-TODO: Problem here is this is all of England; we wanted just London...
 
 ## Part 2: Routing
 
