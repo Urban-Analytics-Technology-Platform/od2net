@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
+use std::time::Instant;
 
 use geojson::{Feature, Geometry, JsonObject, JsonValue, Value};
 use osmpbf::{Element, ElementReader};
@@ -13,20 +14,35 @@ fn main() {
     }
 
     println!("Scraping {}", args[1]);
+    let mut start = Instant::now();
     let (nodes, ways) = scrape_elements(&args[1]);
-    println!("Got {} nodes and {} ways", nodes.len(), ways.len());
+    println!(
+        "Got {} nodes and {} ways. That took {:?}",
+        nodes.len(),
+        ways.len(),
+        Instant::now().duration_since(start)
+    );
 
+    start = Instant::now();
     let network = split_edges(nodes, ways);
-    println!("Got {} edges", network.edges.len());
+    println!(
+        "Split into {} edges. That took {:?}",
+        network.edges.len(),
+        start
+    );
 
     {
         println!("Saving to network.bin");
+        start = Instant::now();
         let writer = BufWriter::new(File::create("network.bin").unwrap());
         bincode::serialize_into(writer, &network).unwrap();
+        println!("That took {:?}", Instant::now().duration_since(start));
     }
 
     println!("Saving to network.geojson");
+    start = Instant::now();
     network.write_geojson("network.geojson");
+    println!("That took {:?}", Instant::now().duration_since(start));
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
