@@ -119,10 +119,5 @@ fn get_requests(path: &str) -> Result<Vec<Request>> {
             }
         }
     }
-    // Pretend we have more requests
-    let repeated: Vec<_> = requests
-        .into_iter()
-        .flat_map(|item| std::iter::repeat(item).take(10))
-        .collect();
-    Ok(repeated)
+    Ok(requests)
 }

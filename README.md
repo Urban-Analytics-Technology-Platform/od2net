@@ -88,7 +88,12 @@ curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907
 
 ### Calculating routes
 
-TODO, aggregate_routes
+```
+cd ../aggregate_routes
+cargo run --release ../data/requests.geojson
+```
+
+Can't load a 1.8GB gj. In the short-term, try FGB instead, or get rid of the intermediate file now.
 
 ## Part 3: Using the output
 
