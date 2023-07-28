@@ -4,12 +4,13 @@ use std::time::Instant;
 use anyhow::Result;
 use futures::{stream, StreamExt};
 use geojson::{GeoJson, Value};
+use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Too high and OSRM chokes
-    let concurrency = 500;
+    // Manually tuned
+    let concurrency = 10;
 
     let args: Vec<String> = std::env::args().collect();
     if args.len() != 2 {
@@ -17,7 +18,8 @@ async fn main() -> Result<()> {
     }
 
     let requests = get_requests(&args[1])?;
-    println!("Got {} requests", requests.len());
+    let num_requests = requests.len();
+    println!("Making {num_requests} requests with concurrency = {concurrency}");
 
     let start = Instant::now();
     let results = stream::iter(requests)
@@ -25,9 +27,12 @@ async fn main() -> Result<()> {
         .buffer_unordered(concurrency);
 
     // Count routes per node pairs
+    let progress = ProgressBar::new(num_requests as u64).with_style(ProgressStyle::with_template(
+            "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
     let mut count_per_edge: HashMap<(i64, i64), usize> = HashMap::new();
     results
         .fold(&mut count_per_edge, |accumulate_count, future| async {
+            progress.inc(1);
             // TODO Flatten
             match future {
                 Ok(result) => match result {
@@ -47,6 +52,7 @@ async fn main() -> Result<()> {
             accumulate_count
         })
         .await;
+    progress.finish();
 
     println!(
         "Got counts for {} edges. That took {:?}",
@@ -68,6 +74,7 @@ struct Request {
 impl Request {
     // Returns OSM node IDs
     async fn calculate_route(self) -> Result<Vec<i64>> {
+        // TODO How to share, and does it matter?
         let client = Client::new();
 
         // Alternatively, try bindings (https://crates.io/crates/rsc_osrm)
