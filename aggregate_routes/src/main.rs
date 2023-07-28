@@ -54,6 +54,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Clone)]
 struct Request {
     x1: f64,
     y1: f64,
@@ -106,5 +107,10 @@ fn get_requests(path: &str) -> Result<Vec<Request>> {
             }
         }
     }
-    Ok(requests)
+    // Pretend we have more requests
+    let repeated: Vec<_> = requests
+        .into_iter()
+        .flat_map(|item| std::iter::repeat(item).take(10))
+        .collect();
+    Ok(repeated)
 }

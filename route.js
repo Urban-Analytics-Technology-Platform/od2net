@@ -7,7 +7,7 @@ main();
 
 async function main() {
   let countPerEdge = await calculateRoutes();
-  await generateRouteNetwork(countPerEdge);
+  //await generateRouteNetwork(countPerEdge);
 }
 
 // Returns countPerEdge
@@ -44,7 +44,10 @@ function generateRequestUrls() {
     let x2 = coords[1][0];
     let y2 = coords[1][1];
     let url = `http://localhost:5000/route/v1/driving/${x1},${y1};${x2},${y2}?overview=false&alternatives=false&steps=false&annotations=nodes`;
-    urls.push(url);
+    // Repeat each one for a quick perf test
+    for (let i = 0; i < 10; i++) {
+      urls.push(url);
+    }
   }
   return urls;
 }
@@ -54,7 +57,8 @@ async function nodesForRequest(url) {
   let resp = await fetch(url);
   let json = await resp.json();
   if (json.code != "Ok") {
-    throw new Error(`${url} failed: ${JSON.stringify(json)}`);
+    //throw new Error(`${url} failed: ${JSON.stringify(json)}`);
+    console.log(`${url} failed: ${JSON.stringify(json)}`);
   }
   return json.routes[0].legs[0].annotation.nodes;
 }
