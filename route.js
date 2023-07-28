@@ -19,9 +19,10 @@ async function calculateRoutes() {
   console.log(`Calculating ${urls.length} routes`);
   console.time(`Calculating routes`);
   let requests = urls.map(url => nodesForRequest(url));
-
-  // TODO This requires everything to succeed
   let responses = await Promise.all(requests);
+  console.timeEnd(`Calculating routes`);
+
+  console.time(`Counting per edge`);
   for (let nodes of responses) {
     for (let i = 0; i < nodes.length - 1; i++) {
       let key = `${nodes[i]},${nodes[i + 1]}`;
@@ -29,7 +30,7 @@ async function calculateRoutes() {
       countPerEdge.set(key, count + 1);
     }
   }
-  console.timeEnd(`Calculating routes`);
+  console.timeEnd(`Counting per edge`);
 
   return countPerEdge;
 }

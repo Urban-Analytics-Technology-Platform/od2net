@@ -8,6 +8,9 @@ use reqwest::Client;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Too high and OSRM chokes
+    let concurrency = 500;
+
     let args: Vec<String> = std::env::args().collect();
     if args.len() != 2 {
         panic!("Give a .geojson with requests as input");
@@ -16,29 +19,29 @@ async fn main() -> Result<()> {
     let requests = get_requests(&args[1])?;
     println!("Got {} requests", requests.len());
 
-    let client = Client::new();
-
     let start = Instant::now();
     let results = stream::iter(requests)
-        .map(|req| {
-            let client = &client;
-            async move { req.calculate_route(client) }
-        })
-        // TODO Not convinced this is doing what I think yet
-        .buffer_unordered(5);
+        .map(|req| tokio::spawn(async { req.calculate_route().await }))
+        .buffer_unordered(concurrency);
 
     // Count routes per node pairs
     let mut count_per_edge: HashMap<(i64, i64), usize> = HashMap::new();
     results
-        .fold(&mut count_per_edge, |accumulate_count, result| async {
-            match result.await {
-                Ok(nodes) => {
-                    for pair in nodes.windows(2) {
-                        *accumulate_count.entry((pair[0], pair[1])).or_insert(0) += 1;
+        .fold(&mut count_per_edge, |accumulate_count, future| async {
+            // TODO Flatten
+            match future {
+                Ok(result) => match result {
+                    Ok(nodes) => {
+                        for pair in nodes.windows(2) {
+                            *accumulate_count.entry((pair[0], pair[1])).or_insert(0) += 1;
+                        }
                     }
-                }
+                    Err(err) => {
+                        println!("Request failed: {err}");
+                    }
+                },
                 Err(err) => {
-                    println!("Request failed: {err}");
+                    println!("Tokio error: {err}");
                 }
             }
             accumulate_count
@@ -64,7 +67,9 @@ struct Request {
 
 impl Request {
     // Returns OSM node IDs
-    async fn calculate_route(self, client: &Client) -> Result<Vec<i64>> {
+    async fn calculate_route(self) -> Result<Vec<i64>> {
+        let client = Client::new();
+
         // Alternatively, try bindings (https://crates.io/crates/rsc_osrm)
         let body = client
             .get(format!(
