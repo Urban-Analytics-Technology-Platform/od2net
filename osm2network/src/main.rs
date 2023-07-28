@@ -1,6 +1,9 @@
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::BufWriter;
 
 use osmpbf::{Element, ElementReader};
+use serde::{Deserialize, Serialize};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -8,14 +11,21 @@ fn main() {
         panic!("Give a .osm.pbf as input");
     }
 
+    println!("Scraping {}", args[1]);
     let (nodes, ways) = scrape_elements(&args[1]);
     println!("Got {} nodes and {} ways", nodes.len(), ways.len());
 
     let network = split_edges(nodes, ways);
     println!("Got {} edges", network.edges.len());
+
+    {
+        println!("Saving to network.bin");
+        let writer = BufWriter::new(File::create("network.bin").unwrap());
+        bincode::serialize_into(writer, &network).unwrap();
+    }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 struct Position {
     // in decimicrodegrees (10⁻⁷)
     lon: i32,
@@ -27,11 +37,13 @@ struct Way {
     nodes: Vec<i64>,
 }
 
+#[derive(Serialize, Deserialize)]
 struct Network {
     // Keyed by a pair of node IDs
     edges: HashMap<(i64, i64), Edge>,
 }
 
+#[derive(Serialize, Deserialize)]
 struct Edge {
     way_id: i64,
     tags: Vec<(String, String)>,
