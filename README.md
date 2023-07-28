@@ -56,9 +56,8 @@ This took a few minutes on my definitely-not-dying laptop:
 ```
 mkdir -p osrm; cd osrm
 docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-extract -p /opt/bicycle.lua /data/london.osm.pbf
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-partition /data/london.osrm
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-customize /data/london.osrm
-docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed --algorithm mld /data/london.osrm
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-contract /data/london.osrm
+docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed /data/london.osrm
 ```
 
 Send a sample request:
@@ -91,3 +90,5 @@ For all of England, OSRM needed:
 - 8G disk
 - about 16 minutes
 - peak RAM around 10GB
+
+TODO: retry with CH
