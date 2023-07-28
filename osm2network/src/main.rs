@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::BufWriter;
+use std::io::{BufWriter, Write};
 
+use geojson::{Feature, Geometry, JsonObject, JsonValue, Value};
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
@@ -23,6 +24,9 @@ fn main() {
         let writer = BufWriter::new(File::create("network.bin").unwrap());
         bincode::serialize_into(writer, &network).unwrap();
     }
+
+    println!("Saving to network.geojson");
+    network.write_geojson("network.geojson");
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
@@ -143,4 +147,43 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
     }
 
     Network { edges }
+}
+
+impl Network {
+    fn write_geojson(&self, path: &str) {
+        // Write one feature at a time manually, to avoid memory problems
+        let mut file = BufWriter::new(File::create(path).unwrap());
+        writeln!(file, "{{\"type\":\"FeatureCollection\", \"features\":[").unwrap();
+        let mut add_comma = false;
+        for ((node1, node2), edge) in &self.edges {
+            if add_comma {
+                writeln!(file, ",").unwrap();
+            } else {
+                add_comma = true;
+            }
+
+            let geometry = Geometry::new(Value::LineString(
+                edge.geometry
+                    .iter()
+                    .map(|pt| vec![1e-7 * pt.lon as f64, 1e-7 * pt.lat as f64])
+                    .collect(),
+            ));
+            let mut properties = JsonObject::new();
+            for (key, value) in &edge.tags {
+                properties.insert(key.to_string(), JsonValue::from(value.to_string()));
+            }
+            properties.insert("node1".to_string(), JsonValue::from(*node1));
+            properties.insert("node2".to_string(), JsonValue::from(*node2));
+            properties.insert("way".to_string(), JsonValue::from(edge.way_id));
+            let feature = Feature {
+                bbox: None,
+                geometry: Some(geometry),
+                id: None,
+                properties: Some(properties),
+                foreign_members: None,
+            };
+            serde_json::to_writer(&mut file, &feature).unwrap();
+        }
+        writeln!(file, "]}}").unwrap();
+    }
 }
