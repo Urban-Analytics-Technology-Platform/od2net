@@ -11,10 +11,12 @@ fn main() {
     let (nodes, ways) = scrape_elements(&args[1]);
     println!("Got {} nodes and {} ways", nodes.len(), ways.len());
 
-    // split_up_roads. wind up with (node1, node2) to a (duplicated??) segment structure
+    let network = split_edges(nodes, ways);
+    println!("Got {} edges", network.edges.len());
 }
 
-struct Node {
+#[derive(Clone, Copy)]
+struct Position {
     // in decimicrodegrees (10⁻⁷)
     lon: i32,
     lat: i32,
@@ -25,11 +27,22 @@ struct Way {
     nodes: Vec<i64>,
 }
 
-fn scrape_elements(path: &str) -> (HashMap<i64, Node>, HashMap<i64, Way>) {
+struct Network {
+    // Keyed by a pair of node IDs
+    edges: HashMap<(i64, i64), Edge>,
+}
+
+struct Edge {
+    way_id: i64,
+    tags: Vec<(String, String)>,
+    geometry: Vec<Position>,
+}
+
+fn scrape_elements(path: &str) -> (HashMap<i64, Position>, HashMap<i64, Way>) {
     // Scrape every node ID -> position
-    let mut nodes: HashMap<i64, Node> = HashMap::new();
+    let mut nodes = HashMap::new();
     // Scrape every routable road. Just tags and node lists to start.
-    let mut ways: HashMap<i64, Way> = HashMap::new();
+    let mut ways = HashMap::new();
 
     let reader = ElementReader::from_path(path).unwrap();
     // TODO par_map_reduce would be fine if we can merge the hashmaps; there should be no repeated
@@ -40,7 +53,7 @@ fn scrape_elements(path: &str) -> (HashMap<i64, Node>, HashMap<i64, Way>) {
                 Element::Node(node) => {
                     nodes.insert(
                         node.id(),
-                        Node {
+                        Position {
                             lon: node.decimicro_lon(),
                             lat: node.decimicro_lat(),
                         },
@@ -49,7 +62,7 @@ fn scrape_elements(path: &str) -> (HashMap<i64, Node>, HashMap<i64, Way>) {
                 Element::DenseNode(node) => {
                     nodes.insert(
                         node.id(),
-                        Node {
+                        Position {
                             lon: node.decimicro_lon(),
                             lat: node.decimicro_lat(),
                         },
@@ -76,4 +89,46 @@ fn scrape_elements(path: &str) -> (HashMap<i64, Node>, HashMap<i64, Way>) {
         .unwrap();
 
     (nodes, ways)
+}
+
+fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Network {
+    // Count how many ways reference each node
+    let mut node_counter: HashMap<i64, usize> = HashMap::new();
+    for way in ways.values() {
+        for node in &way.nodes {
+            *node_counter.entry(*node).or_insert(0) += 1;
+        }
+    }
+
+    // Split each way into edges
+    let mut edges = HashMap::new();
+    for (way_id, way) in ways {
+        let mut node1 = way.nodes[0];
+        let mut pts = Vec::new();
+
+        let num_nodes = way.nodes.len();
+        for (idx, node) in way.nodes.into_iter().enumerate() {
+            pts.push(nodes[&node]);
+            // Edges start/end at intersections between two ways. The endpoints of the way also
+            // count as intersections.
+            let is_endpoint =
+                idx == 0 || idx == num_nodes - 1 || *node_counter.get(&node).unwrap() > 1;
+            if is_endpoint && pts.len() > 1 {
+                edges.insert(
+                    (node1, node),
+                    Edge {
+                        way_id,
+                        tags: way.tags.clone(),
+                        geometry: std::mem::take(&mut pts),
+                    },
+                );
+
+                // Start the next edge
+                node1 = node;
+                pts.push(nodes[&node]);
+            }
+        }
+    }
+
+    Network { edges }
 }
