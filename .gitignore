@@ -1,3 +1,4 @@
 *.swp
 osrm/*
 target/
+data/

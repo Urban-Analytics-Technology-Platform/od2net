@@ -17,56 +17,66 @@ References / inspiration:
 ## Requirements
 
 - [odjitter](https://github.com/dabreegster/odjitter)
-- osmium
 - Docker
-- Node
-- [geoq](https://github.com/worace/geoq) (little tricky to install)
-- ogr2ogr with OSM support
+- Rust
+- ogr2ogr with [OSM support](https://gdal.org/drivers/vector/osm.html)
+- jq
 
 One goal is to write as little new code as possible; reuse existing tools that're good.
 
+Perf requirements for all of England... OSRM needed (TODO retry with CH):
+
+- 8G disk
+- about 16 minutes
+- peak RAM around 10GB
+
 ## Part 1: Generating origin/destination requests
 
-Let's work in London and model people travelling from home to school. The origin will be the centroid of all buildings in OpenStreetMap, and the destination the centroid of all school buildings. There are problems with too little data (because OSM is missing many buildings) and too much (many buildings are not residential), but improvements are an exercise for the reader!
+Let's work in London and model people travelling from home to school. The origin will be the centroid of all buildings in OpenStreetMap, and the destination the centroid of all school buildings. There are problems with too little data (because OSM is missing many buildings) and too much (many buildings are not residential). Let's restrict the trips to within the same MSOA, and generate one for every person living there (according to 2011? census).
+
+[odjitter](https://github.com/dabreegster/odjitter) needs 4 inputs:
+
+- a GeoJSON with zones -- MSOAs for us
+- a GeoJSON with origin subpoints -- the centroids of all buildings
+- a GeoJSON with destination subpoints -- the centroids of all schools
+- a CSV file specifying the number of trips between each zone
 
 ```shell
-# About 90MB
+mkdir -p data
+cd data
 wget http://download.geofabrik.de/europe/great-britain/england/greater-london-latest.osm.pbf -O london.osm.pbf
-# Select all building ways. 35MB, a few seconds to extract
-osmium tags-filter london.osm.pbf w/building -o buildings.osm.pbf
-osmium export buildings.osm.pbf --geometry-types=polygon -o buildings.geojsonseq -x print_record_separator=false
-cat buildings.geojson | geoq centroid | geoq gj fc > centroids.geojson
+wget https://ramp0storage.blob.core.windows.net/nationaldata-v2/GIS/MSOA_2011_Pop20.geojson -O msoa_zones.geojson
+
+ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' origin_subpoints.geojson london.osm.pbf
+ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE amenity = "school"' destination_subpoints.geojson london.osm.pbf
+
+echo 'geo_code1,geo_code2,cycling' > od.csv
+jq -r '.features | map(.properties | [.MSOA11CD, .MSOA11CD, .PopCount] | @csv) | join("\n")' msoa_zones.geojson >> od.csv
 ```
 
-- Note centroid is overkill; any arbitrary point on the building would be fine. OSRM is going to snap it to a road anyway.
-- All these intermediate serialization steps are pointless. Call odjitter as a library?
-
-Or in one shot...
-
-```shell
-ogr2ogr -f GeoJSON -progress -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' building_centroids.json osrm/london.osm.pbf
-ogr2ogr -f GeoJSON -progress -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE amenity = "school"' schools_centroids.json osrm/london.osm.pbf
-```
-
-## Generating requests
+Now we generate a GeoJSON file with the requests (LineStrings):
 
 ```shell
 odjitter disaggregate \
-  --od-csv-path input/od.csv \
-  --zones-path input/zones.geojson \
-  --zone-name-key name \
-  --output-path input/requests.geojson
+  --od-csv-path od.csv \
+  --zones-path msoa_zones.geojson \
+  --zone-name-key MSOA11CD \
+  --output-path requests.geojson
 ```
 
-## Preparing OSRM
+TODO: Problem here is this is all of England; we wanted just London...
+
+## Part 2: Routing
+
+### Preparing OSRM
 
 This took a few minutes on my definitely-not-dying laptop:
 
 ```
 mkdir -p osrm; cd osrm
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-extract -p /opt/bicycle.lua /data/london.osm.pbf
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-contract /data/london.osrm
-docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed /data/london.osrm
+docker run -t -v "${PWD}/..:/data" osrm/osrm-backend osrm-extract -p /opt/bicycle.lua /data/london.osm.pbf
+docker run -t -v "${PWD}/..:/data" osrm/osrm-backend osrm-contract /data/london.osrm
+docker run -t -i -p 5000:5000 -v "${PWD}/..:/data" osrm/osrm-backend osrm-routed /data/london.osrm
 ```
 
 Send a sample request:
@@ -75,13 +85,11 @@ Send a sample request:
 curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907472;-0.3240966796875,51.51515248101072?overview=false&alternatives=false&steps=false&annotations=nodes'
 ```
 
-## Calculating routes
+### Calculating routes
 
-Install node, `npm i`, then `npm run route`. View `output.geojson` to see segment-level counts for routes.
+TODO, aggregate_routes
 
-It'll be slow the first time you run this, generating a 300 MB file for London. Reasonably fast after that.
-
-## Viewing the output
+## Part 3: Using the output
 
 Use [the overline viewer](https://github.com/acteng/overline/blob/master/rust/viewer.html) for now.
 
@@ -90,14 +98,13 @@ Use [the overline viewer](https://github.com/acteng/overline/blob/master/rust/vi
 - [ ] Rename repo
 - [ ] Optionally remove direction
 - [ ] Make a new, faster viewer
-- [ ] Generate more interesting requests
 
-## Perf
+Future directions:
 
-For all of England, OSRM needed:
-
-- 8G disk
-- about 16 minutes
-- peak RAM around 10GB
-
-TODO: retry with CH
+- Try other routing engines
+- Play with the routing profiles
+	- If we can improve any existing roads, we may want to just route based on distance and hilliness, ignoring existing comfort / one-wayness entirely
+- Generate better input OD
+	- Filter for origins, and weight them better (high-density vs low-density housing)
+	- Weight destinations better
+	- Send people beyond their own MSOA
