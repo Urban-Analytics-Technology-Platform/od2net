@@ -19,12 +19,20 @@ struct Args {
     sample_requests: usize,
 }
 
+struct Counts {
+    count_per_edge: HashMap<(i64, i64), usize>,
+    errors: u64,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
 
+    let mut start = Instant::now();
     println!("Loading requests from {}", args.geojson_input);
-    let requests = get_requests(&args.geojson_input, args.sample_requests)?;
+    let requests = Request::load_from_geojson(&args.geojson_input, args.sample_requests)?;
+    println!("That took {:?}", Instant::now().duration_since(start));
+
     let num_requests = requests.len();
     println!(
         "Making {} requests with concurrency = {}",
@@ -32,7 +40,7 @@ async fn main() -> Result<()> {
         args.concurrency
     );
 
-    let start = Instant::now();
+    start = Instant::now();
     let results = stream::iter(requests)
         .map(|req| tokio::spawn(async { req.calculate_route().await }))
         .buffer_unordered(args.concurrency);
@@ -40,16 +48,22 @@ async fn main() -> Result<()> {
     // Count routes per node pairs
     let progress = ProgressBar::new(num_requests as u64).with_style(ProgressStyle::with_template(
             "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
-    let mut count_per_edge: HashMap<(i64, i64), usize> = HashMap::new();
+    let mut counts = Counts {
+        count_per_edge: HashMap::new(),
+        errors: 0,
+    };
     results
-        .fold(&mut count_per_edge, |accumulate_count, future| async {
+        .fold(&mut counts, |accumulate, future| async {
             progress.inc(1);
             // TODO Flatten
             match future {
                 Ok(result) => match result {
                     Ok(nodes) => {
                         for pair in nodes.windows(2) {
-                            *accumulate_count.entry((pair[0], pair[1])).or_insert(0) += 1;
+                            *accumulate
+                                .count_per_edge
+                                .entry((pair[0], pair[1]))
+                                .or_insert(0) += 1;
                         }
                     }
                     Err(err) => {
@@ -57,29 +71,28 @@ async fn main() -> Result<()> {
                         if false {
                             println!("Request failed: {err}");
                         }
-                        // TODO Figure out a nice way to maintain a counter. Having problems with
-                        // folding two things and the progress bar
+                        accumulate.errors += 1;
                     }
                 },
                 Err(err) => {
                     println!("Tokio error: {err}");
                 }
             }
-            accumulate_count
+            accumulate
         })
         .await;
     progress.finish();
 
     println!(
         "Got counts for {} edges. That took {:?}",
-        count_per_edge.len(),
+        counts.count_per_edge.len(),
         Instant::now().duration_since(start)
     );
+    println!("There were {} errors", HumanCount(counts.errors));
 
     Ok(())
 }
 
-#[derive(Clone)]
 struct Request {
     x1: f64,
     y1: f64,
@@ -115,32 +128,32 @@ impl Request {
         )?;
         Ok(nodes)
     }
-}
 
-fn get_requests(path: &str, sample_requests: usize) -> Result<Vec<Request>> {
-    let gj = std::fs::read_to_string(path)?.parse::<GeoJson>()?;
-    let mut requests = Vec::new();
-    let mut total = 0;
-    if let GeoJson::FeatureCollection(collection) = gj {
-        for feature in collection.features {
-            total += 1;
-            // TODO Off by 1
-            if total % 1000 > sample_requests {
-                continue;
-            }
+    fn load_from_geojson(path: &str, sample_requests: usize) -> Result<Vec<Request>> {
+        let gj = std::fs::read_to_string(path)?.parse::<GeoJson>()?;
+        let mut requests = Vec::new();
+        let mut total = 0;
+        if let GeoJson::FeatureCollection(collection) = gj {
+            for feature in collection.features {
+                total += 1;
+                // TODO Off by 1
+                if total % 1000 > sample_requests {
+                    continue;
+                }
 
-            if let Some(geometry) = feature.geometry {
-                if let Value::LineString(line_string) = geometry.value {
-                    assert_eq!(2, line_string.len());
-                    requests.push(Request {
-                        x1: line_string[0][0],
-                        y1: line_string[0][1],
-                        x2: line_string[1][0],
-                        y2: line_string[1][1],
-                    });
+                if let Some(geometry) = feature.geometry {
+                    if let Value::LineString(line_string) = geometry.value {
+                        assert_eq!(2, line_string.len());
+                        requests.push(Request {
+                            x1: line_string[0][0],
+                            y1: line_string[0][1],
+                            x2: line_string[1][0],
+                            y2: line_string[1][1],
+                        });
+                    }
                 }
             }
         }
+        Ok(requests)
     }
-    Ok(requests)
 }
