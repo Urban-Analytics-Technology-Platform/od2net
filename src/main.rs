@@ -80,6 +80,8 @@ async fn main() -> Result<()> {
                 Ok(result) => match result {
                     Ok(nodes) => {
                         // OSRM returns all nodes, but we only consider some to be intersections
+                        // TODO When the route begins or ends with an intermediate non-intersection
+                        // node, we don't handle it well yet
                         let mut i1 = nodes[0];
                         let mut last = nodes[0];
                         for node in nodes.into_iter().skip(1) {
@@ -89,7 +91,7 @@ async fn main() -> Result<()> {
                             }
                             last = node;
                         }
-                        if i1 != last {
+                        if i1 != last && false {
                             println!("We didn't end on an intersection... {i1} to {last}");
                         }
                     }

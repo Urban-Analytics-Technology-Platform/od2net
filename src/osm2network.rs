@@ -223,7 +223,8 @@ impl Network {
                 let feature = edge.to_geojson(node1, node2, count);
                 serde_json::to_writer(&mut file, &feature)?;
             } else {
-                println!("No edge from https://www.openstreetmap.org/node/{node1} to https://www.openstreetmap.org/node/{node2} or vice versa");
+                // TODO We don't handle routes starting or ending in the middle of an edge yet
+                //println!("No edge from https://www.openstreetmap.org/node/{node1} to https://www.openstreetmap.org/node/{node2} or vice versa");
             }
         }
         writeln!(file, "]}}")?;
