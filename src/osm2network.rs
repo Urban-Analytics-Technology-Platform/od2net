@@ -208,6 +208,7 @@ impl Network {
         writeln!(file, "{{\"type\":\"FeatureCollection\", \"features\":[")?;
         let mut add_comma = false;
 
+        let mut skipped = 0;
         for ((node1, node2), count) in count_per_edge {
             // TODO Track forwards and backwards counts separately, and optionally merge later?
             if let Some(edge) = self
@@ -226,8 +227,14 @@ impl Network {
             } else {
                 // TODO We don't handle routes starting or ending in the middle of an edge yet
                 //println!("No edge from https://www.openstreetmap.org/node/{node1} to https://www.openstreetmap.org/node/{node2} or vice versa");
+                skipped += 1;
             }
         }
+        println!(
+            "Skipped {} edges (started/ended mid-edge)",
+            HumanCount(skipped)
+        );
+
         writeln!(file, "]}}")?;
         Ok(())
     }
