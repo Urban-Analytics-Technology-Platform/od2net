@@ -1,4 +1,6 @@
 *.swp
 osrm/*
 target/
-data/
+
+# Particular places
+bedfordshire/

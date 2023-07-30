@@ -42,19 +42,22 @@ Let's work in London and model people travelling from home to school. The origin
 - a CSV file specifying the number of trips between each zone
 
 ```shell
-mkdir -p data
-cd data
-wget http://download.geofabrik.de/europe/great-britain/england/greater-london-latest.osm.pbf -O london.osm.pbf
+AREA=london
+mkdir $AREA
+cd $AREA
+wget http://download.geofabrik.de/europe/great-britain/england/greater-london-latest.osm.pbf -O $AREA.osm.pbf
 wget https://ramp0storage.blob.core.windows.net/nationaldata-v2/GIS/MSOA_2011_Pop20.geojson -O all_msoa_zones.geojson
 
-# Clip zones to London
-ogr2ogr -f GeoJSON -spat -0.4792 51.2737 0.28346 51.70269 msoa_zones.geojson all_msoa_zones.geojson
+# Check the bounding box of the osm.pbf from the header
+osmium fileinfo $AREA.osm.pbf
+# Clip zones to the area. Coordinates below are for London
+ogr2ogr -f GeoJSON -spat -0.4792 51.2737 0.28346 51.70269 ${AREA}_zones.geojson all_msoa_zones.geojson
 
-ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' origin_subpoints.geojson london.osm.pbf
-ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE amenity = "school"' destination_subpoints.geojson london.osm.pbf
+ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' origin_subpoints.geojson $AREA.osm.pbf
+ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE amenity = "school"' destination_subpoints.geojson $AREA.osm.pbf
 
 echo 'geo_code1,geo_code2,cycling' > od.csv
-jq -r '.features | map(.properties | [.MSOA11CD, .MSOA11CD, .PopCount] | @csv) | join("\n")' msoa_zones.geojson >> od.csv
+jq -r '.features | map(.properties | [.MSOA11CD, .MSOA11CD, .PopCount] | @csv) | join("\n")' ${AREA}_zones.geojson >> od.csv
 ```
 
 Now we generate a GeoJSON file with the requests (LineStrings):
@@ -62,7 +65,7 @@ Now we generate a GeoJSON file with the requests (LineStrings):
 ```shell
 odjitter disaggregate \
   --od-csv-path od.csv \
-  --zones-path msoa_zones.geojson \
+  --zones-path ${AREA}_zones.geojson \
   --zone-name-key MSOA11CD \
   --output-path requests.geojson
 ```
@@ -74,10 +77,11 @@ odjitter disaggregate \
 This took a few minutes on my definitely-not-dying laptop:
 
 ```
-mkdir -p osrm; cd osrm
-docker run -t -v "${PWD}/..:/data" osrm/osrm-backend osrm-extract -p /opt/bicycle.lua /data/london.osm.pbf
-docker run -t -v "${PWD}/..:/data" osrm/osrm-backend osrm-contract /data/london.osrm
-docker run -t -i -p 5000:5000 -v "${PWD}/..:/data" osrm/osrm-backend osrm-routed /data/london.osrm
+mkdir osrm
+cd osrm; ln -s ../$AREA.osm.pbf .; cd ..
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-extract -p /opt/bicycle.lua /data/osrm/$AREA.osm.pbf
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-contract /data/osrm/$AREA.osrm
+docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed /data/osrm/$AREA.osrm
 ```
 
 Send a sample request:
@@ -90,7 +94,7 @@ curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907
 
 ```
 cd ../aggregate_routes
-cargo run --release ../data/requests.geojson
+cargo run --release ../$AREA/requests.geojson
 ```
 
 Can't load a 1.8GB gj. In the short-term, try FGB instead, or get rid of the intermediate file now.
