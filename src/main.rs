@@ -46,12 +46,12 @@ async fn main() -> Result<()> {
     } else {
         osm2network::Network::load_from_bin(args.network)?
     };
-    println!("That took {:?}", Instant::now().duration_since(start));
+    println!("That took {:?}\n", Instant::now().duration_since(start));
 
     start = Instant::now();
     println!("Loading requests from {}", args.requests);
     let requests = Request::load_from_geojson(&args.requests, args.sample_requests)?;
-    println!("That took {:?}", Instant::now().duration_since(start));
+    println!("That took {:?}\n", Instant::now().duration_since(start));
 
     let num_requests = requests.len();
     println!(
@@ -114,10 +114,10 @@ async fn main() -> Result<()> {
 
     println!(
         "Got counts for {} edges. That took {:?}",
-        counts.count_per_edge.len(),
+        HumanCount(counts.count_per_edge.len() as u64),
         Instant::now().duration_since(start)
     );
-    println!("There were {} errors", HumanCount(counts.errors));
+    println!("There were {} errors\n", HumanCount(counts.errors));
 
     println!("Writing output GJ");
     start = Instant::now();

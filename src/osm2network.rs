@@ -5,6 +5,7 @@ use std::time::Instant;
 
 use anyhow::Result;
 use geojson::{Feature, Geometry, JsonObject, JsonValue, Value};
+use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
@@ -20,29 +21,28 @@ impl Network {
     pub fn make_from_pbf(path: String) -> Result<Network> {
         let save_bin_path = "network.bin";
 
-        println!("Scraping {path}");
         let mut start = Instant::now();
         let (nodes, ways) = scrape_elements(&path)?;
         println!(
-            "Got {} nodes and {} ways. That took {:?}",
-            nodes.len(),
-            ways.len(),
+            "  Got {} nodes and {} ways. That took {:?}",
+            HumanCount(nodes.len() as u64),
+            HumanCount(ways.len() as u64),
             Instant::now().duration_since(start)
         );
 
         start = Instant::now();
         let network = split_edges(nodes, ways);
         println!(
-            "Split into {} edges. That took {:?}",
-            network.edges.len(),
+            "  Split into {} edges. That took {:?}",
+            HumanCount(network.edges.len() as u64),
             start
         );
 
-        println!("Saving to {save_bin_path}");
+        println!("  Saving to {save_bin_path}");
         start = Instant::now();
         let writer = BufWriter::new(File::create(save_bin_path)?);
         bincode::serialize_into(writer, &network)?;
-        println!("That took {:?}", Instant::now().duration_since(start));
+        println!("  That took {:?}", Instant::now().duration_since(start));
 
         Ok(network)
     }
