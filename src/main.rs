@@ -1,6 +1,6 @@
+mod osm2network;
+
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::BufWriter;
 use std::time::Instant;
 
 use anyhow::Result;
@@ -9,22 +9,27 @@ use futures::{stream, StreamExt};
 use geojson::{GeoJson, Value};
 use indicatif::{HumanCount, ProgressBar, ProgressStyle};
 use reqwest::Client;
-use serde::Serialize;
 
 #[derive(Parser)]
 #[clap(about, version, author)]
 struct Args {
-    geojson_input: String,
+    /// Specify the OSM network to use for counts. Either an osm.pbf file (which'll produce a .bin
+    /// file) or a .bin file from a prior run
+    #[clap(long)]
+    network: String,
+
+    /// A GeoJSON file with LineString requests
+    #[clap(long)]
+    requests: String,
+
+    /// How many requests to OSRM to have in-flight at once
     #[clap(long, default_value_t = 10)]
     concurrency: usize,
     /// A percent (0 to 1000 -- note NOT 100) of requests to use
     #[clap(long, default_value_t = 1000)]
     sample_requests: usize,
-    #[clap(long, default_value = "counts.bin")]
-    output_counts: String,
 }
 
-#[derive(Serialize)]
 struct Counts {
     count_per_edge: HashMap<(i64, i64), usize>,
     errors: u64,
@@ -35,8 +40,17 @@ async fn main() -> Result<()> {
     let args = Args::parse();
 
     let mut start = Instant::now();
-    println!("Loading requests from {}", args.geojson_input);
-    let requests = Request::load_from_geojson(&args.geojson_input, args.sample_requests)?;
+    println!("Loading network from {}", args.network);
+    let network = if args.network.ends_with(".osm.pbf") {
+        osm2network::Network::make_from_pbf(args.network)?
+    } else {
+        osm2network::Network::load_from_bin(args.network)?
+    };
+    println!("That took {:?}", Instant::now().duration_since(start));
+
+    start = Instant::now();
+    println!("Loading requests from {}", args.requests);
+    let requests = Request::load_from_geojson(&args.requests, args.sample_requests)?;
     println!("That took {:?}", Instant::now().duration_since(start));
 
     let num_requests = requests.len();
@@ -96,9 +110,10 @@ async fn main() -> Result<()> {
     );
     println!("There were {} errors", HumanCount(counts.errors));
 
-    println!("Writing to {}", args.output_counts);
-    let writer = BufWriter::new(File::create(&args.output_counts).unwrap());
-    bincode::serialize_into(writer, &counts).unwrap();
+    println!("Writing output GJ");
+    start = Instant::now();
+    network.write_geojson("output.geojson", counts.count_per_edge)?;
+    println!("That took {:?}", Instant::now().duration_since(start));
 
     Ok(())
 }
