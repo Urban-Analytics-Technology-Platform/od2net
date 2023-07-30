@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::BufWriter;
 use std::time::Instant;
 
 use anyhow::Result;
@@ -7,6 +9,7 @@ use futures::{stream, StreamExt};
 use geojson::{GeoJson, Value};
 use indicatif::{HumanCount, ProgressBar, ProgressStyle};
 use reqwest::Client;
+use serde::Serialize;
 
 #[derive(Parser)]
 #[clap(about, version, author)]
@@ -17,8 +20,11 @@ struct Args {
     /// A percent (0 to 1000 -- note NOT 100) of requests to use
     #[clap(long, default_value_t = 1000)]
     sample_requests: usize,
+    #[clap(long, default_value = "counts.bin")]
+    output_counts: String,
 }
 
+#[derive(Serialize)]
 struct Counts {
     count_per_edge: HashMap<(i64, i64), usize>,
     errors: u64,
@@ -89,6 +95,10 @@ async fn main() -> Result<()> {
         Instant::now().duration_since(start)
     );
     println!("There were {} errors", HumanCount(counts.errors));
+
+    println!("Writing to {}", args.output_counts);
+    let writer = BufWriter::new(File::create(&args.output_counts).unwrap());
+    bincode::serialize_into(writer, &counts).unwrap();
 
     Ok(())
 }
