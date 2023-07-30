@@ -79,11 +79,18 @@ async fn main() -> Result<()> {
             match future {
                 Ok(result) => match result {
                     Ok(nodes) => {
-                        for pair in nodes.windows(2) {
-                            *accumulate
-                                .count_per_edge
-                                .entry((pair[0], pair[1]))
-                                .or_insert(0) += 1;
+                        // OSRM returns all nodes, but we only consider some to be intersections
+                        let mut i1 = nodes[0];
+                        let mut last = nodes[0];
+                        for node in nodes.into_iter().skip(1) {
+                            if network.intersections.contains(&node) {
+                                *accumulate.count_per_edge.entry((i1, node)).or_insert(0) += 1;
+                                i1 = node;
+                            }
+                            last = node;
+                        }
+                        if i1 != last {
+                            println!("We didn't end on an intersection... {i1} to {last}");
                         }
                     }
                     Err(err) => {

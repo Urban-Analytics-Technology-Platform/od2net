@@ -209,7 +209,12 @@ impl Network {
         let mut add_comma = false;
 
         for ((node1, node2), count) in count_per_edge {
-            if let Some(edge) = self.edges.get(&(node1, node2)) {
+            // TODO Track forwards and backwards counts separately, and optionally merge later?
+            if let Some(edge) = self
+                .edges
+                .get(&(node1, node2))
+                .or_else(|| self.edges.get(&(node2, node1)))
+            {
                 if add_comma {
                     writeln!(file, ",")?;
                 } else {
@@ -218,7 +223,7 @@ impl Network {
                 let feature = edge.to_geojson(node1, node2, count);
                 serde_json::to_writer(&mut file, &feature)?;
             } else {
-                println!("No edge from https://www.openstreetmap.org/node/{node1} to https://www.openstreetmap.org/node/{node2}");
+                println!("No edge from https://www.openstreetmap.org/node/{node1} to https://www.openstreetmap.org/node/{node2} or vice versa");
             }
         }
         writeln!(file, "]}}")?;
