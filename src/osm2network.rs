@@ -221,6 +221,7 @@ impl Network {
                     add_comma = true;
                 }
                 let feature = edge.to_geojson(node1, node2, count);
+                // TODO Trim f64 precision for some savings
                 serde_json::to_writer(&mut file, &feature)?;
             } else {
                 // TODO We don't handle routes starting or ending in the middle of an edge yet

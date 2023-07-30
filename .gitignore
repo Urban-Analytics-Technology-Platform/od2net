@@ -1,5 +1,6 @@
 *.swp
 target/
+node_modules/
 
 # Particular places
 bedfordshire/
