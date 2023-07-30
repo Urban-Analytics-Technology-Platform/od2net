@@ -2,29 +2,40 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use anyhow::Result;
+use clap::Parser;
 use futures::{stream, StreamExt};
 use geojson::{GeoJson, Value};
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{HumanCount, ProgressBar, ProgressStyle};
 use reqwest::Client;
+
+#[derive(Parser)]
+#[clap(about, version, author)]
+struct Args {
+    geojson_input: String,
+    #[clap(long, default_value_t = 10)]
+    concurrency: usize,
+    /// A percent (0 to 1000 -- note NOT 100) of requests to use
+    #[clap(long, default_value_t = 1000)]
+    sample_requests: usize,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Manually tuned
-    let concurrency = 10;
+    let args = Args::parse();
 
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() != 2 {
-        panic!("Give a .geojson with requests as input");
-    }
-
-    let requests = get_requests(&args[1])?;
+    println!("Loading requests from {}", args.geojson_input);
+    let requests = get_requests(&args.geojson_input, args.sample_requests)?;
     let num_requests = requests.len();
-    println!("Making {num_requests} requests with concurrency = {concurrency}");
+    println!(
+        "Making {} requests with concurrency = {}",
+        HumanCount(num_requests as u64),
+        args.concurrency
+    );
 
     let start = Instant::now();
     let results = stream::iter(requests)
         .map(|req| tokio::spawn(async { req.calculate_route().await }))
-        .buffer_unordered(concurrency);
+        .buffer_unordered(args.concurrency);
 
     // Count routes per node pairs
     let progress = ProgressBar::new(num_requests as u64).with_style(ProgressStyle::with_template(
@@ -42,7 +53,12 @@ async fn main() -> Result<()> {
                         }
                     }
                     Err(err) => {
-                        println!("Request failed: {err}");
+                        // TODO Usually the API being overloaded
+                        if false {
+                            println!("Request failed: {err}");
+                        }
+                        // TODO Figure out a nice way to maintain a counter. Having problems with
+                        // folding two things and the progress bar
                     }
                 },
                 Err(err) => {
@@ -101,11 +117,18 @@ impl Request {
     }
 }
 
-fn get_requests(path: &str) -> Result<Vec<Request>> {
+fn get_requests(path: &str, sample_requests: usize) -> Result<Vec<Request>> {
     let gj = std::fs::read_to_string(path)?.parse::<GeoJson>()?;
     let mut requests = Vec::new();
+    let mut total = 0;
     if let GeoJson::FeatureCollection(collection) = gj {
         for feature in collection.features {
+            total += 1;
+            // TODO Off by 1
+            if total % 1000 > sample_requests {
+                continue;
+            }
+
             if let Some(geometry) = feature.geometry {
                 if let Value::LineString(line_string) = geometry.value {
                     assert_eq!(2, line_string.len());

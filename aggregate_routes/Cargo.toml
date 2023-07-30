@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.72"
+clap = { version = "4.3.19", features = ["derive"] }
 futures = "0.3.28"
 geojson = { version = "0.24.1", default-features = false }
 indicatif = "0.17.5"
