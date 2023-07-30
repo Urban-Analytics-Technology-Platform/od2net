@@ -9,6 +9,7 @@
     MapLibre,
     Popup,
   } from "svelte-maplibre";
+  import Histogram from "./Histogram.svelte";
   import Layout from "./Layout.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
 
@@ -41,7 +42,10 @@
     <h1>Latent demand</h1>
     <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     {#if gj}
-      <p>Stats on counts...</p>
+      <Histogram
+        title="Edge counts"
+        data={gj.features.map((f) => f.properties.count)}
+      />
     {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
