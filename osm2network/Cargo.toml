@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bincode = "1.3.3"
+clap = { version = "4.3.19", features = ["derive"] }
 geojson = { version = "0.24.1", default-features = false }
 osmpbf = "0.3.1"
 serde = { version = "1.0.177", features = ["derive"] }
