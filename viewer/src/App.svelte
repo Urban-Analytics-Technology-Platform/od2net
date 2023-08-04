@@ -15,6 +15,7 @@
   import Histogram from "./Histogram.svelte";
   import Layout from "./Layout.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
+  import ToggleLayer from "./ToggleLayer.svelte";
 
   let fileInput: HTMLInputElement;
   function fileLoaded(e: Event) {
@@ -71,13 +72,17 @@
   <div slot="left">
     <h1>Latent demand</h1>
     <input bind:this={fileInput} on:change={fileLoaded} type="file" />
-    <p>
-      <span style="color: blue">Origins</span> and
-      <span style="color: green">destinations</span>
-    </p>
-    {#if summary}
-      <p>{summary}</p>{/if}
+    {#if map}
+      <ToggleLayer layer="origins-layer" {map}
+        ><span style="color: blue">Origins</span></ToggleLayer
+      >
+      <ToggleLayer layer="destinations-layer" {map}
+        ><span style="color: green">Destinations</span></ToggleLayer
+      >
+    {/if}
     {#if gj}
+      <ToggleLayer layer="input-layer" {map}>Route network</ToggleLayer>
+      <p>{summary}</p>
       <Histogram
         title="Edge counts"
         data={gj.features.map((f) => f.properties.count)}
@@ -92,6 +97,7 @@
     >
       <GeoJSON id="origins" data={originsUrl}>
         <CircleLayer
+          id="origins-layer"
           paint={{
             "circle-color": "blue",
             "circle-radius": 3,
@@ -100,6 +106,7 @@
       </GeoJSON>
       <GeoJSON id="destinations" data={destinationsUrl}>
         <CircleLayer
+          id="destinations-layer"
           paint={{
             "circle-color": "green",
             "circle-radius": 10,
@@ -110,6 +117,7 @@
       {#if gj}
         <GeoJSON id="input" data={gj}>
           <LineLayer
+            id="input-layer"
             manageHoverState
             paint={{
               "line-width": lineWidth,
