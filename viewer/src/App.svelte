@@ -1,7 +1,10 @@
 <script lang="ts">
   import turfBbox from "@turf/bbox";
   import type { FeatureCollection } from "geojson";
-  import type { DataDrivenPropertyValueSpecification, Map } from "maplibre-gl";
+  import type {
+    DataDrivenPropertyValueSpecification,
+    Map as MapType,
+  } from "maplibre-gl";
   import {
     CircleLayer,
     GeoJSON,
@@ -27,9 +30,13 @@
     reader.readAsText(files[0]);
   }
 
-  let map: Map;
+  let map: MapType;
 
   let gj: FeatureCollection | undefined;
+  let endcaps: FeatureCollection = {
+    type: "FeatureCollection",
+    features: [],
+  };
   let lineWidth: DataDrivenPropertyValueSpecification<number> | undefined;
   let summary: string | undefined;
 
@@ -38,6 +45,8 @@
   function loadFile(contents: string) {
     gj = JSON.parse(contents);
     map.fitBounds(bbox(gj!), { padding: 200, duration: 500 });
+
+    recalculateEndcaps();
 
     let min = Number.MAX_VALUE;
     let max = Number.MIN_VALUE;
@@ -48,6 +57,31 @@
     summary = `Counts from ${min} to ${max}`;
 
     adjustLineWidth(min);
+  }
+
+  function recalculateEndcaps() {
+    let counts = new Map();
+    for (let f of gj.features) {
+      for (let pt of [
+        f.geometry.coordinates[0],
+        f.geometry.coordinates[f.geometry.coordinates.length - 1],
+      ]) {
+        // TODO Overwrite arbitrarily for now
+        counts.set(pt, f.properties.count);
+      }
+    }
+    endcaps.features = [];
+    for (let [coordinates, count] of counts.entries()) {
+      endcaps.features.push({
+        type: "Feature",
+        properties: { count },
+        geometry: {
+          type: "Point",
+          coordinates,
+        },
+      });
+    }
+    endcaps = endcaps;
   }
 
   function adjustLineWidth(min: number) {
@@ -90,6 +124,7 @@
     {/if}
     {#if gj}
       <ToggleLayer layer="input-layer" {map}>Route network</ToggleLayer>
+      <ToggleLayer layer="endcaps-layer" {map}>Endcaps for routes</ToggleLayer>
       <p>{summary}</p>
       <label>
         Override max for line width styling:
@@ -132,6 +167,15 @@
       </GeoJSON>
 
       {#if gj}
+        <GeoJSON id="endcaps" data={endcaps}>
+          <CircleLayer
+            id="endcaps-layer"
+            paint={{
+              "circle-color": "red",
+              "circle-radius": ["/", lineWidth, 2.0],
+            }}
+          />
+        </GeoJSON>
         <GeoJSON id="input" data={gj}>
           <LineLayer
             id="input-layer"
