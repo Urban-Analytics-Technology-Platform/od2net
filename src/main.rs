@@ -1,5 +1,6 @@
 mod custom_routing;
 mod node_map;
+mod od;
 mod osm2network;
 mod requests;
 
@@ -19,8 +20,9 @@ struct Args {
     network: String,
 
     /// A GeoJSON file with LineString requests
+    /// TODO If skipped, generate something custom
     #[clap(long)]
-    requests: String,
+    requests: Option<String>,
 
     /// Use custom_routing instead of OSRM
     #[clap(long)]
@@ -51,12 +53,12 @@ async fn main() -> Result<()> {
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
     start = Instant::now();
-    println!("Loading requests from {}", args.requests);
-    let requests = requests::Request::load_from_geojson(
-        &args.requests,
-        args.sample_requests,
-        args.cap_requests,
-    )?;
+    let requests = if let Some(path) = args.requests {
+        println!("Loading requests from {path}");
+        requests::Request::load_from_geojson(&path, args.sample_requests, args.cap_requests)?
+    } else {
+        od::generate()?
+    };
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
     start = Instant::now();
