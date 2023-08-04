@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Write};
 use std::time::Instant;
@@ -16,7 +16,7 @@ pub struct Network {
     // Keyed by a pair of node IDs
     pub edges: HashMap<(i64, i64), Edge>,
     // Node IDs that're above
-    pub intersections: HashSet<i64>,
+    pub intersections: HashMap<i64, Position>,
 }
 
 pub struct Counts {
@@ -70,10 +70,25 @@ impl Network {
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
-struct Position {
+pub struct Position {
     // in decimicrodegrees (10⁻⁷)
     lon: i32,
     lat: i32,
+}
+
+impl Position {
+    // TODO Degrees?
+    pub fn to_degrees(self) -> (f64, f64) {
+        (1e-7 * self.lon as f64, 1e-7 * self.lat as f64)
+    }
+
+    pub fn to_degrees_vec(self) -> Vec<f64> {
+        vec![1e-7 * self.lon as f64, 1e-7 * self.lat as f64]
+    }
+
+    pub fn to_degrees_array(self) -> [f64; 2] {
+        [1e-7 * self.lon as f64, 1e-7 * self.lat as f64]
+    }
 }
 
 struct Way {
@@ -93,7 +108,7 @@ impl Edge {
         let line_string = LineString::<f64>::from(
             self.geometry
                 .iter()
-                .map(|pt| (1e-7 * pt.lon as f64, 1e-7 * pt.lat as f64))
+                .map(|pt| pt.to_degrees())
                 .collect::<Vec<_>>(),
         );
         line_string.haversine_length()
@@ -101,10 +116,7 @@ impl Edge {
 
     fn to_geojson(&self, node1: i64, node2: i64, count: usize) -> Feature {
         let geometry = Geometry::new(Value::LineString(
-            self.geometry
-                .iter()
-                .map(|pt| vec![1e-7 * pt.lon as f64, 1e-7 * pt.lat as f64])
-                .collect(),
+            self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
         ));
         let mut properties = JsonObject::new();
         for (key, value) in &self.tags {
@@ -185,7 +197,7 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
     }
 
     // Split each way into edges
-    let mut intersections = HashSet::new();
+    let mut intersections = HashMap::new();
     let mut edges = HashMap::new();
     for (way_id, way) in ways {
         let mut node1 = way.nodes[0];
@@ -199,8 +211,8 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
             let is_endpoint =
                 idx == 0 || idx == num_nodes - 1 || *node_counter.get(&node).unwrap() > 1;
             if is_endpoint && pts.len() > 1 {
-                intersections.insert(node1);
-                intersections.insert(node);
+                intersections.insert(node1, pts[0]);
+                intersections.insert(node, *pts.last().unwrap());
                 edges.insert(
                     (node1, node),
                     Edge {

@@ -31,6 +31,7 @@ dependencies = [
  "indicatif",
  "osmpbf",
  "reqwest",
+ "rstar",
  "serde",
  "serde_json",
  "tokio",
