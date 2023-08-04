@@ -2,6 +2,7 @@
   export let properties: { [name: string]: any };
 </script>
 
+<b>Count: {properties.count}</b>
 <table>
   <tbody>
     {#each Object.entries(properties) as [key, value]}

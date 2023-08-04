@@ -1,7 +1,7 @@
 <script lang="ts">
   import turfBbox from "@turf/bbox";
   import type { FeatureCollection } from "geojson";
-  import type { Map } from "maplibre-gl";
+  import type { DataDrivenPropertyValueSpecification, Map } from "maplibre-gl";
   import {
     GeoJSON,
     hoverStateFilter,
@@ -26,9 +26,32 @@
   let map: Map;
 
   let gj: FeatureCollection | undefined;
+  let lineWidth: DataDrivenPropertyValueSpecification<number> | undefined;
+  let summary: string | undefined;
   function loadFile(contents: string) {
     gj = JSON.parse(contents);
     map.fitBounds(bbox(gj!), { padding: 200, duration: 500 });
+
+    let min = Number.MAX_VALUE;
+    let max = Number.MIN_VALUE;
+    for (let f of gj.features) {
+      min = Math.min(min, f.properties.count);
+      max = Math.max(max, f.properties.count);
+    }
+    summary = `Counts from ${min} to ${max}`;
+
+    // Linearly interpolate between thin and thick, based on the percent each count is between min and max
+    let thin = 2;
+    let thick = 10;
+
+    let range_input = max - min;
+    let range_output = thick - thin;
+    // thin + range_output * (value - min) / range_input
+    lineWidth = [
+      "+",
+      thin,
+      ["/", ["*", range_output, ["-", ["get", "count"], min]], range_input],
+    ];
   }
 
   // Suitable for passing to map.fitBounds. Work around https://github.com/Turfjs/turf/issues/1807.
@@ -41,6 +64,8 @@
   <div slot="left">
     <h1>Latent demand</h1>
     <input bind:this={fileInput} on:change={fileLoaded} type="file" />
+    {#if summary}
+      <p>{summary}</p>{/if}
     {#if gj}
       <Histogram
         title="Edge counts"
@@ -59,7 +84,7 @@
           <LineLayer
             manageHoverState
             paint={{
-              "line-width": 10,
+              "line-width": lineWidth,
               "line-color": "red",
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
