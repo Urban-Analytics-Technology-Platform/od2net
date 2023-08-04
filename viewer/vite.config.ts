@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import { resolve } from "path";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 
@@ -12,4 +12,10 @@ export default defineConfig({
     },
   },
   plugins: [svelte()],
+  // TODO For the symlinks in assets
+  server: {
+    fs: {
+      allow: [".."],
+    },
+  },
 })

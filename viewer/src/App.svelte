@@ -3,12 +3,15 @@
   import type { FeatureCollection } from "geojson";
   import type { DataDrivenPropertyValueSpecification, Map } from "maplibre-gl";
   import {
+    CircleLayer,
     GeoJSON,
     hoverStateFilter,
     LineLayer,
     MapLibre,
     Popup,
   } from "svelte-maplibre";
+  import destinationsUrl from "../assets/destination_subpoints.geojson?url";
+  import originsUrl from "../assets/origin_subpoints.geojson?url";
   import Histogram from "./Histogram.svelte";
   import Layout from "./Layout.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
@@ -64,6 +67,10 @@
   <div slot="left">
     <h1>Latent demand</h1>
     <input bind:this={fileInput} on:change={fileLoaded} type="file" />
+    <p>
+      <span style="color: blue">Origins</span> and
+      <span style="color: green">destinations</span>
+    </p>
     {#if summary}
       <p>{summary}</p>{/if}
     {#if gj}
@@ -79,6 +86,23 @@
       standardControls
       bind:map
     >
+      <GeoJSON id="origins" data={originsUrl}>
+        <CircleLayer
+          paint={{
+            "circle-color": "blue",
+            "circle-radius": 3,
+          }}
+        />
+      </GeoJSON>
+      <GeoJSON id="destinations" data={destinationsUrl}>
+        <CircleLayer
+          paint={{
+            "circle-color": "green",
+            "circle-radius": 10,
+          }}
+        />
+      </GeoJSON>
+
       {#if gj}
         <GeoJSON id="input" data={gj}>
           <LineLayer
