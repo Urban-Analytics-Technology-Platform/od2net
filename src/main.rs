@@ -52,22 +52,43 @@ async fn main() -> Result<()> {
     let requests = requests::Request::load_from_geojson(&args.requests, args.sample_requests)?;
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
-    if args.use_custom_routing {
-        return custom_routing::run(network, requests);
-    }
-    // Use OSRM otherwise
+    start = Instant::now();
+    let counts = if args.use_custom_routing {
+        custom_routing::run(&network, requests)?
+    } else {
+        run_with_osrm(&network, requests, args.concurrency).await?
+    };
 
+    println!(
+        "Got counts for {} edges. That took {:?}",
+        HumanCount(counts.count_per_edge.len() as u64),
+        Instant::now().duration_since(start)
+    );
+    println!("There were {} errors\n", HumanCount(counts.errors));
+
+    println!("Writing output GJ");
+    start = Instant::now();
+    network.write_geojson("output.geojson", counts)?;
+    println!("That took {:?}", Instant::now().duration_since(start));
+
+    Ok(())
+}
+
+async fn run_with_osrm(
+    network: &osm2network::Network,
+    requests: Vec<requests::Request>,
+    concurrency: usize,
+) -> Result<osm2network::Counts> {
     let num_requests = requests.len();
     println!(
         "Making {} requests with concurrency = {}",
         HumanCount(num_requests as u64),
-        args.concurrency
+        concurrency
     );
 
-    start = Instant::now();
     let results = stream::iter(requests)
         .map(|req| tokio::spawn(async { req.calculate_route().await }))
-        .buffer_unordered(args.concurrency);
+        .buffer_unordered(concurrency);
 
     // Count routes per node pairs
     let progress = ProgressBar::new(num_requests as u64).with_style(ProgressStyle::with_template(
@@ -113,17 +134,5 @@ async fn main() -> Result<()> {
         .await;
     progress.finish();
 
-    println!(
-        "Got counts for {} edges. That took {:?}",
-        HumanCount(counts.count_per_edge.len() as u64),
-        Instant::now().duration_since(start)
-    );
-    println!("There were {} errors\n", HumanCount(counts.errors));
-
-    println!("Writing output GJ");
-    start = Instant::now();
-    network.write_geojson("output.geojson", counts)?;
-    println!("That took {:?}", Instant::now().duration_since(start));
-
-    Ok(())
+    Ok(counts)
 }

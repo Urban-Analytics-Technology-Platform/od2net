@@ -10,10 +10,10 @@ use super::node_map::NodeMap;
 use super::osm2network::{Counts, Edge, Network};
 use super::requests::Request;
 
-pub fn run(network: Network, requests: Vec<Request>) -> Result<()> {
+pub fn run(network: &Network, requests: Vec<Request>) -> Result<Counts> {
     // TODO Save and load from a file
-    let (ch, node_map) = build_ch(&network);
-    let closest_intersection = build_closest_intersection(&network, &node_map);
+    let (ch, node_map) = build_ch(network);
+    let closest_intersection = build_closest_intersection(network, &node_map);
 
     // Count routes per node pairs
     let progress = ProgressBar::new(requests.len() as u64).with_style(ProgressStyle::with_template(
@@ -45,7 +45,7 @@ pub fn run(network: Network, requests: Vec<Request>) -> Result<()> {
     }
     progress.finish();
 
-    Ok(())
+    Ok(counts)
 }
 
 fn build_ch(network: &Network) -> (FastGraph, NodeMap<i64>) {
