@@ -32,6 +32,9 @@
   let gj: FeatureCollection | undefined;
   let lineWidth: DataDrivenPropertyValueSpecification<number> | undefined;
   let summary: string | undefined;
+
+  let overrideMax = 2000;
+
   function loadFile(contents: string) {
     gj = JSON.parse(contents);
     map.fitBounds(bbox(gj!), { padding: 200, duration: 500 });
@@ -43,8 +46,13 @@
       max = Math.max(max, f.properties.count);
     }
     summary = `Counts from ${min} to ${max}`;
+
+    adjustLineWidth(min);
+  }
+
+  function adjustLineWidth(min: number) {
     // Manually fake the max, and clamp below
-    max = 2000;
+    let max = overrideMax;
 
     // Linearly interpolate between thin and thick, based on the percent each count is between min and max
     let thin = 2;
@@ -83,6 +91,15 @@
     {#if gj}
       <ToggleLayer layer="input-layer" {map}>Route network</ToggleLayer>
       <p>{summary}</p>
+      <label>
+        Override max for line width styling:
+        <input
+          type="number"
+          bind:value={overrideMax}
+          min={1}
+          on:change={() => adjustLineWidth(0)}
+        />
+      </label>
       <Histogram
         title="Edge counts"
         data={gj.features.map((f) => f.properties.count)}
