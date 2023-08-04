@@ -19,6 +19,20 @@ pub struct Network {
     pub intersections: HashSet<i64>,
 }
 
+pub struct Counts {
+    pub count_per_edge: HashMap<(i64, i64), usize>,
+    pub errors: u64,
+}
+
+impl Counts {
+    pub fn new() -> Self {
+        Self {
+            count_per_edge: HashMap::new(),
+            errors: 0,
+        }
+    }
+}
+
 impl Network {
     pub fn make_from_pbf(path: String) -> Result<Network> {
         let save_bin_path = "network.bin";
@@ -210,18 +224,14 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
 }
 
 impl Network {
-    pub fn write_geojson(
-        &self,
-        path: &str,
-        count_per_edge: HashMap<(i64, i64), usize>,
-    ) -> Result<()> {
+    pub fn write_geojson(&self, path: &str, counts: Counts) -> Result<()> {
         // Write one feature at a time manually, to avoid memory problems
         let mut file = BufWriter::new(File::create(path)?);
         writeln!(file, "{{\"type\":\"FeatureCollection\", \"features\":[")?;
         let mut add_comma = false;
 
         let mut skipped = 0;
-        for ((node1, node2), count) in count_per_edge {
+        for ((node1, node2), count) in counts.count_per_edge {
             // TODO Track forwards and backwards counts separately, and optionally merge later?
             if let Some(edge) = self
                 .edges

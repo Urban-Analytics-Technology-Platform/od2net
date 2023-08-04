@@ -3,7 +3,6 @@ mod node_map;
 mod osm2network;
 mod requests;
 
-use std::collections::HashMap;
 use std::time::Instant;
 
 use anyhow::Result;
@@ -35,11 +34,6 @@ struct Args {
     sample_requests: usize,
 }
 
-struct Counts {
-    count_per_edge: HashMap<(i64, i64), usize>,
-    errors: u64,
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
@@ -53,15 +47,15 @@ async fn main() -> Result<()> {
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
-    // TODO Do this before loading requests, just to iterate faster
-    if args.use_custom_routing {
-        return custom_routing::run(network, Vec::new());
-    }
-
     start = Instant::now();
     println!("Loading requests from {}", args.requests);
     let requests = requests::Request::load_from_geojson(&args.requests, args.sample_requests)?;
     println!("That took {:?}\n", Instant::now().duration_since(start));
+
+    if args.use_custom_routing {
+        return custom_routing::run(network, requests);
+    }
+    // Use OSRM otherwise
 
     let num_requests = requests.len();
     println!(
@@ -78,10 +72,7 @@ async fn main() -> Result<()> {
     // Count routes per node pairs
     let progress = ProgressBar::new(num_requests as u64).with_style(ProgressStyle::with_template(
             "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
-    let mut counts = Counts {
-        count_per_edge: HashMap::new(),
-        errors: 0,
-    };
+    let mut counts = osm2network::Counts::new();
     results
         .fold(&mut counts, |accumulate, future| async {
             progress.inc(1);
@@ -131,7 +122,7 @@ async fn main() -> Result<()> {
 
     println!("Writing output GJ");
     start = Instant::now();
-    network.write_geojson("output.geojson", counts.count_per_edge)?;
+    network.write_geojson("output.geojson", counts)?;
     println!("That took {:?}", Instant::now().duration_since(start));
 
     Ok(())

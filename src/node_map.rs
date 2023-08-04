@@ -34,14 +34,6 @@ impl<T: Copy + Ord + Debug + Serialize> NodeMap<T> {
         id
     }
 
-    pub fn get(&self, node: T) -> NodeId {
-        if let Some(id) = self.node_to_id.get(&node) {
-            *id
-        } else {
-            panic!("{:?} not in NodeMap", node);
-        }
-    }
-
     pub fn translate_id(&self, id: usize) -> T {
         self.id_to_node[id]
     }
