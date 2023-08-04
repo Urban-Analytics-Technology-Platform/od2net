@@ -42,6 +42,8 @@
       max = Math.max(max, f.properties.count);
     }
     summary = `Counts from ${min} to ${max}`;
+    // Manually fake the max, and clamp below
+    max = 2000;
 
     // Linearly interpolate between thin and thick, based on the percent each count is between min and max
     let thin = 2;
@@ -49,12 +51,14 @@
 
     let range_input = max - min;
     let range_output = thick - thin;
-    // thin + range_output * (value - min) / range_input
-    lineWidth = [
-      "+",
-      thin,
-      ["/", ["*", range_output, ["-", ["get", "count"], min]], range_input],
+    // min(1, (value - min) / range_input)
+    let calculatePercent = [
+      "min",
+      1.0,
+      ["/", ["-", ["get", "count"], min], range_input],
     ];
+    // thin + range_output * percent
+    lineWidth = ["+", thin, ["*", range_output, calculatePercent]];
   }
 
   // Suitable for passing to map.fitBounds. Work around https://github.com/Turfjs/turf/issues/1807.
