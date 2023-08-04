@@ -38,7 +38,11 @@ impl Request {
         Ok(nodes)
     }
 
-    pub fn load_from_geojson(path: &str, sample_requests: usize) -> Result<Vec<Request>> {
+    pub fn load_from_geojson(
+        path: &str,
+        sample_requests: usize,
+        cap_requests: Option<usize>,
+    ) -> Result<Vec<Request>> {
         let gj = std::fs::read_to_string(path)?.parse::<GeoJson>()?;
         let mut requests = Vec::new();
         let mut total = 0;
@@ -48,6 +52,11 @@ impl Request {
                 // TODO Off by 1
                 if total % 1000 > sample_requests {
                     continue;
+                }
+                if let Some(cap) = cap_requests {
+                    if requests.len() == cap {
+                        break;
+                    }
                 }
 
                 if let Some(geometry) = feature.geometry {

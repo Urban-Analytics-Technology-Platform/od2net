@@ -32,6 +32,9 @@ struct Args {
     /// A percent (0 to 1000 -- note NOT 100) of requests to use
     #[clap(long, default_value_t = 1000)]
     sample_requests: usize,
+    /// Cap requests to exactly this many.
+    #[clap(long)]
+    cap_requests: Option<usize>,
 }
 
 #[tokio::main]
@@ -49,7 +52,11 @@ async fn main() -> Result<()> {
 
     start = Instant::now();
     println!("Loading requests from {}", args.requests);
-    let requests = requests::Request::load_from_geojson(&args.requests, args.sample_requests)?;
+    let requests = requests::Request::load_from_geojson(
+        &args.requests,
+        args.sample_requests,
+        args.cap_requests,
+    )?;
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
     start = Instant::now();
