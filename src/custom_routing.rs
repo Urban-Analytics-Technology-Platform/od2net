@@ -33,6 +33,16 @@ pub fn run(network: &Network, requests: Vec<Request>) -> Result<Counts> {
             .unwrap()
             .data;
 
+        // A sanity check that snapping works -- manually check these:
+        if false {
+            println!(
+                "req from {}, {} snaps to http://openstreetmap.org/node/{}",
+                req.x1,
+                req.y1,
+                node_map.translate_id(start)
+            );
+        }
+
         if let Some(path) = path_calc.calc_path(&ch, start, end) {
             for pair in path.get_nodes().windows(2) {
                 let i1 = node_map.translate_id(pair[0]);
