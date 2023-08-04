@@ -4,6 +4,8 @@ use std::io::{BufReader, BufWriter, Write};
 use std::time::Instant;
 
 use anyhow::Result;
+use geo::prelude::HaversineLength;
+use geo::LineString;
 use geojson::{Feature, Geometry, JsonObject, JsonValue, Value};
 use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
@@ -12,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct Network {
     // Keyed by a pair of node IDs
-    edges: HashMap<(i64, i64), Edge>,
+    pub edges: HashMap<(i64, i64), Edge>,
     // Node IDs that're above
     pub intersections: HashSet<i64>,
 }
@@ -66,13 +68,23 @@ struct Way {
 }
 
 #[derive(Serialize, Deserialize)]
-struct Edge {
+pub struct Edge {
     way_id: i64,
     tags: Vec<(String, String)>,
     geometry: Vec<Position>,
 }
 
 impl Edge {
+    pub fn length_meters(&self) -> f64 {
+        let line_string = LineString::<f64>::from(
+            self.geometry
+                .iter()
+                .map(|pt| (1e-7 * pt.lon as f64, 1e-7 * pt.lat as f64))
+                .collect::<Vec<_>>(),
+        );
+        line_string.haversine_length()
+    }
+
     fn to_geojson(&self, node1: i64, node2: i64, count: usize) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry

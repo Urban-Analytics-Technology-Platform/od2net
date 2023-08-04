@@ -1,4 +1,7 @@
+mod custom_routing;
+mod node_map;
 mod osm2network;
+mod requests;
 
 use std::collections::HashMap;
 use std::time::Instant;
@@ -6,9 +9,7 @@ use std::time::Instant;
 use anyhow::Result;
 use clap::Parser;
 use futures::{stream, StreamExt};
-use geojson::{GeoJson, Value};
 use indicatif::{HumanCount, ProgressBar, ProgressStyle};
-use reqwest::Client;
 
 #[derive(Parser)]
 #[clap(about, version, author)]
@@ -21,6 +22,10 @@ struct Args {
     /// A GeoJSON file with LineString requests
     #[clap(long)]
     requests: String,
+
+    /// Use custom_routing instead of OSRM
+    #[clap(long)]
+    use_custom_routing: bool,
 
     /// How many requests to OSRM to have in-flight at once
     #[clap(long, default_value_t = 10)]
@@ -48,9 +53,14 @@ async fn main() -> Result<()> {
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
+    // TODO Do this before loading requests, just to iterate faster
+    if args.use_custom_routing {
+        return custom_routing::run(network, Vec::new());
+    }
+
     start = Instant::now();
     println!("Loading requests from {}", args.requests);
-    let requests = Request::load_from_geojson(&args.requests, args.sample_requests)?;
+    let requests = requests::Request::load_from_geojson(&args.requests, args.sample_requests)?;
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
     let num_requests = requests.len();
@@ -125,69 +135,4 @@ async fn main() -> Result<()> {
     println!("That took {:?}", Instant::now().duration_since(start));
 
     Ok(())
-}
-
-struct Request {
-    x1: f64,
-    y1: f64,
-    x2: f64,
-    y2: f64,
-}
-
-impl Request {
-    // Returns OSM node IDs
-    async fn calculate_route(self) -> Result<Vec<i64>> {
-        // TODO How to share, and does it matter?
-        let client = Client::new();
-
-        // Alternatively, try bindings (https://crates.io/crates/rsc_osrm)
-        let body = client
-            .get(format!(
-                "http://localhost:5000/route/v1/driving/{},{};{},{}",
-                self.x1, self.y1, self.x2, self.y2
-            ))
-            .query(&[
-                ("overview", "false"),
-                ("alternatives", "false"),
-                ("steps", "false"),
-                ("annotations", "nodes"),
-            ])
-            .send()
-            .await?
-            .text()
-            .await?;
-        let json_value: serde_json::Value = serde_json::from_str(&body)?;
-        let nodes: Vec<i64> = serde_json::from_value(
-            json_value["routes"][0]["legs"][0]["annotation"]["nodes"].clone(),
-        )?;
-        Ok(nodes)
-    }
-
-    fn load_from_geojson(path: &str, sample_requests: usize) -> Result<Vec<Request>> {
-        let gj = std::fs::read_to_string(path)?.parse::<GeoJson>()?;
-        let mut requests = Vec::new();
-        let mut total = 0;
-        if let GeoJson::FeatureCollection(collection) = gj {
-            for feature in collection.features {
-                total += 1;
-                // TODO Off by 1
-                if total % 1000 > sample_requests {
-                    continue;
-                }
-
-                if let Some(geometry) = feature.geometry {
-                    if let Value::LineString(line_string) = geometry.value {
-                        assert_eq!(2, line_string.len());
-                        requests.push(Request {
-                            x1: line_string[0][0],
-                            y1: line_string[0][1],
-                            x2: line_string[1][0],
-                            y2: line_string[1][1],
-                        });
-                    }
-                }
-            }
-        }
-        Ok(requests)
-    }
 }
