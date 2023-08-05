@@ -4,7 +4,7 @@
   export let layer: string;
   export let map: Map;
 
-  let show = true;
+  let show = map.getLayoutProperty(layer, "visibility") == "visible";
 
   function toggle() {
     map.setLayoutProperty(layer, "visibility", show ? "visible" : "none");

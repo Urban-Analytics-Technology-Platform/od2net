@@ -17,6 +17,7 @@
   import originsUrl from "../assets/origin_subpoints.geojson?url";
   import Histogram from "./Histogram.svelte";
   import Layout from "./Layout.svelte";
+  import Legend from "./Legend.svelte";
   import { evaluateLTS } from "./lts";
   import PropertiesTable from "./PropertiesTable.svelte";
   import ToggleLayer from "./ToggleLayer.svelte";
@@ -145,6 +146,14 @@
     {#if gj}
       <ToggleLayer layer="input-layer" {map}>Route network</ToggleLayer>
       <ToggleLayer layer="endcaps-layer" {map}>Endcaps for routes</ToggleLayer>
+      <Legend
+        rows={[
+          ["LTS 1 - suitable for children", colors.lts1],
+          ["LTS 2 - low stress", colors.lts2],
+          ["LTS 3 - medium stress", colors.lts3],
+          ["LTS 4 - high stress", colors.lts4],
+        ]}
+      />
       <p>{summary}</p>
       <label>
         Override max for line width styling:
@@ -169,7 +178,7 @@
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
-      style="https://api.maptiler.com/maps/streets/style.json?key=MZEJTanw3WpxRvt7qDfo"
+      style="https://api.maptiler.com/maps/dataviz/style.json?key=MZEJTanw3WpxRvt7qDfo"
       standardControls
       bind:map
     >
@@ -180,6 +189,7 @@
             "circle-color": colors.origins,
             "circle-radius": 3,
           }}
+          layout={{ visibility: "none" }}
         />
       </GeoJSON>
       <GeoJSON id="destinations" data={destinationsUrl}>
@@ -189,6 +199,7 @@
             "circle-color": colors.destinations,
             "circle-radius": 10,
           }}
+          layout={{ visibility: "none" }}
         />
       </GeoJSON>
 
