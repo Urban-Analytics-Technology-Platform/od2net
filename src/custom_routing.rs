@@ -64,17 +64,15 @@ fn build_ch(network: &Network) -> (FastGraph, NodeMap<i64>) {
     let mut input_graph = InputGraph::new();
     let mut node_map = NodeMap::new();
     for ((node1, node2), edge) in &network.edges {
-        // Everything bidirectional for now!
-        input_graph.add_edge(
-            node_map.get_or_insert(*node1),
-            node_map.get_or_insert(*node2),
-            cost(edge),
-        );
-        input_graph.add_edge(
-            node_map.get_or_insert(*node2),
-            node_map.get_or_insert(*node1),
-            cost(edge),
-        );
+        // Put every node in the CH, even if we wind up with no edges there
+        let node1 = node_map.get_or_insert(*node1);
+        let node2 = node_map.get_or_insert(*node2);
+
+        if let Some(cost) = cost(edge) {
+            // Everything bidirectional for now!
+            input_graph.add_edge(node1, node2, cost);
+            input_graph.add_edge(node2, node1, cost);
+        }
     }
     input_graph.freeze();
     println!(
@@ -91,8 +89,16 @@ fn build_ch(network: &Network) -> (FastGraph, NodeMap<i64>) {
     (ch, node_map)
 }
 
-fn cost(edge: &Edge) -> usize {
-    edge.length_meters().round() as usize
+fn cost(edge: &Edge) -> Option<usize> {
+    let tags = edge.cleaned_tags();
+
+    // TODO Match the lts.ts definition
+    if tags.is("bicycle", "no") || tags.is("highway", "motorway") || tags.is("highway", "proposed")
+    {
+        return None;
+    }
+
+    Some(edge.length_meters().round() as usize)
 }
 
 // fast_paths ID representing the OSM node ID as the data

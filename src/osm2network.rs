@@ -141,15 +141,20 @@ impl Edge {
         }
     }
 
+    pub fn cleaned_tags(&self) -> Tags {
+        let mut tags = Tags::new();
+        for (k, v) in &self.tags {
+            tags.insert(k, v);
+        }
+        tags
+    }
+
     // 1 suitable for kids, 4 high stress, 0 is unknown. Need to swap this out for something much
     // better, and maybe make it directional!
     fn level_traffic_stress(&self) -> usize {
         // TODO Handle bicycle=no, on things like highway=footway
 
-        let mut tags = Tags::new();
-        for (k, v) in &self.tags {
-            tags.insert(k, v);
-        }
+        let tags = self.cleaned_tags();
 
         if let Some(mph) = tags
             .get("maxspeed")
