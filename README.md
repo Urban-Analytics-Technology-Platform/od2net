@@ -9,10 +9,12 @@ The overview:
 - Filter for most popular segments that lack cycling 
 
 References / inspiration:
-- [Propensity to Cycle Tool](https://www.pct.bike)
+
+- [Propensity to Cycle Tool](https://www.pct.bike) / [NPTScot](https://nptscot.github.io)
 - [Ungap the Map](https://a-b-street.github.io/docs/software/ungap_the_map/tech_details.html#predict-impact)
 - A [talk from March 2022](https://dabreegster.github.io/talks/tds_seminar_synthpop/slides.html)
 - [GrowBike.net](https://growbike.net)
+- [BikeOttawa LTS map](https://maps.bikeottawa.ca/lts/)
 
 ## Requirements
 
