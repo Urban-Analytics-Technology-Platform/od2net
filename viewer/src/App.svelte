@@ -17,8 +17,20 @@
   import originsUrl from "../assets/origin_subpoints.geojson?url";
   import Histogram from "./Histogram.svelte";
   import Layout from "./Layout.svelte";
+  import { evaluateLTS } from "./lts";
   import PropertiesTable from "./PropertiesTable.svelte";
   import ToggleLayer from "./ToggleLayer.svelte";
+
+  let colors = {
+    origins: "blue",
+    destinations: "purple",
+
+    lts1: "#009e73",
+    lts2: "#56b4e9",
+    lts3: "#e69f00",
+    lts4: "#d55e00",
+    lts_unknown: "black",
+  };
 
   let fileInput: HTMLInputElement;
   function fileLoaded(e: Event) {
@@ -43,10 +55,17 @@
   let overrideMax = 2000;
 
   function loadFile(contents: string) {
-    gj = JSON.parse(contents);
+    let tmp = JSON.parse(contents);
+    // Add in LTS
+    for (let f of tmp.features) {
+      let result = evaluateLTS({ tags: f.properties });
+      f.properties.lts = result.lts;
+    }
+
+    gj = tmp;
     map.fitBounds(bbox(gj!), { padding: 200, duration: 500 });
 
-    recalculateEndcaps();
+    //recalculateEndcaps();
 
     let min = Number.MAX_VALUE;
     let max = Number.MIN_VALUE;
@@ -116,10 +135,11 @@
     <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     {#if map}
       <ToggleLayer layer="origins-layer" {map}
-        ><span style="color: blue">Origins</span></ToggleLayer
+        ><span style="color: {colors.origins}">Origins</span></ToggleLayer
       >
       <ToggleLayer layer="destinations-layer" {map}
-        ><span style="color: green">Destinations</span></ToggleLayer
+        ><span style="color: {colors.destinations}">Destinations</span
+        ></ToggleLayer
       >
     {/if}
     {#if gj}
@@ -139,6 +159,12 @@
         title="Edge counts"
         data={gj.features.map((f) => f.properties.count)}
       />
+      <p>
+        Note: LTS model from <a
+          href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
+          target="_blank">BikeOttawa</a
+        >
+      </p>
     {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
@@ -151,7 +177,7 @@
         <CircleLayer
           id="origins-layer"
           paint={{
-            "circle-color": "blue",
+            "circle-color": colors.origins,
             "circle-radius": 3,
           }}
         />
@@ -160,7 +186,7 @@
         <CircleLayer
           id="destinations-layer"
           paint={{
-            "circle-color": "green",
+            "circle-color": colors.destinations,
             "circle-radius": 10,
           }}
         />
@@ -187,14 +213,14 @@
                 "match",
                 ["get", "lts"],
                 1,
-                "#009e73",
+                colors.lts1,
                 2,
-                "#56b4e9",
+                colors.lts2,
                 3,
-                "#e69f00",
+                colors.lts3,
                 4,
-                "#d55e00",
-                "black",
+                colors.lts4,
+                colors.lts_unknown,
               ],
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
