@@ -3,6 +3,7 @@ mod node_map;
 mod od;
 mod osm2network;
 mod requests;
+mod tags;
 
 use std::time::Instant;
 

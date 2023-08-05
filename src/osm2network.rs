@@ -11,6 +11,8 @@ use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
+use super::tags::Tags;
+
 #[derive(Serialize, Deserialize)]
 pub struct Network {
     // Keyed by a pair of node IDs
@@ -126,6 +128,10 @@ impl Edge {
         properties.insert("node2".to_string(), JsonValue::from(node2));
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
         properties.insert("count".to_string(), JsonValue::from(count));
+        properties.insert(
+            "lts".to_string(),
+            JsonValue::from(self.level_traffic_stress()),
+        );
         Feature {
             bbox: None,
             geometry: Some(geometry),
@@ -133,6 +139,37 @@ impl Edge {
             properties: Some(properties),
             foreign_members: None,
         }
+    }
+
+    // 1 suitable for kids, 4 high stress, 0 is unknown. Need to swap this out for something much
+    // better, and maybe make it directional!
+    fn level_traffic_stress(&self) -> usize {
+        // TODO Handle bicycle=no, on things like highway=footway
+
+        let mut tags = Tags::new();
+        for (k, v) in &self.tags {
+            tags.insert(k, v);
+        }
+
+        if let Some(mph) = tags
+            .get("maxspeed")
+            .and_then(|x| x.trim_end_matches(" mph").parse::<usize>().ok())
+        {
+            if mph <= 20 {
+                return 2;
+            }
+            if mph >= 40 {
+                return 4;
+            }
+            // Between 20 and 40
+            return 3;
+        }
+
+        /*if tags.is("highway", "residential") {
+            return 1;
+        }*/
+
+        0 // TODO unknown
     }
 }
 

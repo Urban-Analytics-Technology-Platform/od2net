@@ -182,7 +182,20 @@
             manageHoverState
             paint={{
               "line-width": lineWidth,
-              "line-color": "red",
+              "line-color": [
+                // Colors from https://github.com/BikeOttawa/maps.bikeottawa.ca-frontend/blob/master/lts/index.html
+                "match",
+                ["get", "lts"],
+                1,
+                "#009e73",
+                2,
+                "#56b4e9",
+                3,
+                "#e69f00",
+                4,
+                "#d55e00",
+                "black",
+              ],
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
           >
