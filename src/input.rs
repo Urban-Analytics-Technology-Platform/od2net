@@ -48,5 +48,15 @@ pub enum Routing {
         /// How many requests to OSRM to have in-flight at once. Defaults to 10.
         concurrency: Option<usize>,
     },
-    Custom,
+    FastPaths {
+        cost: CostFunction,
+    },
+}
+
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub enum CostFunction {
+    /// Just find the shortest distance path
+    Distance,
+    /// Heavily penalize main roads
+    AvoidMainRoads,
 }

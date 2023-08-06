@@ -37,7 +37,7 @@ ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multi
 Then run the pipeline, routing from every single building to the nearest school. Or to see a much more clear pattern in the output, use `FromEveryOriginToOneDestination` to go from every building to one arbitrary school.
 
 ```shell
-cargo run --release -- '{"directory":"'"$AREA"'","requests":{"Generate":{"pattern":"FromEveryOriginToNearestDestination"}},"routing":"Custom"}'
+cargo run --release -- '{"directory":"'"$AREA"'","requests":{"Generate":{"pattern":"FromEveryOriginToNearestDestination"}},"routing":{"FastPaths":{"cost":"Distance"}}}'
 ```
 
 It'll be slow the first time you run (compiling the tool, parsing OSM data, and building a contraction hierarchy). Subsequent runs will be faster.
@@ -85,9 +85,10 @@ Problems to solve include:
 
 The pipeline currently has two methods for calculating a route:
 
-- The built-in `"routing":"Custom"` option, which currently makes a number of very bad assumptions:
+- The built-in `"routing":"FastPaths"` option, which currently makes a number of very bad assumptions:
   - Every edge can be crossed either direction
-  - Edge cost is just distance -- equivalent to calculating the most direct route, ignoring LTS
+  - When `"cost":"Distance", edge cost is just distance -- equivalent to calculating the most direct route, ignoring LTS
+    - `"cost":"AvoidMainRoads"` uses hardcoded multipliers for main roads
   - No penalty for elevation gain
   - No handling for turn restrictions, penalties for crossing intersections, etc
 - Calling a local instance of [OSRM](https://project-osrm.org)

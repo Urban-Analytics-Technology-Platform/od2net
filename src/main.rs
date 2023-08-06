@@ -71,9 +71,12 @@ async fn main() -> Result<()> {
         input::Routing::OSRM { concurrency } => {
             osrm::run(&network, requests, concurrency.unwrap_or(10)).await?
         }
-        input::Routing::Custom => {
-            custom_routing::run(&format!("{}/ch.bin", config.directory), &network, requests)?
-        }
+        input::Routing::FastPaths { cost } => custom_routing::run(
+            &format!("{}/ch.bin", config.directory),
+            &network,
+            requests,
+            cost,
+        )?,
     };
 
     println!(

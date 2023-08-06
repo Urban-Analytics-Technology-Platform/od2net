@@ -9,12 +9,19 @@ use rstar::primitives::GeomWithData;
 use rstar::RTree;
 use serde::{Deserialize, Serialize};
 
+use super::input::CostFunction;
 use super::node_map::{deserialize_nodemap, NodeMap};
 use super::osm2network::{Counts, Edge, Network};
 use super::requests::Request;
 
-pub fn run(ch_path: &str, network: &Network, requests: Vec<Request>) -> Result<Counts> {
-    let prepared_ch = build_ch(ch_path, network)?;
+// TODO Vary ch_path with CostFunction
+pub fn run(
+    ch_path: &str,
+    network: &Network,
+    requests: Vec<Request>,
+    cost: CostFunction,
+) -> Result<Counts> {
+    let prepared_ch = build_ch(ch_path, network, cost)?;
     let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map);
 
     // Count routes per node pairs
@@ -68,7 +75,7 @@ struct PreparedCH {
     node_map: NodeMap<i64>,
 }
 
-fn build_ch(path: &str, network: &Network) -> Result<PreparedCH> {
+fn build_ch(path: &str, network: &Network, cost: CostFunction) -> Result<PreparedCH> {
     println!("Trying to load CH from {path}");
     match File::open(path)
         .map_err(|err| err.into())
@@ -91,7 +98,7 @@ fn build_ch(path: &str, network: &Network) -> Result<PreparedCH> {
         let node1 = node_map.get_or_insert(*node1);
         let node2 = node_map.get_or_insert(*node2);
 
-        if let Some(cost) = cost(edge) {
+        if let Some(cost) = edge_cost(edge, cost) {
             // Everything bidirectional for now!
             input_graph.add_edge(node1, node2, cost);
             input_graph.add_edge(node2, node1, cost);
@@ -116,7 +123,7 @@ fn build_ch(path: &str, network: &Network) -> Result<PreparedCH> {
     Ok(result)
 }
 
-fn cost(edge: &Edge) -> Option<usize> {
+fn edge_cost(edge: &Edge, cost: CostFunction) -> Option<usize> {
     let tags = edge.cleaned_tags();
 
     // TODO Match the lts.ts definition
@@ -125,7 +132,21 @@ fn cost(edge: &Edge) -> Option<usize> {
         return None;
     }
 
-    Some(edge.length_meters().round() as usize)
+    let dist = edge.length_meters();
+
+    let output = match cost {
+        CostFunction::Distance => dist,
+        CostFunction::AvoidMainRoads => {
+            // TODO Match the LTS definitoins
+            let penalty = if tags.is("highway", "residential") || tags.is("highway", "cycleway") {
+                1.0
+            } else {
+                5.0
+            };
+            penalty * dist
+        }
+    };
+    Some(output.round() as usize)
 }
 
 // fast_paths ID representing the OSM node ID as the data
