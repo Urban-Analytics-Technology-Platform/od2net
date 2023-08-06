@@ -8,7 +8,7 @@ mod tags;
 use std::time::Instant;
 
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use futures::{stream, StreamExt};
 use indicatif::{HumanCount, ProgressBar, ProgressStyle};
 
@@ -20,10 +20,8 @@ struct Args {
     #[clap(long)]
     network: String,
 
-    /// A GeoJSON file with LineString requests
-    /// TODO If skipped, generate something custom
-    #[clap(long)]
-    requests: Option<String>,
+    #[command(subcommand)]
+    requests: Requests,
 
     /// Use custom_routing instead of OSRM
     #[clap(long)]
@@ -32,12 +30,26 @@ struct Args {
     /// How many requests to OSRM to have in-flight at once
     #[clap(long, default_value_t = 10)]
     concurrency: usize,
-    /// A percent (0 to 1000 -- note NOT 100) of requests to use
-    #[clap(long, default_value_t = 1000)]
-    sample_requests: usize,
-    /// Cap requests to exactly this many.
-    #[clap(long)]
-    cap_requests: Option<usize>,
+}
+
+#[derive(Subcommand)]
+enum Requests {
+    Odjitter {
+        /// A GeoJSON file with LineString requests
+        path: String,
+        /// A percent (0 to 1000 -- note NOT 100) of requests to use
+        #[clap(long, default_value_t = 1000)]
+        sample_requests: usize,
+        /// Cap requests to exactly this many.
+        #[clap(long)]
+        cap_requests: Option<usize>,
+    },
+    Generate {
+        /// Path to a GeoJSON file with origin points to use
+        origins_path: String,
+        /// Path to a GeoJSON file with destination points to use
+        destinations_path: String,
+    },
 }
 
 #[tokio::main]
@@ -54,11 +66,19 @@ async fn main() -> Result<()> {
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
     start = Instant::now();
-    let requests = if let Some(path) = args.requests {
-        println!("Loading requests from {path}");
-        requests::Request::load_from_geojson(&path, args.sample_requests, args.cap_requests)?
-    } else {
-        od::generate()?
+    let requests = match args.requests {
+        Requests::Odjitter {
+            path,
+            sample_requests,
+            cap_requests,
+        } => {
+            println!("Loading requests from {path}");
+            requests::Request::load_from_geojson(&path, sample_requests, cap_requests)?
+        }
+        Requests::Generate {
+            origins_path,
+            destinations_path,
+        } => od::generate(&origins_path, &destinations_path)?,
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
 

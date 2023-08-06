@@ -4,10 +4,9 @@ use indicatif::HumanCount;
 
 use super::requests::Request;
 
-pub fn generate() -> Result<Vec<Request>> {
-    // TODO Hardcoded paths
-    let origins = load_subpoints("bedfordshire/origin_subpoints.geojson")?;
-    let destinations = load_subpoints("bedfordshire/destination_subpoints.geojson")?;
+pub fn generate(origins_path: &str, destinations_path: &str) -> Result<Vec<Request>> {
+    let origins = load_subpoints(origins_path)?;
+    let destinations = load_subpoints(destinations_path)?;
     println!(
         "Got {} origins and {} destination",
         HumanCount(origins.len() as u64),

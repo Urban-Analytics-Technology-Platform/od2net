@@ -45,6 +45,7 @@ pub fn run(network: &Network, requests: Vec<Request>) -> Result<Counts> {
 
         if let Some(path) = path_calc.calc_path(&ch, start, end) {
             for pair in path.get_nodes().windows(2) {
+                // TODO Actually, don't do this translation until the very end
                 let i1 = node_map.translate_id(pair[0]);
                 let i2 = node_map.translate_id(pair[1]);
                 *counts.count_per_edge.entry((i1, i2)).or_insert(0) += 1;
