@@ -1,128 +1,171 @@
-# Latent demand 
+# Latent demand (name TBD)
 
-This repo is an example of how to... TODO
+WARNING: This repo is not ready for use.
 
-The overview:
+TODO: Write intro
 
 - Create origin/destination requests
-- Calculate routes, and count trips per road segment
-- Filter for most popular segments that lack cycling 
+- Calculate routes, and count how many trips cross each road segment
+- Filter for most popular segments that lack appropriate cycling infrastructure
 
-References / inspiration:
+## Quick start
+
+### Setup
+
+You'll need:
+
+- Rust (1.71 or newer)
+- ogr2ogr with [OSM support](https://gdal.org/drivers/vector/osm.html)
+- Node (to run the web app)
+- About X disk, Y RAM, and Z minutes to run
+
+First let's create input data. Let's explore routes starting from any building in Cornwall and going to schools.
+
+```shell
+AREA=cornwall
+URL=http://download.geofabrik.de/europe/great-britain/england/cornwall-latest.osm.pbf
+
+# Fill the $AREA directory with 3 files: input.osm.pbf, origins.geojson, and destinations.geojson
+mkdir $AREA
+curl $URL -o $AREA/input.osm.pbf
+ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' $AREA/origins.geojson $AREA/input.osm.pbf
+ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE amenity = "school"' $AREA/destinations.geojson $AREA/input.osm.pbf
+```
+
+### Run the pipeline
+
+Then run the pipeline, routing from every single building to the nearest school. Or to see a much more clear pattern in the output, use `FromEveryOriginToOneDestination` to go from every building to one arbitrary school.
+
+```shell
+cargo run --release -- '{"directory":"'"$AREA"'","requests":{"Generate":{"pattern":"FromEveryOriginToNearestDestination"}},"routing":"Custom"}'
+```
+
+It'll be slow the first time you run (compiling the tool, parsing OSM data, and building a contraction hierarchy). Subsequent runs will be faster.
+
+### View the output
+
+Let's see which roads are most used. Start the web app:
+
+```shell
+cd viewer
+# You need to install dependencies the first time
+npm i
+npm run dev
+```
+
+Then open <http://localhost:5173/routing-engines/> (or whatever npm says) in your browser. Load `$AREA/output.geojson`.
+
+The Level of Traffic Stress definitions shown come from [BikeOttawa](https://maps.bikeottawa.ca/lts/).
+
+## Customizing
+
+The purpose of this tool is to generate route networks **quickly** for areas up to **national scale**. The different stages of the pipeline are all modular and customizable, and to get meaningful results, we'll need to improve the defaults in all of them.
+
+### Generating requests
+
+The pipeline needs a list of routing requests to run -- just a huge list of start/end coordinates. These should **not** be centroids of a large zone or anything like that.
+
+Built-in options currently include:
+
+- `"requests":{"Generate":{"pattern":"FromEveryOriginToOneDestination"}}`
+  - One trip for every $AREA/origins.geojson to the first point in $AREA/destinations.geojson
+- `"requests":{"Generate":{"pattern":"FromEveryOriginToNearestDestination"}}`
+  - One trip for every $AREA/origins.geojson to the nearest (as the crow flies) point in $AREA/destinations.geojson
+- `"requests":{"Odjitter":{"path":"file.geojson"}}`
+  - Use LineStrings from a GeoJSON file. You can use [odjitter](https://github.com/dabreegster/odjitter) to generate a number of trips between zones, picking specific weighted points from each zone.
+  - Note this option is **not** recommended for performance. For an interesting amount of requests, the overhead of reading/writing this file full of requests and storing it in memory doesn't work.
+
+Problems to solve include:
+
+- OSM is missing buildings in many places
+- Origins and destinations should be weighted, based on how many people live or work/shop/go to school/etc somewhere
+- We may want to exclude trips with routes exceeding some distance or elevation thresholds
+
+### Routing
+
+The pipeline currently has two methods for calculating a route:
+
+- The built-in `"routing":"Custom"` option, which currently makes a number of very bad assumptions:
+  - Every edge can be crossed either direction
+  - Edge cost is just distance -- equivalent to calculating the most direct route, ignoring LTS
+  - No penalty for elevation gain
+  - No handling for turn restrictions, penalties for crossing intersections, etc
+- Calling a local instance of [OSRM](https://project-osrm.org)
+  - The built-in routing profiles can be used and customized
+  - The overhead of calling even a local instance of OSRM is tremendous, because we're going through HTTP and parsing JSON on both ends.
+
+Note to use OSRM, you additionally need Docker and to prepare OSRM in your area:
+
+```shell
+cd $AREA
+mkdir osrm
+cd osrm
+ln -s ../inputosm.pbf .
+cd ..
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-extract -p /opt/bicycle.lua /data/osrm/input.osm.pbf
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-contract /data/osrm/input.osrm
+```
+
+And then run OSRM on prepared data:
+
+```shell
+docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed /data/osrm/input.osrm
+
+# To send a sample request:
+curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907472;-0.3240966796875,51.51515248101072?overview=false&alternatives=false&steps=false&annotations=nodes'
+```
+
+### Visualization
+
+Open questions include:
+
+- How to visualize the counts for different road segments?
+  - Currently, direction is ignored
+  - Currently, we linearly interpolate line width based on the min/max count of any edge. Optionally can clamp the upper limit to handle outliers.
+- How to judge how suitable roads currently are for cycling
+  - Currently using [BikeOttawa's Level of Traffic Stress code](https://maps.bikeottawa.ca/lts/)
+- Could we also visualize how easy a road is to modify? (Looking for excess width, parking/turn lanes, etc)
+
+## Performance
+
+TODO: Measure disk, memory, and runtime requirements for different areas.
+
+TODO: Note the custom routing only uses **one thread** right now. Way more gains coming soon.
+
+This pipeline uses a number of techniques to achieve these results on a regular laptop:
+
+- Avoid saving and loading huge intermediate files
+  - This is why running odjitter as a separate step right now isn't recommended. We can instead lazily generate requests as the router needs work to do, if they don't fit in memory.
+- Reduce overhead for calling the router
+  - The cost of actually calculating a single route is absolutely tiny. We're calculating millions of routes. So, the overhead for communicating with the router and using the results **must** be tiny.
+  - Calling even a local instance of OSRM over HTTP is very slow. We could try native bindings in the future.
+  - Currently, using a Rust implementation of [contraction hierarchies](https://github.com/easbar/fast_paths/). Zero communication overhead.
+- Minimize the results for each routing call
+  - Prior approaches have gotten back GeoJSON LineStrings and OSM attributes covering the resulting route. This is incredibly expensive to deal with for many requests.
+  - Prior approachs have tried to sum up counts for road segments by [using geometry to represent segments](https://github.com/acteng/overline). This is very slow, has potential floating point errors, can break near bridges/tunnels, etc.
+  - Instead, we just ask the router for OSM node IDs (64-bit integers). An edge is just a pair of these. At the very last step when we're generating output GeoJSON to visualize, we can match these node IDs to objects in OSM and produce the same geometry and OSM attributes.
+
+## TODO
+
+Some of the most important next steps:
+
+- Check the validity of using rstar on WGS84 coordinates. I think since the distances are so small, it's OK to pretend we're in Euclidean space.
+- Directly read in the graph from OSRM, so we don't have to reinvent the wheel for edge costs
+- Explore a UI for comparing counts from two different runs (so we can compare OSRM with our own cost function, for example)
+- Handle bidirectionality end-to-end -- track count in both directions, and produce a directed input graph
+
+Longer-term:
+
+- Explore edge bundling to deal with dual carriageways and similar. Or maybe this is just a UI problem
+- Add an example of modifying the network to represent improvements
+	- aka, Ungap the Map v2
+- Make this entire thing easier to run -- generate configs using the web UI?
+- Validate output counts against current numbers (switching to a quiet/balanced profile first!)
+
+## References / inspiration:
 
 - [Propensity to Cycle Tool](https://www.pct.bike) / [NPTScot](https://nptscot.github.io)
 - [Ungap the Map](https://a-b-street.github.io/docs/software/ungap_the_map/tech_details.html#predict-impact)
 - A [talk from March 2022](https://dabreegster.github.io/talks/tds_seminar_synthpop/slides.html)
 - [GrowBike.net](https://growbike.net)
 - [BikeOttawa LTS map](https://maps.bikeottawa.ca/lts/)
-
-## Quick start
-
-```shell
-cargo run --release -- --network network.bin --config '{"requests":{"Generate":{"pattern":"FromEveryOriginToOneDestination","origins_path":"bedfordshire/origin_subpoints.geojson","destinations_path":"bedfordshire/destination_subpoints.geojson"}},"routing":"Custom"}'
-```
-
-## Requirements
-
-- [odjitter](https://github.com/dabreegster/odjitter)
-- Docker
-- Rust
-- ogr2ogr with [OSM support](https://gdal.org/drivers/vector/osm.html)
-- jq
-
-One goal is to write as little new code as possible; reuse existing tools that're good.
-
-Perf requirements for all of England... OSRM needed (TODO retry with CH):
-
-- 8G disk
-- about 16 minutes
-- peak RAM around 10GB
-
-## Part 1: Generating origin/destination requests
-
-Let's work in London and model people travelling from home to school. The origin will be the centroid of all buildings in OpenStreetMap, and the destination the centroid of all school buildings. There are problems with too little data (because OSM is missing many buildings) and too much (many buildings are not residential). Let's restrict the trips to within the same MSOA, and generate one for every person living there (according to 2011? census).
-
-[odjitter](https://github.com/dabreegster/odjitter) needs 4 inputs:
-
-- a GeoJSON with zones -- MSOAs for us
-- a GeoJSON with origin subpoints -- the centroids of all buildings
-- a GeoJSON with destination subpoints -- the centroids of all schools
-- a CSV file specifying the number of trips between each zone
-
-```shell
-AREA=london
-mkdir $AREA
-cd $AREA
-wget http://download.geofabrik.de/europe/great-britain/england/greater-london-latest.osm.pbf -O $AREA.osm.pbf
-wget https://ramp0storage.blob.core.windows.net/nationaldata-v2/GIS/MSOA_2011_Pop20.geojson -O all_msoa_zones.geojson
-
-# Check the bounding box of the osm.pbf from the header
-osmium fileinfo $AREA.osm.pbf
-# Clip zones to the area. Coordinates below are for London
-ogr2ogr -f GeoJSON -spat -0.4792 51.2737 0.28346 51.70269 ${AREA}_zones.geojson all_msoa_zones.geojson
-
-ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' origin_subpoints.geojson $AREA.osm.pbf
-ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE amenity = "school"' destination_subpoints.geojson $AREA.osm.pbf
-
-echo 'geo_code1,geo_code2,cycling' > od.csv
-jq -r '.features | map(.properties | [.MSOA11CD, .MSOA11CD, .PopCount] | @csv) | join("\n")' ${AREA}_zones.geojson >> od.csv
-```
-
-Now we generate a GeoJSON file with the requests (LineStrings):
-
-```shell
-odjitter disaggregate \
-  --od-csv-path od.csv \
-  --zones-path ${AREA}_zones.geojson \
-  --zone-name-key MSOA11CD \
-  --output-path requests.geojson
-```
-
-## Part 2: Routing
-
-### Preparing OSRM
-
-This took a few minutes on my definitely-not-dying laptop:
-
-```
-mkdir osrm
-cd osrm; ln -s ../$AREA.osm.pbf .; cd ..
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-extract -p /opt/bicycle.lua /data/osrm/$AREA.osm.pbf
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-contract /data/osrm/$AREA.osrm
-docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed /data/osrm/$AREA.osrm
-```
-
-Send a sample request:
-
-```
-curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907472;-0.3240966796875,51.51515248101072?overview=false&alternatives=false&steps=false&annotations=nodes'
-```
-
-### Calculating routes
-
-```
-cd ../aggregate_routes
-cargo run --release ../$AREA/requests.geojson
-```
-
-Can't load a 1.8GB gj. In the short-term, try FGB instead, or get rid of the intermediate file now.
-
-## Part 3: Using the output
-
-Use [the overline viewer](https://github.com/acteng/overline/blob/master/rust/viewer.html) for now.
-
-## TODO
-
-- [ ] Rename repo
-- [ ] Optionally remove direction
-- [ ] Make a new, faster viewer
-
-Future directions:
-
-- Try other routing engines
-- Play with the routing profiles
-	- If we can improve any existing roads, we may want to just route based on distance and hilliness, ignoring existing comfort / one-wayness entirely
-- Generate better input OD
-	- Filter for origins, and weight them better (high-density vs low-density housing)
-	- Weight destinations better
-	- Send people beyond their own MSOA
