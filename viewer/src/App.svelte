@@ -13,8 +13,8 @@
     MapLibre,
     Popup,
   } from "svelte-maplibre";
-  import destinationsUrl from "../assets/destination_subpoints.geojson?url";
-  import originsUrl from "../assets/origin_subpoints.geojson?url";
+  import destinationsUrl from "../assets/destinations.geojson?url";
+  import originsUrl from "../assets/origins.geojson?url";
   import Histogram from "./Histogram.svelte";
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
