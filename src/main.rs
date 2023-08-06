@@ -23,13 +23,8 @@ struct Args {
     #[command(subcommand)]
     requests: Requests,
 
-    /// Use custom_routing instead of OSRM
-    #[clap(long)]
-    use_custom_routing: bool,
-
-    /// How many requests to OSRM to have in-flight at once
-    #[clap(long, default_value_t = 10)]
-    concurrency: usize,
+    #[command(subcommand)]
+    routing: Routing,
 }
 
 #[derive(Subcommand)]
@@ -50,6 +45,16 @@ enum Requests {
         /// Path to a GeoJSON file with destination points to use
         destinations_path: String,
     },
+}
+
+#[derive(Subcommand)]
+enum Routing {
+    OSRM {
+        /// How many requests to OSRM to have in-flight at once
+        #[clap(long, default_value_t = 10)]
+        concurrency: usize,
+    },
+    Custom,
 }
 
 #[tokio::main]
