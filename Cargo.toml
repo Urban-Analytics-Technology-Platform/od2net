@@ -8,6 +8,7 @@ anyhow = "1.0.72"
 bincode = "1.3.3"
 clap = { version = "4.3.19", features = ["derive"] }
 fast_paths = { git = "https://github.com/easbar/fast_paths" }
+fs-err = "2.9.0"
 futures = "0.3.28"
 geo = "0.26.0"
 geojson = { version = "0.24.1", default-features = false }

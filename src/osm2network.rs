@@ -1,9 +1,9 @@
 use std::collections::HashMap;
-use std::fs::File;
 use std::io::{BufReader, BufWriter, Write};
 use std::time::Instant;
 
 use anyhow::Result;
+use fs_err::File;
 use geo::prelude::HaversineLength;
 use geo::LineString;
 use geojson::{Feature, Geometry, JsonObject, JsonValue, Value};
@@ -36,11 +36,9 @@ impl Counts {
 }
 
 impl Network {
-    pub fn make_from_pbf(path: String) -> Result<Network> {
-        let save_bin_path = "network.bin";
-
+    pub fn make_from_pbf(osm_pbf_path: &str, bin_path: &str) -> Result<Network> {
         let mut start = Instant::now();
-        let (nodes, ways) = scrape_elements(&path)?;
+        let (nodes, ways) = scrape_elements(osm_pbf_path)?;
         println!(
             "  Got {} nodes and {} ways. That took {:?}",
             HumanCount(nodes.len() as u64),
@@ -56,16 +54,16 @@ impl Network {
             start
         );
 
-        println!("  Saving to {save_bin_path}");
+        println!("  Saving to {bin_path}");
         start = Instant::now();
-        let writer = BufWriter::new(File::create(save_bin_path)?);
+        let writer = BufWriter::new(File::create(bin_path)?);
         bincode::serialize_into(writer, &network)?;
         println!("  That took {:?}", Instant::now().duration_since(start));
 
         Ok(network)
     }
 
-    pub fn load_from_bin(path: String) -> Result<Network> {
+    pub fn load_from_bin(path: &str) -> Result<Network> {
         let network = bincode::deserialize_from(BufReader::new(File::open(path)?))?;
         Ok(network)
     }

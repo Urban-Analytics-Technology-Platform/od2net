@@ -14,7 +14,7 @@ impl Request {
         sample_requests: usize,
         cap_requests: Option<usize>,
     ) -> Result<Vec<Request>> {
-        let gj = std::fs::read_to_string(path)?.parse::<GeoJson>()?;
+        let gj = fs_err::read_to_string(path)?.parse::<GeoJson>()?;
         let mut requests = Vec::new();
         let mut total = 0;
         if let GeoJson::FeatureCollection(collection) = gj {

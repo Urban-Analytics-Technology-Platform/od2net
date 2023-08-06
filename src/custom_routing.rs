@@ -1,9 +1,9 @@
-use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::time::Instant;
 
 use anyhow::Result;
 use fast_paths::{FastGraph, InputGraph};
+use fs_err::File;
 use indicatif::{ProgressBar, ProgressStyle};
 use rstar::primitives::GeomWithData;
 use rstar::RTree;
@@ -13,8 +13,8 @@ use super::node_map::{deserialize_nodemap, NodeMap};
 use super::osm2network::{Counts, Edge, Network};
 use super::requests::Request;
 
-pub fn run(network: &Network, requests: Vec<Request>) -> Result<Counts> {
-    let prepared_ch = build_ch(network)?;
+pub fn run(ch_path: &str, network: &Network, requests: Vec<Request>) -> Result<Counts> {
+    let prepared_ch = build_ch(ch_path, network)?;
     let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map);
 
     // Count routes per node pairs
@@ -68,9 +68,7 @@ struct PreparedCH {
     node_map: NodeMap<i64>,
 }
 
-fn build_ch(network: &Network) -> Result<PreparedCH> {
-    // TODO Don't hardcode path, or at least scope it by area
-    let path = "ch.bin";
+fn build_ch(path: &str, network: &Network) -> Result<PreparedCH> {
     println!("Trying to load CH from {path}");
     match File::open(path)
         .map_err(|err| err.into())

@@ -3,6 +3,18 @@ use serde::{Deserialize, Serialize};
 /// Everything needed to run the pipeline
 #[derive(Serialize, Deserialize)]
 pub struct InputConfig {
+    /// Path to a directory containing:
+    ///
+    /// - input.osm.pbf
+    /// - Optionally, origins.geojson and destinations.geojson
+    ///
+    /// Cached and output files will get created in here by this pipeline:
+    ///
+    /// - network.bin
+    /// - ch.bin
+    /// - output.geojson
+    pub directory: String,
+
     pub requests: Requests,
 
     pub routing: Routing,
@@ -18,13 +30,8 @@ pub enum Requests {
         /// Cap requests to exactly this many.
         cap_requests: Option<usize>,
     },
-    Generate {
-        pattern: ODPattern,
-        /// Path to a GeoJSON file with origin points to use
-        origins_path: String,
-        /// Path to a GeoJSON file with destination points to use
-        destinations_path: String,
-    },
+    /// These all assume <directory>/origins.geojson and <directory>/destinations.geojson exist
+    Generate { pattern: ODPattern },
 }
 
 #[derive(Serialize, Deserialize)]

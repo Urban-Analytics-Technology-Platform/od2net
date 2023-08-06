@@ -49,7 +49,7 @@ pub fn generate(
 }
 
 fn load_subpoints(path: &str) -> Result<Vec<(f64, f64)>> {
-    let gj = std::fs::read_to_string(path)?.parse::<GeoJson>()?;
+    let gj = fs_err::read_to_string(path)?.parse::<GeoJson>()?;
     let mut points = Vec::new();
     if let GeoJson::FeatureCollection(collection) = gj {
         for feature in collection.features {

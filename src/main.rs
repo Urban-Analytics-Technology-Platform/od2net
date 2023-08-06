@@ -16,31 +16,30 @@ use indicatif::HumanCount;
 #[derive(Parser)]
 #[clap(about, version, author)]
 struct Args {
-    /// Specify the OSM network to use for counts. Either an osm.pbf file (which'll produce a .bin
-    /// file) or a .bin file from a prior run
-    #[clap(long)]
-    network: String,
-
     /// A JSON string representing an InputConfig
-    #[clap(long)]
     config: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-
     let config: input::InputConfig = match serde_json::from_str(&args.config) {
         Ok(config) => config,
         Err(err) => panic!("--config is invalid: {err}"),
     };
 
     let mut start = Instant::now();
-    println!("Loading network from {}", args.network);
-    let network = if args.network.ends_with(".osm.pbf") {
-        osm2network::Network::make_from_pbf(args.network)?
-    } else {
-        osm2network::Network::load_from_bin(args.network)?
+    let network = {
+        let bin_path = format!("{}/network.bin", config.directory);
+        let osm_pbf_path = format!("{}/input.osm.pbf", config.directory);
+        println!("Trying to load network from {bin_path}");
+        match osm2network::Network::load_from_bin(&bin_path) {
+            Ok(network) => network,
+            Err(err) => {
+                println!("That failed ({err}), so generating it from {osm_pbf_path}");
+                osm2network::Network::make_from_pbf(&osm_pbf_path, &bin_path)?
+            }
+        }
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
@@ -59,11 +58,11 @@ async fn main() -> Result<()> {
                 cap_requests,
             )?
         }
-        input::Requests::Generate {
+        input::Requests::Generate { pattern } => od::generate(
             pattern,
-            origins_path,
-            destinations_path,
-        } => od::generate(pattern, &origins_path, &destinations_path)?,
+            &format!("{}/origins.geojson", config.directory),
+            &format!("{}/destinations.geojson", config.directory),
+        )?,
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
@@ -72,7 +71,9 @@ async fn main() -> Result<()> {
         input::Routing::OSRM { concurrency } => {
             osrm::run(&network, requests, concurrency.unwrap_or(10)).await?
         }
-        input::Routing::Custom => custom_routing::run(&network, requests)?,
+        input::Routing::Custom => {
+            custom_routing::run(&format!("{}/ch.bin", config.directory), &network, requests)?
+        }
     };
 
     println!(
@@ -84,7 +85,7 @@ async fn main() -> Result<()> {
 
     println!("Writing output GJ");
     start = Instant::now();
-    network.write_geojson("output.geojson", counts)?;
+    network.write_geojson(&format!("{}/output.geojson", config.directory), counts)?;
     println!("That took {:?}", Instant::now().duration_since(start));
 
     Ok(())
