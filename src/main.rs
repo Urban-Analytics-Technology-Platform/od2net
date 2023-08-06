@@ -44,6 +44,7 @@ async fn main() -> Result<()> {
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
+    println!("Loading or generating requests");
     start = Instant::now();
     let requests = match config.requests {
         input::Requests::Odjitter {

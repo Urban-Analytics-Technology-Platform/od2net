@@ -1,6 +1,7 @@
 use anyhow::Result;
 use geojson::{GeoJson, Value};
 use indicatif::HumanCount;
+use rstar::RTree;
 
 use super::input::ODPattern;
 use super::requests::Request;
@@ -27,6 +28,18 @@ pub fn generate(
                     y1: pt.1,
                     x2: destinations[0].0,
                     y2: destinations[0].1,
+                });
+            }
+        }
+        ODPattern::FromEveryOriginToNearestDestination => {
+            let closest = RTree::bulk_load(destinations);
+            for pt in origins {
+                let goto = closest.nearest_neighbor(&pt).unwrap();
+                requests.push(Request {
+                    x1: pt.0,
+                    y1: pt.1,
+                    x2: goto.0,
+                    y2: goto.1,
                 });
             }
         }

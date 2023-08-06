@@ -31,6 +31,8 @@ pub enum Requests {
 pub enum ODPattern {
     /// One trip from every origin to just the first destination
     FromEveryOriginToOneDestination,
+    /// One trip from every origin to the closest (as the crow flies) destination
+    FromEveryOriginToNearestDestination,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -64,7 +64,7 @@
     }
 
     gj = tmp;
-    map.fitBounds(bbox(gj!), { padding: 200, duration: 500 });
+    map.fitBounds(bbox(gj!), { padding: 100, duration: 500 });
 
     //recalculateEndcaps();
 
@@ -135,17 +135,19 @@
     <h1>Latent demand</h1>
     <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     {#if map}
-      <ToggleLayer layer="origins-layer" {map}
+      <ToggleLayer layer="origins-layer" {map} show={false}
         ><span style="color: {colors.origins}">Origins</span></ToggleLayer
       >
-      <ToggleLayer layer="destinations-layer" {map}
+      <ToggleLayer layer="destinations-layer" {map} show={false}
         ><span style="color: {colors.destinations}">Destinations</span
         ></ToggleLayer
       >
     {/if}
     {#if gj}
-      <ToggleLayer layer="input-layer" {map}>Route network</ToggleLayer>
-      <ToggleLayer layer="endcaps-layer" {map}>Endcaps for routes</ToggleLayer>
+      <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
+      <ToggleLayer layer="endcaps-layer" {map} show={false}
+        >Endcaps for routes</ToggleLayer
+      >
       <Legend
         rows={[
           ["LTS 1 - suitable for children", colors.lts1],

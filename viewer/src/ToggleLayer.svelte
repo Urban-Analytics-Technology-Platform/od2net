@@ -3,8 +3,9 @@
 
   export let layer: string;
   export let map: Map;
-
-  let show = map.getLayoutProperty(layer, "visibility") == "visible";
+  // TODO It'd ve great to detect this with getLayoutProperty, but the layer is
+  // usually not finished loading by the time we create this component
+  export let show: boolean;
 
   function toggle() {
     map.setLayoutProperty(layer, "visibility", show ? "visible" : "none");
