@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::{BufReader, BufWriter};
 use std::time::Instant;
 
 use anyhow::Result;
@@ -5,22 +7,22 @@ use fast_paths::{FastGraph, InputGraph};
 use indicatif::{ProgressBar, ProgressStyle};
 use rstar::primitives::GeomWithData;
 use rstar::RTree;
+use serde::{Deserialize, Serialize};
 
-use super::node_map::NodeMap;
+use super::node_map::{deserialize_nodemap, NodeMap};
 use super::osm2network::{Counts, Edge, Network};
 use super::requests::Request;
 
 pub fn run(network: &Network, requests: Vec<Request>) -> Result<Counts> {
-    // TODO Save and load from a file
-    let (ch, node_map) = build_ch(network);
-    let closest_intersection = build_closest_intersection(network, &node_map);
+    let prepared_ch = build_ch(network)?;
+    let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map);
 
     // Count routes per node pairs
     let progress = ProgressBar::new(requests.len() as u64).with_style(ProgressStyle::with_template(
             "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
     let mut counts = Counts::new();
 
-    let mut path_calc = fast_paths::create_calculator(&ch);
+    let mut path_calc = fast_paths::create_calculator(&prepared_ch.ch);
     for req in requests {
         progress.inc(1);
 
@@ -39,15 +41,15 @@ pub fn run(network: &Network, requests: Vec<Request>) -> Result<Counts> {
                 "req from {}, {} snaps to http://openstreetmap.org/node/{}",
                 req.x1,
                 req.y1,
-                node_map.translate_id(start)
+                prepared_ch.node_map.translate_id(start)
             );
         }
 
-        if let Some(path) = path_calc.calc_path(&ch, start, end) {
+        if let Some(path) = path_calc.calc_path(&prepared_ch.ch, start, end) {
             for pair in path.get_nodes().windows(2) {
                 // TODO Actually, don't do this translation until the very end
-                let i1 = node_map.translate_id(pair[0]);
-                let i2 = node_map.translate_id(pair[1]);
+                let i1 = prepared_ch.node_map.translate_id(pair[0]);
+                let i2 = prepared_ch.node_map.translate_id(pair[1]);
                 *counts.count_per_edge.entry((i1, i2)).or_insert(0) += 1;
             }
         } else {
@@ -59,7 +61,29 @@ pub fn run(network: &Network, requests: Vec<Request>) -> Result<Counts> {
     Ok(counts)
 }
 
-fn build_ch(network: &Network) -> (FastGraph, NodeMap<i64>) {
+#[derive(Serialize, Deserialize)]
+struct PreparedCH {
+    ch: FastGraph,
+    #[serde(deserialize_with = "deserialize_nodemap")]
+    node_map: NodeMap<i64>,
+}
+
+fn build_ch(network: &Network) -> Result<PreparedCH> {
+    // TODO Don't hardcode path, or at least scope it by area
+    let path = "ch.bin";
+    println!("Trying to load CH from {path}");
+    match File::open(path)
+        .map_err(|err| err.into())
+        .and_then(|f| bincode::deserialize_from(BufReader::new(f)))
+    {
+        Ok(ch) => {
+            return Ok(ch);
+        }
+        Err(err) => {
+            println!("That failed, so regenerating it: {err}");
+        }
+    }
+
     let mut start = Instant::now();
     println!("Building InputGraph");
     let mut input_graph = InputGraph::new();
@@ -87,7 +111,11 @@ fn build_ch(network: &Network) -> (FastGraph, NodeMap<i64>) {
         "Preparing the CH took {:?}\n",
         Instant::now().duration_since(start)
     );
-    (ch, node_map)
+
+    let result = PreparedCH { ch, node_map };
+    let writer = BufWriter::new(File::create(path)?);
+    bincode::serialize_into(writer, &result)?;
+    Ok(result)
 }
 
 fn cost(edge: &Edge) -> Option<usize> {
