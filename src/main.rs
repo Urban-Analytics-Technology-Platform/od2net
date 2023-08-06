@@ -1,4 +1,5 @@
 mod custom_routing;
+mod input;
 mod node_map;
 mod od;
 mod osm2network;
@@ -8,7 +9,7 @@ mod tags;
 use std::time::Instant;
 
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use futures::{stream, StreamExt};
 use indicatif::{HumanCount, ProgressBar, ProgressStyle};
 
@@ -20,46 +21,19 @@ struct Args {
     #[clap(long)]
     network: String,
 
-    #[command(subcommand)]
-    requests: Requests,
-
-    #[command(subcommand)]
-    routing: Routing,
-}
-
-#[derive(Subcommand)]
-enum Requests {
-    Odjitter {
-        /// A GeoJSON file with LineString requests
-        path: String,
-        /// A percent (0 to 1000 -- note NOT 100) of requests to use
-        #[clap(long, default_value_t = 1000)]
-        sample_requests: usize,
-        /// Cap requests to exactly this many.
-        #[clap(long)]
-        cap_requests: Option<usize>,
-    },
-    Generate {
-        /// Path to a GeoJSON file with origin points to use
-        origins_path: String,
-        /// Path to a GeoJSON file with destination points to use
-        destinations_path: String,
-    },
-}
-
-#[derive(Subcommand)]
-enum Routing {
-    OSRM {
-        /// How many requests to OSRM to have in-flight at once
-        #[clap(long, default_value_t = 10)]
-        concurrency: usize,
-    },
-    Custom,
+    /// A JSON string representing an InputConfig
+    #[clap(long)]
+    config: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
+
+    let config: input::InputConfig = match serde_json::from_str(&args.config) {
+        Ok(config) => config,
+        Err(err) => panic!("--config is invalid: {err}"),
+    };
 
     let mut start = Instant::now();
     println!("Loading network from {}", args.network);
@@ -71,27 +45,33 @@ async fn main() -> Result<()> {
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
     start = Instant::now();
-    let requests = match args.requests {
-        Requests::Odjitter {
+    let requests = match config.requests {
+        input::Requests::Odjitter {
             path,
             sample_requests,
             cap_requests,
         } => {
             println!("Loading requests from {path}");
-            requests::Request::load_from_geojson(&path, sample_requests, cap_requests)?
+            requests::Request::load_from_geojson(
+                &path,
+                sample_requests.unwrap_or(1000),
+                cap_requests,
+            )?
         }
-        Requests::Generate {
+        input::Requests::Generate {
+            pattern,
             origins_path,
             destinations_path,
-        } => od::generate(&origins_path, &destinations_path)?,
+        } => od::generate(pattern, &origins_path, &destinations_path)?,
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
     start = Instant::now();
-    let counts = if args.use_custom_routing {
-        custom_routing::run(&network, requests)?
-    } else {
-        run_with_osrm(&network, requests, args.concurrency).await?
+    let counts = match config.routing {
+        input::Routing::OSRM { concurrency } => {
+            run_with_osrm(&network, requests, concurrency.unwrap_or(10)).await?
+        }
+        input::Routing::Custom => custom_routing::run(&network, requests)?,
     };
 
     println!(

@@ -2,9 +2,14 @@ use anyhow::Result;
 use geojson::{GeoJson, Value};
 use indicatif::HumanCount;
 
+use super::input::ODPattern;
 use super::requests::Request;
 
-pub fn generate(origins_path: &str, destinations_path: &str) -> Result<Vec<Request>> {
+pub fn generate(
+    pattern: ODPattern,
+    origins_path: &str,
+    destinations_path: &str,
+) -> Result<Vec<Request>> {
     let origins = load_subpoints(origins_path)?;
     let destinations = load_subpoints(destinations_path)?;
     println!(
@@ -13,15 +18,18 @@ pub fn generate(origins_path: &str, destinations_path: &str) -> Result<Vec<Reque
         HumanCount(destinations.len() as u64)
     );
 
-    // Just a quick pattern: from every origin to one destination
     let mut requests = Vec::new();
-    for pt in origins {
-        requests.push(Request {
-            x1: pt.0,
-            y1: pt.1,
-            x2: destinations[0].0,
-            y2: destinations[0].1,
-        });
+    match pattern {
+        ODPattern::FromEveryOriginToOneDestination => {
+            for pt in origins {
+                requests.push(Request {
+                    x1: pt.0,
+                    y1: pt.1,
+                    x2: destinations[0].0,
+                    y2: destinations[0].1,
+                });
+            }
+        }
     }
 
     Ok(requests)

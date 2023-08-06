@@ -16,6 +16,12 @@ References / inspiration:
 - [GrowBike.net](https://growbike.net)
 - [BikeOttawa LTS map](https://maps.bikeottawa.ca/lts/)
 
+## Quick start
+
+```shell
+cargo run --release -- --network network.bin --config '{"requests":{"Generate":{"pattern":"FromEveryOriginToOneDestination","origins_path":"bedfordshire/origin_subpoints.geojson","destinations_path":"bedfordshire/destination_subpoints.geojson"}},"routing":"Custom"}'
+```
+
 ## Requirements
 
 - [odjitter](https://github.com/dabreegster/odjitter)
