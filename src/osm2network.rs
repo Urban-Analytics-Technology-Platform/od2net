@@ -6,7 +6,7 @@ use anyhow::Result;
 use fs_err::File;
 use geo::prelude::HaversineLength;
 use geo::LineString;
-use geojson::{Feature, Geometry, JsonObject, JsonValue, Value};
+use geojson::{feature::Id, Feature, Geometry, JsonObject, JsonValue, Value};
 use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
@@ -114,7 +114,7 @@ impl Edge {
         line_string.haversine_length()
     }
 
-    fn to_geojson(&self, node1: i64, node2: i64, count: usize) -> Feature {
+    fn to_geojson(&self, node1: i64, node2: i64, count: usize, id: usize) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
         ));
@@ -133,7 +133,7 @@ impl Edge {
         Feature {
             bbox: None,
             geometry: Some(geometry),
-            id: None,
+            id: Some(Id::Number(id.into())),
             properties: Some(properties),
             foreign_members: None,
         }
@@ -283,6 +283,7 @@ impl Network {
         let mut add_comma = false;
 
         let mut skipped = 0;
+        let mut id_counter = 0;
         for ((node1, node2), count) in counts.count_per_edge {
             // TODO Track forwards and backwards counts separately, and optionally merge later?
             if let Some(edge) = self
@@ -290,12 +291,13 @@ impl Network {
                 .get(&(node1, node2))
                 .or_else(|| self.edges.get(&(node2, node1)))
             {
+                id_counter += 1;
                 if add_comma {
                     writeln!(file, ",")?;
                 } else {
                     add_comma = true;
                 }
-                let feature = edge.to_geojson(node1, node2, count);
+                let feature = edge.to_geojson(node1, node2, count, id_counter);
                 // TODO Trim f64 precision for some savings
                 serde_json::to_writer(&mut file, &feature)?;
             } else {
