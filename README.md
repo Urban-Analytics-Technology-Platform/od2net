@@ -170,3 +170,4 @@ Longer-term:
 - A [talk from March 2022](https://dabreegster.github.io/talks/tds_seminar_synthpop/slides.html)
 - [GrowBike.net](https://growbike.net)
 - [BikeOttawa LTS map](https://maps.bikeottawa.ca/lts/)
+- [nori](https://github.com/b-r-u/nori)
