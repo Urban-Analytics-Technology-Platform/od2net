@@ -16,7 +16,7 @@ You'll need:
 
 - Rust (1.71 or newer)
 - ogr2ogr with [OSM support](https://gdal.org/drivers/vector/osm.html)
-- Node (to run the web app)
+- Node (at least v18, to run the web app)
 - About X disk, Y RAM, and Z minutes to run
 
 First let's create input data. Let's explore routes starting from any building in Cornwall and going to schools.
