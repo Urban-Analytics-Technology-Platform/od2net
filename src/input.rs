@@ -30,8 +30,13 @@ pub enum Requests {
         /// Cap requests to exactly this many.
         cap_requests: Option<usize>,
     },
-    /// These all assume <directory>/origins.geojson and <directory>/destinations.geojson exist
-    Generate { pattern: ODPattern },
+    Generate {
+        pattern: ODPattern,
+        /// Defaults to <directory>/origins.geojson
+        origins_path: Option<String>,
+        /// Defaults to <directory>/destinations.geojson
+        destinations_path: Option<String>,
+    },
 }
 
 #[derive(Serialize, Deserialize)]

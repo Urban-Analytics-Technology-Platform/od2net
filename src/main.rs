@@ -58,10 +58,15 @@ async fn main() -> Result<()> {
                 cap_requests,
             )?
         }
-        input::Requests::Generate { pattern } => od::generate(
+        input::Requests::Generate {
             pattern,
-            &format!("{}/origins.geojson", config.directory),
-            &format!("{}/destinations.geojson", config.directory),
+            origins_path,
+            destinations_path,
+        } => od::generate(
+            pattern,
+            &origins_path.unwrap_or_else(|| format!("{}/origins.geojson", config.directory)),
+            &destinations_path
+                .unwrap_or_else(|| format!("{}/destinations.geojson", config.directory)),
         )?,
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
