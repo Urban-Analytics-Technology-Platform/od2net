@@ -1,6 +1,6 @@
 <script lang="ts">
   import turfBbox from "@turf/bbox";
-  import type { FeatureCollection } from "geojson";
+  import type { Feature, FeatureCollection } from "geojson";
   import type {
     DataDrivenPropertyValueSpecification,
     Map as MapType,
@@ -128,6 +128,11 @@
   function bbox(gj: FeatureCollection): [number, number, number, number] {
     return turfBbox(gj) as [number, number, number, number];
   }
+
+  function openOSM(feature: Feature) {
+    let id = feature.properties.way;
+    window.open(`http://openstreetmap.org/way/${id}`, "_blank");
+  }
 </script>
 
 <Layout>
@@ -237,6 +242,7 @@
               ],
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
+            on:click={(e) => openOSM(e.detail.features[0])}
           >
             <Popup openOn="hover" let:features>
               <PropertiesTable properties={features[0].properties} />
