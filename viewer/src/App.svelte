@@ -43,7 +43,9 @@
 
   let map: MapType;
 
-  let gj: FeatureCollection | undefined;
+  let rnetGj: FeatureCollection | undefined;
+  let originsGj: FeatureCollection | undefined;
+  let destinationsGj: FeatureCollection | undefined;
   let endcaps: FeatureCollection = {
     type: "FeatureCollection",
     features: [],
@@ -54,44 +56,49 @@
   let overrideMax = 2000;
 
   function loadFile(contents: string) {
-    let tmp = JSON.parse(contents);
-    // Add in LTS
-    for (let f of tmp.features) {
-      // All the LineStrings are first
-      if (f.geometry.type == "Point") {
-        break;
-      }
-      let result = evaluateLTS({ tags: f.properties });
-      f.properties.lts = result.lts;
-    }
-
-    gj = tmp;
-    map.fitBounds(bbox(gj!), { padding: 100, duration: 500 });
-
-    //recalculateEndcaps();
+    rnetGj = {
+      type: "FeatureCollection",
+      features: [],
+    };
+    originsGj = {
+      type: "FeatureCollection",
+      features: [],
+    };
+    destinationsGj = {
+      type: "FeatureCollection",
+      features: [],
+    };
 
     let min = Number.MAX_VALUE;
     let max = Number.MIN_VALUE;
-    for (let f of gj.features) {
-      // All the LineStrings are first
-      if (f.geometry.type == "Point") {
-        break;
+    for (let f of JSON.parse(contents).features) {
+      if (f.geometry.type == "LineString") {
+        min = Math.min(min, f.properties.count);
+        max = Math.max(max, f.properties.count);
+
+        // Add in LTS
+        let result = evaluateLTS({ tags: f.properties });
+        f.properties.lts = result.lts;
+        rnetGj.features.push(f);
+      } else if (f.properties.origin_count) {
+        originsGj.features.push(f);
+      } else {
+        destinationsGj.features.push(f);
       }
-      min = Math.min(min, f.properties.count);
-      max = Math.max(max, f.properties.count);
     }
-    summary = `Counts from ${min} to ${max}`;
+
+    map.fitBounds(bbox(rnetGj!), { padding: 100, duration: 500 });
+
+    //recalculateEndcaps();
+
+    summary = `Route segment counts from ${min} to ${max}`;
 
     adjustLineWidth(min);
   }
 
   function recalculateEndcaps() {
     let counts = new Map();
-    for (let f of gj.features) {
-      // All the LineStrings are first
-      if (f.geometry.type == "Point") {
-        break;
-      }
+    for (let f of rnetGj.features) {
       for (let pt of [
         f.geometry.coordinates[0],
         f.geometry.coordinates[f.geometry.coordinates.length - 1],
@@ -149,7 +156,7 @@
   <div slot="left">
     <h1>Latent demand</h1>
     <input bind:this={fileInput} on:change={fileLoaded} type="file" />
-    {#if gj}
+    {#if rnetGj}
       <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
       <ToggleLayer layer="endcaps-layer" {map} show={false}
         >Endcaps for routes</ToggleLayer
@@ -170,6 +177,9 @@
         ]}
       />
       <p>{summary}</p>
+      <p>
+        {originsGj.features.length} origins, {destinationsGj.features.length} destinations
+      </p>
       <label>
         Override max for line width styling:
         <input
@@ -181,7 +191,7 @@
       </label>
       <Histogram
         title="Edge counts"
-        data={gj.features.map((f) => f.properties.count)}
+        data={rnetGj.features.map((f) => f.properties.count)}
       />
       <p>
         Note: LTS model from <a
@@ -197,7 +207,7 @@
       standardControls
       bind:map
     >
-      {#if gj}
+      {#if rnetGj}
         <GeoJSON id="endcaps" data={endcaps}>
           <CircleLayer
             id="endcaps-layer"
@@ -207,10 +217,9 @@
             }}
           />
         </GeoJSON>
-        <GeoJSON id="input" data={gj}>
+        <GeoJSON id="input" data={rnetGj}>
           <LineLayer
             id="input-layer"
-            filter={["==", "$type", "LineString"]}
             manageHoverState
             paint={{
               "line-width": lineWidth,
@@ -236,9 +245,12 @@
               <PropertiesTable properties={features[0].properties} />
             </Popup>
           </LineLayer>
+        </GeoJSON>
+      {/if}
+      {#if originsGj}
+        <GeoJSON id="origins" data={originsGj}>
           <CircleLayer
             id="origins-layer"
-            filter={["has", "origin_count"]}
             manageHoverState
             paint={{
               "circle-color": colors.origins,
@@ -250,9 +262,12 @@
               {features[0].properties.origin_count} routes start here
             </Popup>
           </CircleLayer>
+        </GeoJSON>
+      {/if}
+      {#if destinationsGj}
+        <GeoJSON id="destinations" data={destinationsGj}>
           <CircleLayer
             id="destintions-layer"
-            filter={["has", "destination_count"]}
             manageHoverState
             paint={{
               "circle-color": colors.destintions,
