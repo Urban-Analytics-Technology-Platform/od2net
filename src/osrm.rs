@@ -48,6 +48,8 @@ pub async fn run(
                         if i1 != last && false {
                             println!("We didn't end on an intersection... {i1} to {last}");
                         }
+
+                        // TODO count_per_{o,d}
                     }
                     Err(err) => {
                         // TODO Usually the API being overloaded

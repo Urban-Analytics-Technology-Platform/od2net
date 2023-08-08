@@ -25,6 +25,10 @@ pub struct Counts {
     pub count_per_edge: HashMap<(i64, i64), usize>,
     pub errors: u64,
     pub filtered_out: u64,
+
+    // Count how many times a point is used successfully as an origin or destination
+    pub count_per_origin: HashMap<Position, usize>,
+    pub count_per_destination: HashMap<Position, usize>,
 }
 
 impl Counts {
@@ -33,6 +37,9 @@ impl Counts {
             count_per_edge: HashMap::new(),
             errors: 0,
             filtered_out: 0,
+
+            count_per_origin: HashMap::new(),
+            count_per_destination: HashMap::new(),
         }
     }
 }
@@ -71,7 +78,7 @@ impl Network {
     }
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Position {
     // in decimicrodegrees (10⁻⁷)
     lon: i32,
@@ -79,6 +86,14 @@ pub struct Position {
 }
 
 impl Position {
+    pub fn from_degrees(lon: f64, lat: f64) -> Self {
+        // TODO Rounding? Unit test bidirectionality
+        Self {
+            lon: (lon * 1e7) as i32,
+            lat: (lat * 1e7) as i32,
+        }
+    }
+
     // TODO Degrees?
     pub fn to_degrees(self) -> (f64, f64) {
         (1e-7 * self.lon as f64, 1e-7 * self.lat as f64)
@@ -306,6 +321,35 @@ impl Network {
             "Skipped {} edges (started/ended mid-edge)",
             HumanCount(skipped)
         );
+
+        // Also write origin/destination points with the number of routes to the same file. It
+        // hugely bloats the size, but keeping them together is useful right now.
+        for (key, counter) in [
+            ("origin_count", counts.count_per_origin),
+            ("destination_count", counts.count_per_destination),
+        ] {
+            for (pt, count) in counter {
+                id_counter += 1;
+                if add_comma {
+                    writeln!(file, ",")?;
+                } else {
+                    add_comma = true;
+                }
+
+                let geometry = Geometry::new(Value::Point(pt.to_degrees_vec()));
+                let mut properties = JsonObject::new();
+                properties.insert(key.to_string(), JsonValue::from(count));
+                let feature = Feature {
+                    bbox: None,
+                    geometry: Some(geometry),
+                    id: Some(Id::Number(id_counter.into())),
+                    properties: Some(properties),
+                    foreign_members: None,
+                };
+                // TODO Trim f64 precision for some savings
+                serde_json::to_writer(&mut file, &feature)?;
+            }
+        }
 
         writeln!(file, "]}}")?;
         Ok(())

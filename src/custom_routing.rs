@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use super::input::{CostFunction, Filter};
 use super::node_map::{deserialize_nodemap, NodeMap};
-use super::osm2network::{Counts, Edge, Network};
+use super::osm2network::{Counts, Edge, Network, Position};
 use super::requests::Request;
 
 // TODO Vary ch_path with CostFunction
@@ -80,6 +80,15 @@ pub fn run(
                 let i2 = prepared_ch.node_map.translate_id(pair[1]);
                 *counts.count_per_edge.entry((i1, i2)).or_insert(0) += 1;
             }
+
+            *counts
+                .count_per_origin
+                .entry(Position::from_degrees(req.x1, req.y1))
+                .or_insert(0) += 1;
+            *counts
+                .count_per_destination
+                .entry(Position::from_degrees(req.x2, req.y2))
+                .or_insert(0) += 1;
         } else {
             counts.errors += 1;
         }
