@@ -44,7 +44,9 @@ It'll be slow the first time you run (compiling the tool, parsing OSM data, and 
 
 ### View the output
 
-Let's see which roads are most used. Start the web app:
+Let's see which roads are most used. It's easiest to use the deployed web app at <https://dabreegster.github.io/routing-engines/>. Load `$AREA/output.geojson` here.
+
+Or you can build and run the web app yourself:
 
 ```shell
 cd viewer
@@ -53,7 +55,7 @@ npm i
 npm run dev
 ```
 
-Then open <http://localhost:5173/routing-engines/> (or whatever npm says) in your browser. Load `$AREA/output.geojson`.
+Then open <http://localhost:5173/routing-engines/> (or whatever npm says) in your browser.
 
 The Level of Traffic Stress definitions shown come from [BikeOttawa](https://maps.bikeottawa.ca/lts/).
 
