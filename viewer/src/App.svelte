@@ -94,6 +94,11 @@
     summary = `Route segment counts from ${min} to ${max}`;
 
     adjustLineWidth(min);
+
+    // Make sure Svelte sees the update
+    rnetGj = rnetGj;
+    originsGj = originsGj;
+    destinationsGj = destinationsGj;
   }
 
   function recalculateEndcaps() {
@@ -267,10 +272,10 @@
       {#if destinationsGj}
         <GeoJSON id="destinations" data={destinationsGj}>
           <CircleLayer
-            id="destintions-layer"
+            id="destinations-layer"
             manageHoverState
             paint={{
-              "circle-color": colors.destintions,
+              "circle-color": colors.destinations,
               "circle-radius": 3,
             }}
             layout={{ visibility: "none" }}
