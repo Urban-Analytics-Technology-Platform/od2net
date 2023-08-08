@@ -9,7 +9,7 @@ use rstar::primitives::GeomWithData;
 use rstar::RTree;
 use serde::{Deserialize, Serialize};
 
-use super::input::CostFunction;
+use super::input::{CostFunction, Filter};
 use super::node_map::{deserialize_nodemap, NodeMap};
 use super::osm2network::{Counts, Edge, Network};
 use super::requests::Request;
@@ -20,6 +20,7 @@ pub fn run(
     network: &Network,
     requests: Vec<Request>,
     cost: CostFunction,
+    filter: &Filter,
 ) -> Result<Counts> {
     let prepared_ch = build_ch(ch_path, network, cost)?;
     let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map);
@@ -53,6 +54,26 @@ pub fn run(
         }
 
         if let Some(path) = path_calc.calc_path(&prepared_ch.ch, start, end) {
+            if let Some(max_dist) = filter.max_distance_meters {
+                // fast_paths returns the total cost, but it's not necessarily the right unit.
+                // Calculate how long this route is.
+                let mut length = 0.0;
+                for pair in path.get_nodes().windows(2) {
+                    let i1 = prepared_ch.node_map.translate_id(pair[0]);
+                    let i2 = prepared_ch.node_map.translate_id(pair[1]);
+                    let edge = network
+                        .edges
+                        .get(&(i1, i2))
+                        .or_else(|| network.edges.get(&(i2, i1)))
+                        .unwrap();
+                    length += edge.length_meters;
+                }
+                if length.round() as usize > max_dist {
+                    counts.filtered_out += 1;
+                    continue;
+                }
+            }
+
             for pair in path.get_nodes().windows(2) {
                 // TODO Actually, don't do this translation until the very end
                 let i1 = prepared_ch.node_map.translate_id(pair[0]);
@@ -132,10 +153,8 @@ fn edge_cost(edge: &Edge, cost: CostFunction) -> Option<usize> {
         return None;
     }
 
-    let dist = edge.length_meters();
-
     let output = match cost {
-        CostFunction::Distance => dist,
+        CostFunction::Distance => edge.length_meters,
         CostFunction::AvoidMainRoads => {
             // TODO Match the LTS definitoins
             let penalty = if tags.is("highway", "residential") || tags.is("highway", "cycleway") {
@@ -143,7 +162,7 @@ fn edge_cost(edge: &Edge, cost: CostFunction) -> Option<usize> {
             } else {
                 5.0
             };
-            penalty * dist
+            penalty * edge.length_meters
         }
     };
     Some(output.round() as usize)

@@ -24,6 +24,7 @@ pub struct Network {
 pub struct Counts {
     pub count_per_edge: HashMap<(i64, i64), usize>,
     pub errors: u64,
+    pub filtered_out: u64,
 }
 
 impl Counts {
@@ -31,6 +32,7 @@ impl Counts {
         Self {
             count_per_edge: HashMap::new(),
             errors: 0,
+            filtered_out: 0,
         }
     }
 }
@@ -101,19 +103,11 @@ pub struct Edge {
     way_id: i64,
     tags: Vec<(String, String)>,
     geometry: Vec<Position>,
+    // Storing the derived field is negligible for file size
+    pub length_meters: f64,
 }
 
 impl Edge {
-    pub fn length_meters(&self) -> f64 {
-        let line_string = LineString::<f64>::from(
-            self.geometry
-                .iter()
-                .map(|pt| pt.to_degrees())
-                .collect::<Vec<_>>(),
-        );
-        line_string.haversine_length()
-    }
-
     fn to_geojson(&self, node1: i64, node2: i64, count: usize, id: usize) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
@@ -253,12 +247,14 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
             if is_endpoint && pts.len() > 1 {
                 intersections.insert(node1, pts[0]);
                 intersections.insert(node, *pts.last().unwrap());
+                let length_meters = calculate_length_meters(&pts);
                 edges.insert(
                     (node1, node),
                     Edge {
                         way_id,
                         tags: way.tags.clone(),
                         geometry: std::mem::take(&mut pts),
+                        length_meters,
                     },
                 );
 
@@ -314,4 +310,10 @@ impl Network {
         writeln!(file, "]}}")?;
         Ok(())
     }
+}
+
+fn calculate_length_meters(pts: &[Position]) -> f64 {
+    let line_string =
+        LineString::<f64>::from(pts.iter().map(|pt| pt.to_degrees()).collect::<Vec<_>>());
+    line_string.haversine_length()
 }

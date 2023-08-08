@@ -18,6 +18,8 @@ pub struct InputConfig {
     pub requests: Requests,
 
     pub routing: Routing,
+
+    pub filter: Filter,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -64,4 +66,12 @@ pub enum CostFunction {
     Distance,
     /// Heavily penalize main roads
     AvoidMainRoads,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Filter {
+    /// If a route exceeds this distance, exclude it from the final counts
+    pub max_distance_meters: Option<usize>,
+    // TODO Max elevation gain
+    // TODO Decay curves using both of these. https://github.com/a-b-street/abstreet/issues/448
 }

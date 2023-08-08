@@ -81,6 +81,7 @@ async fn main() -> Result<()> {
             &network,
             requests,
             cost,
+            &config.filter,
         )?,
     };
 
@@ -88,6 +89,10 @@ async fn main() -> Result<()> {
         "Got counts for {} edges. That took {:?}",
         HumanCount(counts.count_per_edge.len() as u64),
         Instant::now().duration_since(start)
+    );
+    println!(
+        "{} routes were ignored based on filters\n",
+        HumanCount(counts.filtered_out)
     );
     println!("There were {} errors\n", HumanCount(counts.errors));
 

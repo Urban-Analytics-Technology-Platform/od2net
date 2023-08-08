@@ -10,6 +10,7 @@ pub async fn run(
     requests: Vec<requests::Request>,
     concurrency: usize,
 ) -> Result<osm2network::Counts> {
+    // TODO Take and apply Filter here to routes
     let num_requests = requests.len();
     println!(
         "Making {} requests with concurrency = {}",

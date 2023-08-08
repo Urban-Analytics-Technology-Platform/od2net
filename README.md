@@ -37,7 +37,7 @@ ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multi
 Then run the pipeline, routing from every single building to the nearest school. Or to see a much more clear pattern in the output, use `FromEveryOriginToOneDestination` to go from every building to one arbitrary school.
 
 ```shell
-cargo run --release -- '{"directory":"'"$AREA"'","requests":{"Generate":{"pattern":"FromEveryOriginToNearestDestination"}},"routing":{"FastPaths":{"cost":"Distance"}}}'
+cargo run --release -- '{"directory":"'"$AREA"'","requests":{"Generate":{"pattern":"FromEveryOriginToNearestDestination"}},"routing":{"FastPaths":{"cost":"Distance"}},"filter":{}}'
 ```
 
 It'll be slow the first time you run (compiling the tool, parsing OSM data, and building a contraction hierarchy). Subsequent runs will be faster.
@@ -79,7 +79,6 @@ Problems to solve include:
 
 - OSM is missing buildings in many places
 - Origins and destinations should be weighted, based on how many people live or work/shop/go to school/etc somewhere
-- We may want to exclude trips with routes exceeding some distance or elevation thresholds
 
 ### Routing
 
@@ -115,6 +114,12 @@ docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed /d
 # To send a sample request:
 curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907472;-0.3240966796875,51.51515248101072?overview=false&alternatives=false&steps=false&annotations=nodes'
 ```
+
+### Filtering out routes
+
+After we calculate a route, we may want to exclude it because it's too long or hilly to reasonably expect people to cycle, even if the route was made very safe.
+
+To exclude all routes over 16km: pass this instead of the empty JSON for `"filter":{"max_distance_meters":16000}`
 
 ### Visualization
 
