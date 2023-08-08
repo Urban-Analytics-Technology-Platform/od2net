@@ -13,8 +13,6 @@
     MapLibre,
     Popup,
   } from "svelte-maplibre";
-  import destinationsUrl from "../assets/destinations.geojson?url";
-  import originsUrl from "../assets/origins.geojson?url";
   import Histogram from "./Histogram.svelte";
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
@@ -59,6 +57,10 @@
     let tmp = JSON.parse(contents);
     // Add in LTS
     for (let f of tmp.features) {
+      // All the LineStrings are first
+      if (f.geometry.type == "Point") {
+        break;
+      }
       let result = evaluateLTS({ tags: f.properties });
       f.properties.lts = result.lts;
     }
@@ -71,6 +73,10 @@
     let min = Number.MAX_VALUE;
     let max = Number.MIN_VALUE;
     for (let f of gj.features) {
+      // All the LineStrings are first
+      if (f.geometry.type == "Point") {
+        break;
+      }
       min = Math.min(min, f.properties.count);
       max = Math.max(max, f.properties.count);
     }
@@ -82,6 +88,10 @@
   function recalculateEndcaps() {
     let counts = new Map();
     for (let f of gj.features) {
+      // All the LineStrings are first
+      if (f.geometry.type == "Point") {
+        break;
+      }
       for (let pt of [
         f.geometry.coordinates[0],
         f.geometry.coordinates[f.geometry.coordinates.length - 1],
@@ -139,19 +149,17 @@
   <div slot="left">
     <h1>Latent demand</h1>
     <input bind:this={fileInput} on:change={fileLoaded} type="file" />
-    {#if map}
+    {#if gj}
+      <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
+      <ToggleLayer layer="endcaps-layer" {map} show={false}
+        >Endcaps for routes</ToggleLayer
+      >
       <ToggleLayer layer="origins-layer" {map} show={false}
         ><span style="color: {colors.origins}">Origins</span></ToggleLayer
       >
       <ToggleLayer layer="destinations-layer" {map} show={false}
         ><span style="color: {colors.destinations}">Destinations</span
         ></ToggleLayer
-      >
-    {/if}
-    {#if gj}
-      <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
-      <ToggleLayer layer="endcaps-layer" {map} show={false}
-        >Endcaps for routes</ToggleLayer
       >
       <Legend
         rows={[
@@ -189,27 +197,6 @@
       standardControls
       bind:map
     >
-      <GeoJSON id="origins" data={originsUrl}>
-        <CircleLayer
-          id="origins-layer"
-          paint={{
-            "circle-color": colors.origins,
-            "circle-radius": 3,
-          }}
-          layout={{ visibility: "none" }}
-        />
-      </GeoJSON>
-      <GeoJSON id="destinations" data={destinationsUrl}>
-        <CircleLayer
-          id="destinations-layer"
-          paint={{
-            "circle-color": colors.destinations,
-            "circle-radius": 10,
-          }}
-          layout={{ visibility: "none" }}
-        />
-      </GeoJSON>
-
       {#if gj}
         <GeoJSON id="endcaps" data={endcaps}>
           <CircleLayer
@@ -223,6 +210,7 @@
         <GeoJSON id="input" data={gj}>
           <LineLayer
             id="input-layer"
+            filter={["==", "$type", "LineString"]}
             manageHoverState
             paint={{
               "line-width": lineWidth,
@@ -248,6 +236,34 @@
               <PropertiesTable properties={features[0].properties} />
             </Popup>
           </LineLayer>
+          <CircleLayer
+            id="origins-layer"
+            filter={["has", "origin_count"]}
+            manageHoverState
+            paint={{
+              "circle-color": colors.origins,
+              "circle-radius": 3,
+            }}
+            layout={{ visibility: "none" }}
+          >
+            <Popup openOn="hover" let:features>
+              {features[0].properties.origin_count} routes start here
+            </Popup>
+          </CircleLayer>
+          <CircleLayer
+            id="destintions-layer"
+            filter={["has", "destination_count"]}
+            manageHoverState
+            paint={{
+              "circle-color": colors.destintions,
+              "circle-radius": 3,
+            }}
+            layout={{ visibility: "none" }}
+          >
+            <Popup openOn="hover" let:features>
+              {features[0].properties.destination_count} routes end here
+            </Popup>
+          </CircleLayer>
         </GeoJSON>
       {/if}
     </MapLibre>
