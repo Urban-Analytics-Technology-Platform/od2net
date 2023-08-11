@@ -34,10 +34,31 @@ ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multi
 
 ### Run the pipeline
 
-Then run the pipeline, routing from every single building to the nearest school. Or to see a much more clear pattern in the output, use `FromEveryOriginToOneDestination` to go from every building to one arbitrary school.
+Then create a file `$AREA/config.json` file containing:
+
+```
+{
+  "directory": "$AREA",
+  "requests": {
+    "Generate": {
+      "pattern": "FromEveryOriginToNearestDestination"
+    }
+  },
+  "routing": {
+    "FastPaths": {
+      "cost": "Distance"
+    }
+  },
+  "filter": {}
+}
+```
+
+This would route from every single building to the nearest school. Or to see a much more clear pattern in the output, change the pattern to `FromEveryOriginToOneDestination` to go from every building to one arbitrary school.
+
+Run the pipeline on this config:
 
 ```shell
-cargo run --release -- '{"directory":"'"$AREA"'","requests":{"Generate":{"pattern":"FromEveryOriginToNearestDestination"}},"routing":{"FastPaths":{"cost":"Distance"}},"filter":{}}'
+cargo run --release $AREA/config.json
 ```
 
 It'll be slow the first time you run (compiling the tool, parsing OSM data, and building a contraction hierarchy). Subsequent runs will be faster.
@@ -67,13 +88,13 @@ The purpose of this tool is to generate route networks **quickly** for areas up 
 
 The pipeline needs a list of routing requests to run -- just a huge list of start/end coordinates. These should **not** be centroids of a large zone or anything like that.
 
-Built-in options currently include:
+Built-in options for `"requests"` currently include:
 
-- `"requests":{"Generate":{"pattern":"FromEveryOriginToOneDestination"}}`
+- `{ "Generate": { "pattern": "FromEveryOriginToOneDestination" } }`
   - One trip for every $AREA/origins.geojson to the first point in $AREA/destinations.geojson
-- `"requests":{"Generate":{"pattern":"FromEveryOriginToNearestDestination"}}`
+- `{"Generate" : { "pattern": "FromEveryOriginToNearestDestination" } }`
   - One trip for every $AREA/origins.geojson to the nearest (as the crow flies) point in $AREA/destinations.geojson
-- `"requests":{"Odjitter":{"path":"file.geojson"}}`
+- `{"Odjitter": { "path": "file.geojson" } }`
   - Use LineStrings from a GeoJSON file. You can use [odjitter](https://github.com/dabreegster/odjitter) to generate a number of trips between zones, picking specific weighted points from each zone.
   - Note this option is **not** recommended for performance. For an interesting amount of requests, the overhead of reading/writing this file full of requests and storing it in memory doesn't work.
 
@@ -84,12 +105,12 @@ Problems to solve include:
 
 ### Routing
 
-The pipeline currently has two methods for calculating a route:
+The pipeline currently has two methods for calculating a route, specified by `"routing"`:
 
-- The built-in `"routing":"FastPaths"` option, which currently makes a number of very bad assumptions:
+- The built-in `"FastPaths"` option, which currently makes a number of very bad assumptions:
   - Every edge can be crossed either direction
-  - When `"cost":"Distance", edge cost is just distance -- equivalent to calculating the most direct route, ignoring LTS
-    - `"cost":"AvoidMainRoads"` uses hardcoded multipliers for main roads
+  - When `"cost": "Distance", edge cost is just distance -- equivalent to calculating the most direct route, ignoring LTS
+    - `"cost": "AvoidMainRoads"` uses hardcoded multipliers for main roads
   - No penalty for elevation gain
   - No handling for turn restrictions, penalties for crossing intersections, etc
 - Calling a local instance of [OSRM](https://project-osrm.org)
@@ -121,7 +142,7 @@ curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907
 
 After we calculate a route, we may want to exclude it because it's too long or hilly to reasonably expect people to cycle, even if the route was made very safe.
 
-To exclude all routes over 16km: pass this instead of the empty JSON for `"filter":{"max_distance_meters":16000}`
+To exclude all routes over 16km: `"filter": { "max_distance_meters": 16000 }`
 
 ### Visualization
 

@@ -17,17 +17,23 @@ use indicatif::HumanCount;
 #[derive(Parser)]
 #[clap(about, version, author)]
 struct Args {
-    /// A JSON string representing an InputConfig
-    config: String,
+    /// The path to a JSON file representing an InputConfig
+    config_path: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-    let config: input::InputConfig = match serde_json::from_str(&args.config) {
+    let config_json = fs_err::read_to_string(&args.config_path)?;
+    let config: input::InputConfig = match serde_json::from_str(&config_json) {
         Ok(config) => config,
-        Err(err) => panic!("--config is invalid: {err}"),
+        Err(err) => panic!("{} is invalid: {err}", args.config_path),
     };
+    println!(
+        "Using config from {}:\n{}\n",
+        args.config_path,
+        serde_json::to_string_pretty(&config)?
+    );
 
     let mut start = Instant::now();
     let network = {
