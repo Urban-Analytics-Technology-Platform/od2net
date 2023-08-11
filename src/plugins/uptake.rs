@@ -65,5 +65,36 @@ fn pct_go_dutch(distance_meters: f64, gradient_percent: f64) -> f64 {
 }
 
 fn inverse_logit(p: f64) -> f64 {
-    p.exp() / (1.0 + p.exp())
+    let result = p.exp() / (1.0 + p.exp());
+    if result < 0.0 || result > 1.0 {
+        panic!("inverse_logit({p}) = {result}, which isn't between 0 and 1");
+    }
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fs_err::File;
+    use std::io::Write;
+
+    // Load the resulting CSV files with https://www.csvplot.com to manually check
+    #[test]
+    fn test_pct() {
+        for (path, model) in [
+            ("gov_target.csv", pct_gov_target as fn(f64, f64) -> f64),
+            ("go_dutch.csv", pct_go_dutch),
+        ] {
+            let mut file = File::create(path).unwrap();
+            writeln!(file, "distance_km,gradient_percent,pcycle").unwrap();
+            for distance_km in 0..=50 {
+                for gradient in 0..=5 {
+                    let distance_meters = distance_km as f64 * 1000.0;
+                    let gradient_percent = gradient as f64;
+                    let pcycle = model(distance_meters, gradient_percent);
+                    writeln!(file, "{distance_km},{gradient},{pcycle}").unwrap();
+                }
+            }
+        }
+    }
 }
