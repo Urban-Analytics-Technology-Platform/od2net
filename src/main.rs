@@ -8,6 +8,7 @@ mod plugins;
 mod requests;
 mod tags;
 
+use std::path::Path;
 use std::time::Instant;
 
 use anyhow::Result;
@@ -35,10 +36,13 @@ async fn main() -> Result<()> {
         serde_json::to_string_pretty(&config)?
     );
 
+    // Assume the config file is in the directory for the area
+    let directory = Path::new(&args.config_path).parent().unwrap().display();
+
     let mut start = Instant::now();
     let network = {
-        let bin_path = format!("{}/network.bin", config.directory);
-        let osm_pbf_path = format!("{}/input.osm.pbf", config.directory);
+        let bin_path = format!("{directory}/network.bin");
+        let osm_pbf_path = format!("{directory}/input.osm.pbf");
         println!("Trying to load network from {bin_path}");
         match osm2network::Network::load_from_bin(&bin_path) {
             Ok(network) => network,
@@ -71,9 +75,8 @@ async fn main() -> Result<()> {
             destinations_path,
         } => od::generate(
             pattern,
-            &origins_path.unwrap_or_else(|| format!("{}/origins.geojson", config.directory)),
-            &destinations_path
-                .unwrap_or_else(|| format!("{}/destinations.geojson", config.directory)),
+            &origins_path.unwrap_or_else(|| format!("{directory}/origins.geojson")),
+            &destinations_path.unwrap_or_else(|| format!("{directory}/destinations.geojson")),
         )?,
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
@@ -84,7 +87,7 @@ async fn main() -> Result<()> {
             osrm::run(&network, requests, concurrency.unwrap_or(10)).await?
         }
         input::Routing::FastPaths { cost } => custom_routing::run(
-            &format!("{}/ch.bin", config.directory),
+            &format!("{directory}/ch.bin"),
             &network,
             requests,
             cost,
@@ -105,7 +108,7 @@ async fn main() -> Result<()> {
 
     println!("Writing output GJ");
     start = Instant::now();
-    network.write_geojson(&format!("{}/output.geojson", config.directory), counts)?;
+    network.write_geojson(&format!("{directory}/output.geojson"), counts)?;
     println!("That took {:?}", Instant::now().duration_since(start));
 
     Ok(())

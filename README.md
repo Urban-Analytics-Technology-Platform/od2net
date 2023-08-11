@@ -38,7 +38,6 @@ Then create a file `$AREA/config.json` file containing:
 
 ```
 {
-  "directory": "$AREA",
   "requests": {
     "Generate": {
       "pattern": "FromEveryOriginToNearestDestination"

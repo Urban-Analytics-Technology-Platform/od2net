@@ -3,18 +3,6 @@ use serde::{Deserialize, Serialize};
 /// Everything needed to run the pipeline
 #[derive(Serialize, Deserialize)]
 pub struct InputConfig {
-    /// Path to a directory containing:
-    ///
-    /// - input.osm.pbf
-    /// - Optionally, origins.geojson and destinations.geojson
-    ///
-    /// Cached and output files will get created in here by this pipeline:
-    ///
-    /// - network.bin
-    /// - ch.bin
-    /// - output.geojson
-    pub directory: String,
-
     pub requests: Requests,
 
     pub routing: Routing,
