@@ -12,7 +12,9 @@ use serde::{Deserialize, Serialize};
 
 use super::input::{CostFunction, Filter};
 use super::node_map::{deserialize_nodemap, NodeMap};
-use super::osm2network::{Counts, Edge, Network, Position};
+use super::osm2network::{Counts, Network, Position};
+use super::plugins::route_cost;
+use super::plugins::uptake;
 use super::requests::Request;
 
 // TODO Vary ch_path with CostFunction
@@ -100,7 +102,8 @@ fn handle_request(
     }
 
     if let Some(path) = path_calc.calc_path(&prepared_ch.ch, start, end) {
-        if let Some(max_dist) = filter.max_distance_meters {
+        // Optimization: don't calculate full route details unless needed
+        if filter.max_distance_meters.is_some() {
             // fast_paths returns the total cost, but it's not necessarily the right unit.
             // Calculate how long this route is.
             let mut length = 0.0;
@@ -114,7 +117,8 @@ fn handle_request(
                     .unwrap();
                 length += edge.length_meters;
             }
-            if length.round() as usize > max_dist {
+
+            if uptake::should_skip_trip(filter, length) {
                 counts.filtered_out += 1;
                 return;
             }
@@ -170,7 +174,7 @@ fn build_ch(path: &str, network: &Network, cost: CostFunction) -> Result<Prepare
         let node1 = node_map.get_or_insert(*node1);
         let node2 = node_map.get_or_insert(*node2);
 
-        if let Some(cost) = edge_cost(edge, cost) {
+        if let Some(cost) = route_cost::edge_cost(edge, cost) {
             // Everything bidirectional for now!
             input_graph.add_edge(node1, node2, cost);
             input_graph.add_edge(node2, node1, cost);
@@ -193,30 +197,6 @@ fn build_ch(path: &str, network: &Network, cost: CostFunction) -> Result<Prepare
     let writer = BufWriter::new(File::create(path)?);
     bincode::serialize_into(writer, &result)?;
     Ok(result)
-}
-
-fn edge_cost(edge: &Edge, cost: CostFunction) -> Option<usize> {
-    let tags = edge.cleaned_tags();
-
-    // TODO Match the lts.ts definition
-    if tags.is("bicycle", "no") || tags.is("highway", "motorway") || tags.is("highway", "proposed")
-    {
-        return None;
-    }
-
-    let output = match cost {
-        CostFunction::Distance => edge.length_meters,
-        CostFunction::AvoidMainRoads => {
-            // TODO Match the LTS definitoins
-            let penalty = if tags.is("highway", "residential") || tags.is("highway", "cycleway") {
-                1.0
-            } else {
-                5.0
-            };
-            penalty * edge.length_meters
-        }
-    };
-    Some(output.round() as usize)
 }
 
 // fast_paths ID representing the OSM node ID as the data

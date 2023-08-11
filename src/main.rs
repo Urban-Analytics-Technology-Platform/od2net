@@ -4,6 +4,7 @@ mod node_map;
 mod od;
 mod osm2network;
 mod osrm;
+mod plugins;
 mod requests;
 mod tags;
 

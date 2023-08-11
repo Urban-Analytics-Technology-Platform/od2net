@@ -11,6 +11,7 @@ use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
+use super::plugins::lts;
 use super::tags::Tags;
 
 #[derive(Serialize, Deserialize)]
@@ -152,7 +153,7 @@ impl Edge {
         properties.insert("count".to_string(), JsonValue::from(count));
         properties.insert(
             "lts".to_string(),
-            JsonValue::from(self.level_traffic_stress()),
+            JsonValue::from(lts::placeholder(self.cleaned_tags())),
         );
         Feature {
             bbox: None,
@@ -169,34 +170,6 @@ impl Edge {
             tags.insert(k, v);
         }
         tags
-    }
-
-    // 1 suitable for kids, 4 high stress, 0 is unknown. Need to swap this out for something much
-    // better, and maybe make it directional!
-    fn level_traffic_stress(&self) -> usize {
-        // TODO Handle bicycle=no, on things like highway=footway
-
-        let tags = self.cleaned_tags();
-
-        if let Some(mph) = tags
-            .get("maxspeed")
-            .and_then(|x| x.trim_end_matches(" mph").parse::<usize>().ok())
-        {
-            if mph <= 20 {
-                return 2;
-            }
-            if mph >= 40 {
-                return 4;
-            }
-            // Between 20 and 40
-            return 3;
-        }
-
-        /*if tags.is("highway", "residential") {
-            return 1;
-        }*/
-
-        0 // TODO unknown
     }
 }
 
