@@ -10,7 +10,7 @@ use rstar::primitives::GeomWithData;
 use rstar::RTree;
 use serde::{Deserialize, Serialize};
 
-use super::input::{CostFunction, Filter};
+use super::input::{CostFunction, Uptake};
 use super::node_map::{deserialize_nodemap, NodeMap};
 use super::osm2network::{Counts, Network, Position};
 use super::plugins::route_cost;
@@ -23,7 +23,7 @@ pub fn run(
     network: &Network,
     requests: Vec<Request>,
     cost: CostFunction,
-    filter: &Filter,
+    uptake: &Uptake,
 ) -> Result<Counts> {
     let prepared_ch = build_ch(ch_path, network, cost)?;
     let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map);
@@ -44,7 +44,7 @@ pub fn run(
                 acc.path_calc.as_mut().unwrap(),
                 &closest_intersection,
                 &prepared_ch,
-                filter,
+                uptake,
                 network,
             );
             acc
@@ -79,7 +79,7 @@ fn handle_request(
     path_calc: &mut fast_paths::PathCalculator,
     closest_intersection: &RTree<IntersectionLocation>,
     prepared_ch: &PreparedCH,
-    filter: &Filter,
+    uptake: &Uptake,
     network: &Network,
 ) {
     let start = closest_intersection
@@ -102,26 +102,23 @@ fn handle_request(
     }
 
     if let Some(path) = path_calc.calc_path(&prepared_ch.ch, start, end) {
-        // Optimization: don't calculate full route details unless needed
-        if filter.max_distance_meters.is_some() {
-            // fast_paths returns the total cost, but it's not necessarily the right unit.
-            // Calculate how long this route is.
-            let mut length = 0.0;
-            for pair in path.get_nodes().windows(2) {
-                let i1 = prepared_ch.node_map.translate_id(pair[0]);
-                let i2 = prepared_ch.node_map.translate_id(pair[1]);
-                let edge = network
-                    .edges
-                    .get(&(i1, i2))
-                    .or_else(|| network.edges.get(&(i2, i1)))
-                    .unwrap();
-                length += edge.length_meters;
-            }
+        // fast_paths returns the total cost, but it's not necessarily the right unit.
+        // Calculate how long this route is.
+        let mut total_distance = 0.0;
+        for pair in path.get_nodes().windows(2) {
+            let i1 = prepared_ch.node_map.translate_id(pair[0]);
+            let i2 = prepared_ch.node_map.translate_id(pair[1]);
+            let edge = network
+                .edges
+                .get(&(i1, i2))
+                .or_else(|| network.edges.get(&(i2, i1)))
+                .unwrap();
+            total_distance += edge.length_meters;
+        }
 
-            if uptake::should_skip_trip(filter, length) {
-                counts.filtered_out += 1;
-                return;
-            }
+        if uptake::should_skip_trip(uptake, total_distance) {
+            counts.filtered_out += 1;
+            return;
         }
 
         for pair in path.get_nodes().windows(2) {

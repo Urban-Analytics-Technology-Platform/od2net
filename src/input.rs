@@ -7,7 +7,7 @@ pub struct InputConfig {
 
     pub routing: Routing,
 
-    pub filter: Filter,
+    pub uptake: Uptake,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -57,9 +57,13 @@ pub enum CostFunction {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Filter {
-    /// If a route exceeds this distance, exclude it from the final counts
-    pub max_distance_meters: Option<usize>,
-    // TODO Max elevation gain
-    // TODO Decay curves using both of these. https://github.com/a-b-street/abstreet/issues/448
+pub enum Uptake {
+    /// Don't do anything -- every route counts for 1
+    Identity,
+    /// 0 for trips greater than this distance, 1 otherwise
+    CutoffMaxDistanceMeters(f64),
+    /// Defined by https://github.com/ITSLeeds/pct/blob/HEAD/R/uptake.R
+    GovTargetPCT,
+    /// Defined by https://github.com/ITSLeeds/pct/blob/HEAD/R/uptake.R
+    GoDutchPCT,
 }
