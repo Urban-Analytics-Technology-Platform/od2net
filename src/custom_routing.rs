@@ -33,69 +33,88 @@ pub fn run(
     let mut path_calc = fast_paths::create_calculator(&prepared_ch.ch);
     for req in requests {
         progress.inc(1);
-
-        let start = closest_intersection
-            .nearest_neighbor(&[req.x1, req.y1])
-            .unwrap()
-            .data;
-        let end = closest_intersection
-            .nearest_neighbor(&[req.x2, req.y2])
-            .unwrap()
-            .data;
-
-        // A sanity check that snapping works -- manually check these:
-        if false {
-            println!(
-                "req from {}, {} snaps to http://openstreetmap.org/node/{}",
-                req.x1,
-                req.y1,
-                prepared_ch.node_map.translate_id(start)
-            );
-        }
-
-        if let Some(path) = path_calc.calc_path(&prepared_ch.ch, start, end) {
-            if let Some(max_dist) = filter.max_distance_meters {
-                // fast_paths returns the total cost, but it's not necessarily the right unit.
-                // Calculate how long this route is.
-                let mut length = 0.0;
-                for pair in path.get_nodes().windows(2) {
-                    let i1 = prepared_ch.node_map.translate_id(pair[0]);
-                    let i2 = prepared_ch.node_map.translate_id(pair[1]);
-                    let edge = network
-                        .edges
-                        .get(&(i1, i2))
-                        .or_else(|| network.edges.get(&(i2, i1)))
-                        .unwrap();
-                    length += edge.length_meters;
-                }
-                if length.round() as usize > max_dist {
-                    counts.filtered_out += 1;
-                    continue;
-                }
-            }
-
-            for pair in path.get_nodes().windows(2) {
-                // TODO Actually, don't do this translation until the very end
-                let i1 = prepared_ch.node_map.translate_id(pair[0]);
-                let i2 = prepared_ch.node_map.translate_id(pair[1]);
-                *counts.count_per_edge.entry((i1, i2)).or_insert(0) += 1;
-            }
-
-            *counts
-                .count_per_origin
-                .entry(Position::from_degrees(req.x1, req.y1))
-                .or_insert(0) += 1;
-            *counts
-                .count_per_destination
-                .entry(Position::from_degrees(req.x2, req.y2))
-                .or_insert(0) += 1;
-        } else {
-            counts.errors += 1;
-        }
+        handle_request(
+            req,
+            &mut counts,
+            &mut path_calc,
+            &closest_intersection,
+            &prepared_ch,
+            filter,
+            network,
+        );
     }
     progress.finish();
 
     Ok(counts)
+}
+
+fn handle_request(
+    req: Request,
+    counts: &mut Counts,
+    path_calc: &mut fast_paths::PathCalculator,
+    closest_intersection: &RTree<IntersectionLocation>,
+    prepared_ch: &PreparedCH,
+    filter: &Filter,
+    network: &Network,
+) {
+    let start = closest_intersection
+        .nearest_neighbor(&[req.x1, req.y1])
+        .unwrap()
+        .data;
+    let end = closest_intersection
+        .nearest_neighbor(&[req.x2, req.y2])
+        .unwrap()
+        .data;
+
+    // A sanity check that snapping works -- manually check these:
+    if false {
+        println!(
+            "req from {}, {} snaps to http://openstreetmap.org/node/{}",
+            req.x1,
+            req.y1,
+            prepared_ch.node_map.translate_id(start)
+        );
+    }
+
+    if let Some(path) = path_calc.calc_path(&prepared_ch.ch, start, end) {
+        if let Some(max_dist) = filter.max_distance_meters {
+            // fast_paths returns the total cost, but it's not necessarily the right unit.
+            // Calculate how long this route is.
+            let mut length = 0.0;
+            for pair in path.get_nodes().windows(2) {
+                let i1 = prepared_ch.node_map.translate_id(pair[0]);
+                let i2 = prepared_ch.node_map.translate_id(pair[1]);
+                let edge = network
+                    .edges
+                    .get(&(i1, i2))
+                    .or_else(|| network.edges.get(&(i2, i1)))
+                    .unwrap();
+                length += edge.length_meters;
+            }
+            if length.round() as usize > max_dist {
+                counts.filtered_out += 1;
+                return;
+            }
+        }
+
+        for pair in path.get_nodes().windows(2) {
+            // TODO Actually, don't do this translation until the very end
+            let i1 = prepared_ch.node_map.translate_id(pair[0]);
+            let i2 = prepared_ch.node_map.translate_id(pair[1]);
+            *counts.count_per_edge.entry((i1, i2)).or_insert(0) += 1;
+        }
+
+        *counts
+            .count_per_origin
+            .entry(Position::from_degrees(req.x1, req.y1))
+            .or_insert(0) += 1;
+        *counts
+            .count_per_destination
+            .entry(Position::from_degrees(req.x2, req.y2))
+            .or_insert(0) += 1;
+    } else {
+        counts.errors += 1;
+    }
 }
 
 #[derive(Serialize, Deserialize)]
