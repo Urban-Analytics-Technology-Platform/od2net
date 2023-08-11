@@ -91,7 +91,7 @@ async fn main() -> Result<()> {
             &network,
             requests,
             cost,
-            &config.filter,
+            &config.uptake,
         )?,
     };
 
@@ -101,7 +101,7 @@ async fn main() -> Result<()> {
         Instant::now().duration_since(start)
     );
     println!(
-        "{} routes were ignored based on filters\n",
+        "{} routes were ignored based on uptake model\n",
         HumanCount(counts.filtered_out)
     );
     println!("There were {} errors\n", HumanCount(counts.errors));

@@ -48,7 +48,7 @@ Then create a file `$AREA/config.json` file containing:
       "cost": "Distance"
     }
   },
-  "filter": {}
+  "uptake": {}
 }
 ```
 
@@ -138,6 +138,8 @@ curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907
 ```
 
 ### Filtering out routes
+
+TODO: Rewrite this section completely
 
 After we calculate a route, we may want to exclude it because it's too long or hilly to reasonably expect people to cycle, even if the route was made very safe.
 
