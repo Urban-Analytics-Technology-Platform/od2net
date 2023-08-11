@@ -153,6 +153,8 @@ This pipeline uses a number of techniques to achieve these results on a regular 
   - Prior approachs have tried to sum up counts for road segments by [using geometry to represent segments](https://github.com/acteng/overline). This is very slow, has potential floating point errors, can break near bridges/tunnels, etc.
   - Instead, we just ask the router for OSM node IDs (64-bit integers). An edge is just a pair of these. At the very last step when we're generating output GeoJSON to visualize, we can match these node IDs to objects in OSM and produce the same geometry and OSM attributes.
 
+You can tune how many threads the built-in routing uses by setting the `RAYON_NUM_THREADS` environment variable.
+
 ## TODO
 
 Some of the most important next steps:

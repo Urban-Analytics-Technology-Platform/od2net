@@ -12,8 +12,9 @@ fs-err = "2.9.0"
 futures = "0.3.28"
 geo = "0.26.0"
 geojson = { version = "0.24.1", default-features = false }
-indicatif = "0.17.5"
+indicatif = { version = "0.17.5", features = ["rayon"] }
 osmpbf = "0.3.1"
+rayon = "1.7.0"
 reqwest = { version = "0.11.18", default-features = false }
 rstar = "0.11.0"
 serde = { version = "1.0.177", features = ["derive"] }

@@ -31,6 +31,7 @@ dependencies = [
  "geojson",
  "indicatif",
  "osmpbf",
+ "rayon",
  "reqwest",
  "rstar",
  "serde",
@@ -712,6 +713,7 @@ dependencies = [
  "instant",
  "number_prefix",
  "portable-atomic",
+ "rayon",
  "unicode-width",
 ]
 

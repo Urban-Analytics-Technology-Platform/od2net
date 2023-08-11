@@ -2,9 +2,10 @@ use std::io::{BufReader, BufWriter};
 use std::time::Instant;
 
 use anyhow::Result;
-use fast_paths::{FastGraph, InputGraph};
+use fast_paths::{FastGraph, InputGraph, PathCalculator};
 use fs_err::File;
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
+use rayon::prelude::*;
 use rstar::primitives::GeomWithData;
 use rstar::RTree;
 use serde::{Deserialize, Serialize};
@@ -25,27 +26,49 @@ pub fn run(
     let prepared_ch = build_ch(ch_path, network, cost)?;
     let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map);
 
-    // Count routes per node pairs
     let progress = ProgressBar::new(requests.len() as u64).with_style(ProgressStyle::with_template(
             "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
-    let mut counts = Counts::new();
 
-    let mut path_calc = fast_paths::create_calculator(&prepared_ch.ch);
-    for req in requests {
-        progress.inc(1);
-        handle_request(
-            req,
-            &mut counts,
-            &mut path_calc,
-            &closest_intersection,
-            &prepared_ch,
-            filter,
-            network,
-        );
-    }
-    progress.finish();
+    let counts = requests
+        .into_par_iter()
+        .progress_with(progress)
+        .fold(PerThreadState::new, |mut acc, req| {
+            if acc.path_calc.is_none() {
+                acc.path_calc = Some(fast_paths::create_calculator(&prepared_ch.ch));
+            }
+            handle_request(
+                req,
+                &mut acc.counts,
+                acc.path_calc.as_mut().unwrap(),
+                &closest_intersection,
+                &prepared_ch,
+                filter,
+                network,
+            );
+            acc
+        })
+        .reduce_with(|mut acc1, acc2| {
+            acc1.counts.combine(acc2.counts);
+            acc1
+        })
+        .unwrap()
+        .counts;
 
     Ok(counts)
+}
+
+struct PerThreadState {
+    counts: Counts,
+    path_calc: Option<PathCalculator>,
+}
+
+impl PerThreadState {
+    fn new() -> Self {
+        Self {
+            counts: Counts::new(),
+            path_calc: None,
+        }
+    }
 }
 
 fn handle_request(

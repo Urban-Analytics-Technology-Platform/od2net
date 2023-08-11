@@ -42,6 +42,21 @@ impl Counts {
             count_per_destination: HashMap::new(),
         }
     }
+
+    /// Adds other to this one
+    pub fn combine(&mut self, other: Counts) {
+        self.errors += other.errors;
+        self.filtered_out += other.filtered_out;
+        for (key, count) in other.count_per_edge {
+            *self.count_per_edge.entry(key).or_insert(0) += count;
+        }
+        for (key, count) in other.count_per_origin {
+            *self.count_per_origin.entry(key).or_insert(0) += count;
+        }
+        for (key, count) in other.count_per_destination {
+            *self.count_per_destination.entry(key).or_insert(0) += count;
+        }
+    }
 }
 
 impl Network {
