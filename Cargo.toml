@@ -15,6 +15,7 @@ geo = "0.26.0"
 geojson = "0.24.1"
 indicatif = { version = "0.17.5", features = ["rayon"] }
 nanorand = { version = "0.7.0", default-features = false, features = ["wyrand"] }
+num_cpus = "1.16.0"
 osmpbf = "0.3.1"
 rayon = "1.7.0"
 reqwest = { version = "0.11.18", default-features = false }

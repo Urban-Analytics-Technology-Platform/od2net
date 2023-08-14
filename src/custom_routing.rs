@@ -30,9 +30,14 @@ pub fn run(
 
     let progress = ProgressBar::new(requests.len() as u64).with_style(ProgressStyle::with_template(
             "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
+    let num_requests = requests.len();
 
     let counts = requests
         .into_par_iter()
+        // Split the work evenly among CPUs. Otherwise rayon fold too eagerly splits, creating too
+        // many PerThreadStates in-memory. See
+        // https://users.rust-lang.org/t/rayon-with-expensive-to-construct-combine-accumulator/78252/3.
+        .with_min_len(num_requests / num_cpus::get())
         .progress_with(progress)
         .fold(PerThreadState::new, |mut acc, req| {
             if acc.path_calc.is_none() {
