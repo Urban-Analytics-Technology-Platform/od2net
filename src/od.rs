@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::time::Instant;
 
 use anyhow::Result;
 use geo::{BoundingRect, Contains, MultiPolygon};
@@ -16,8 +17,16 @@ pub fn generate(
     origins_path: &str,
     destinations_path: &str,
 ) -> Result<Vec<Request>> {
+    let mut start = Instant::now();
+    println!("Loading origins from {origins_path}");
     let origins = load_points(origins_path)?;
+    println!(
+        "That took {:?}. Loading destinations from {destinations_path}",
+        Instant::now().duration_since(start)
+    );
+    start = Instant::now();
     let destinations = load_points(destinations_path)?;
+    println!("That took {:?}", Instant::now().duration_since(start));
     println!(
         "Got {} origins and {} destination",
         HumanCount(origins.len() as u64),
@@ -52,9 +61,20 @@ pub fn generate(
             zones_path,
             csv_path,
         } => {
+            start = Instant::now();
+            println!("Loading zones from {zones_path}");
             let zones = load_zones(&zones_path)?;
+            println!(
+                "That took {:?}. Matching points to zones",
+                Instant::now().duration_since(start)
+            );
+            start = Instant::now();
             let origins_per_zone = points_per_polygon(origins, &zones);
             let destinations_per_zone = points_per_polygon(destinations, &zones);
+            println!(
+                "That took {:?}. Generating requests from {csv_path}",
+                Instant::now().duration_since(start)
+            );
 
             // TODO Plumb RNG seed
             let mut rng = WyRand::new_seed(42);
