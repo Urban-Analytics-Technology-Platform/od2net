@@ -6,7 +6,7 @@
   let result = evaluateLTS({ tags: properties });
 </script>
 
-<b>Count: {properties.count}</b>
+<b>Count: {properties.count.toFixed(2)}</b>
 <ul>
   {#each result.message as msg}
     <li>{msg}</li>

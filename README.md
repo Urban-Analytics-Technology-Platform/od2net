@@ -48,7 +48,7 @@ Then create a file `$AREA/config.json` file containing:
       "cost": "Distance"
     }
   },
-  "uptake": {}
+  "uptake": "Identity",
 }
 ```
 
@@ -137,13 +137,15 @@ docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed /d
 curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907472;-0.3240966796875,51.51515248101072?overview=false&alternatives=false&steps=false&annotations=nodes'
 ```
 
-### Filtering out routes
+### Scoring route likelihood
 
-TODO: Rewrite this section completely
+Even if a route is perfectly safe, it might be unlikely somebody would use it just based on the total distance or hilliness. The configurable "uptake model" assigns a probability between 0 and 1 to every route, and this value is summed for each edge.
 
-After we calculate a route, we may want to exclude it because it's too long or hilly to reasonably expect people to cycle, even if the route was made very safe.
+The possible values for `"uptake"`:
 
-To exclude all routes over 16km: `"filter": { "max_distance_meters": 16000 }`
+- `"identity"` -- every route counts as 1, equivalent to just counting every trip
+- `{ "CutoffMaxDistanceMeters": 16000 }` -- trips over 16km are skipped entirely, otherwise they count as 1
+- `"GovTargetPCT"` and `"GoDutchPCT"` are uptake models from the PCT, using distance and gradient (**currently hardcoded to 0**)
 
 ### Visualization
 

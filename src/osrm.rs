@@ -40,7 +40,7 @@ pub async fn run(
                         let mut last = nodes[0];
                         for node in nodes.into_iter().skip(1) {
                             if network.intersections.contains_key(&node) {
-                                *accumulate.count_per_edge.entry((i1, node)).or_insert(0) += 1;
+                                *accumulate.count_per_edge.entry((i1, node)).or_insert(0.0) += 1.0;
                                 i1 = node;
                             }
                             last = node;

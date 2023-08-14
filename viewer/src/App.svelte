@@ -53,7 +53,7 @@
   let lineWidth: DataDrivenPropertyValueSpecification<number> | undefined;
   let summary: string | undefined;
 
-  let overrideMax = 2000;
+  let overrideMax = 1000;
 
   function loadFile(contents: string) {
     rnetGj = {
@@ -91,7 +91,9 @@
 
     //recalculateEndcaps();
 
-    summary = `Route segment counts from ${min} to ${max}`;
+    summary = `Route segment counts from ${min.toFixed(2)} to ${max.toFixed(
+      2
+    )}`;
 
     adjustLineWidth(min);
 

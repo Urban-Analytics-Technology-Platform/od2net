@@ -1,21 +1,27 @@
 use crate::input::Uptake;
 
-pub fn should_skip_trip(uptake: &Uptake, total_distance_meters: f64) -> bool {
+/// Given stats about a route, calculate its "uptake", between 0 and 1.
+pub fn calculate_uptake(uptake: &Uptake, total_distance_meters: f64) -> f64 {
     // TODO Find a data source and calculate this
     let gradient = 0.0;
 
     match uptake {
-        Uptake::Identity => false,
-        Uptake::CutoffMaxDistanceMeters(max) => total_distance_meters > *max,
-        // TODO Right now we're interpreting probabilities less than 0.1 as "totally skip this
-        // trip." Change the pipeline to add a fractional count for routes, instead of 0 or 1.
-        Uptake::GovTargetPCT => pct_gov_target(total_distance_meters, gradient) < 0.1,
-        Uptake::GoDutchPCT => pct_go_dutch(total_distance_meters, gradient) < 0.1,
+        Uptake::Identity => 1.0,
+        Uptake::CutoffMaxDistanceMeters(max) => {
+            if total_distance_meters > *max {
+                0.0
+            } else {
+                1.0
+            }
+        }
+        Uptake::GovTargetPCT => pct_gov_target(total_distance_meters, gradient),
+        Uptake::GoDutchPCT => pct_go_dutch(total_distance_meters, gradient),
     }
 }
 
 // Everything below from
 // https://github.com/ITSLeeds/pct/blob/e630464efeaef539b18647b10745b863c9cd9948/R/uptake.R
+// TODO Switch to 2020 variations
 
 // TODO What does gradient represent -- an average or total or something over the entire route?
 // gradient should be in [0, 100]

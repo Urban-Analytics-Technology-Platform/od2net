@@ -116,8 +116,10 @@ fn handle_request(
             total_distance += edge.length_meters;
         }
 
-        if uptake::should_skip_trip(uptake, total_distance) {
-            counts.filtered_out += 1;
+        let count = uptake::calculate_uptake(uptake, total_distance);
+        // TODO Pick an epsilon based on the final rounding we do... though it's possible 1e6 trips
+        // cross a segment each with probability 1e-6?
+        if count == 0.0 {
             return;
         }
 
@@ -125,17 +127,17 @@ fn handle_request(
             // TODO Actually, don't do this translation until the very end
             let i1 = prepared_ch.node_map.translate_id(pair[0]);
             let i2 = prepared_ch.node_map.translate_id(pair[1]);
-            *counts.count_per_edge.entry((i1, i2)).or_insert(0) += 1;
+            *counts.count_per_edge.entry((i1, i2)).or_insert(0.0) += count;
         }
 
         *counts
             .count_per_origin
             .entry(Position::from_degrees(req.x1, req.y1))
-            .or_insert(0) += 1;
+            .or_insert(0.0) += count;
         *counts
             .count_per_destination
             .entry(Position::from_degrees(req.x2, req.y2))
-            .or_insert(0) += 1;
+            .or_insert(0.0) += count;
     } else {
         counts.errors += 1;
     }
