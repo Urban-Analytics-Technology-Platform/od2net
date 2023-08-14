@@ -37,6 +37,7 @@ pub enum ODPattern {
     FromEveryOriginToNearestDestination,
     /// Trips between named zones
     BetweenZones {
+        // TODO Maybe use default filenames here too
         /// Path to a GeoJSON file containing Polygons and MultiPolygons with a "name" property
         zones_path: String,
         /// Path to a CSV file that must have 3 columns "from", "to", and "count". The first
