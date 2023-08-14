@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate anyhow;
+
 mod custom_routing;
 mod input;
 mod node_map;

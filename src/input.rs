@@ -35,6 +35,14 @@ pub enum ODPattern {
     FromEveryOriginToOneDestination,
     /// One trip from every origin to the closest (as the crow flies) destination
     FromEveryOriginToNearestDestination,
+    /// Trips between named zones
+    BetweenZones {
+        /// Path to a GeoJSON file containing Polygons and MultiPolygons with a "name" property
+        zones_path: String,
+        /// Path to a CSV file that must have 3 columns "from", "to", and "count". The first
+        /// two must match zone names. "count" must be an integer.
+        csv_path: String,
+    },
 }
 
 #[derive(Serialize, Deserialize)]

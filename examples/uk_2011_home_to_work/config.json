@@ -1,0 +1,18 @@
+{
+  "requests": {
+    "Generate": {
+      "pattern": {
+	"BetweenZones": {
+	  "zones_path": "examples/uk_2011_home_to_work/zones_core.geojson",
+	  "csv_path": "examples/uk_2011_home_to_work/wu03ew_v2.csv"
+        }
+      }
+    }
+  },
+  "routing": {
+    "FastPaths": {
+      "cost": "Distance"
+    }
+  },
+  "uptake": "Identity"
+}
