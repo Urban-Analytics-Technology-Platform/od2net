@@ -22,14 +22,16 @@ pub struct Network {
     pub intersections: HashMap<i64, Position>,
 }
 
+// TODO Rename this. We don't represent counts, but instead summed uptake. If every single route we
+// considered would actually happen, then this would be equivalent to counts.
 pub struct Counts {
-    pub count_per_edge: HashMap<(i64, i64), usize>,
+    // TODO Don't use f64 -- we'll end up rounding somewhere anyway, so pick a precision upfront.
+    pub count_per_edge: HashMap<(i64, i64), f64>,
     pub errors: u64,
-    pub filtered_out: u64,
 
     // Count how many times a point is used successfully as an origin or destination
-    pub count_per_origin: HashMap<Position, usize>,
-    pub count_per_destination: HashMap<Position, usize>,
+    pub count_per_origin: HashMap<Position, f64>,
+    pub count_per_destination: HashMap<Position, f64>,
 }
 
 impl Counts {
@@ -37,7 +39,6 @@ impl Counts {
         Self {
             count_per_edge: HashMap::new(),
             errors: 0,
-            filtered_out: 0,
 
             count_per_origin: HashMap::new(),
             count_per_destination: HashMap::new(),
@@ -47,15 +48,14 @@ impl Counts {
     /// Adds other to this one
     pub fn combine(&mut self, other: Counts) {
         self.errors += other.errors;
-        self.filtered_out += other.filtered_out;
         for (key, count) in other.count_per_edge {
-            *self.count_per_edge.entry(key).or_insert(0) += count;
+            *self.count_per_edge.entry(key).or_insert(0.0) += count;
         }
         for (key, count) in other.count_per_origin {
-            *self.count_per_origin.entry(key).or_insert(0) += count;
+            *self.count_per_origin.entry(key).or_insert(0.0) += count;
         }
         for (key, count) in other.count_per_destination {
-            *self.count_per_destination.entry(key).or_insert(0) += count;
+            *self.count_per_destination.entry(key).or_insert(0.0) += count;
         }
     }
 }
@@ -139,7 +139,7 @@ pub struct Edge {
 }
 
 impl Edge {
-    fn to_geojson(&self, node1: i64, node2: i64, count: usize, id: usize) -> Feature {
+    fn to_geojson(&self, node1: i64, node2: i64, count: f64, id: usize) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
         ));

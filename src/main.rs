@@ -100,10 +100,6 @@ async fn main() -> Result<()> {
         HumanCount(counts.count_per_edge.len() as u64),
         Instant::now().duration_since(start)
     );
-    println!(
-        "{} routes were ignored based on uptake model\n",
-        HumanCount(counts.filtered_out)
-    );
     println!("There were {} errors\n", HumanCount(counts.errors));
 
     println!("Writing output GJ");
