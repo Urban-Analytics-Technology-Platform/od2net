@@ -16,6 +16,7 @@ pub fn generate(
     pattern: ODPattern,
     origins_path: &str,
     destinations_path: &str,
+    rng_seed: u64,
 ) -> Result<Vec<Request>> {
     let mut start = Instant::now();
     println!("Loading origins from {origins_path}");
@@ -76,8 +77,7 @@ pub fn generate(
                 Instant::now().duration_since(start)
             );
 
-            // TODO Plumb RNG seed
-            let mut rng = WyRand::new_seed(42);
+            let mut rng = WyRand::new_seed(rng_seed);
 
             for rec in csv::Reader::from_reader(fs_err::File::open(csv_path)?).deserialize() {
                 let row: BetweenZonesRow = rec?;

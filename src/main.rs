@@ -23,6 +23,12 @@ use indicatif::HumanCount;
 struct Args {
     /// The path to a JSON file representing an InputConfig
     config_path: String,
+    /// Specify a random number seed, used only for some generated request patterns, like BetweenZones.
+    #[clap(long, default_value_t = 42)]
+    rng_seed: u64,
+    /// Don't output a CSV file with each edge's counts.
+    #[clap(long)]
+    no_output_csv: bool,
 }
 
 #[tokio::main]
@@ -80,6 +86,7 @@ async fn main() -> Result<()> {
             pattern,
             &origins_path.unwrap_or_else(|| format!("{directory}/origins.geojson")),
             &destinations_path.unwrap_or_else(|| format!("{directory}/destinations.geojson")),
+            args.rng_seed,
         )?,
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
@@ -104,6 +111,13 @@ async fn main() -> Result<()> {
         Instant::now().duration_since(start)
     );
     println!("There were {} errors\n", HumanCount(counts.errors));
+
+    if !args.no_output_csv {
+        println!("Writing output CSV");
+        start = Instant::now();
+        network.write_csv(&format!("{directory}/output.csv"), &counts)?;
+        println!("That took {:?}", Instant::now().duration_since(start));
+    }
 
     println!("Writing output GJ");
     start = Instant::now();

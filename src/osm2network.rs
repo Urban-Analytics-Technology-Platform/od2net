@@ -17,6 +17,7 @@ use super::tags::Tags;
 #[derive(Serialize, Deserialize)]
 pub struct Network {
     // Keyed by a pair of node IDs
+    // TODO Doesn't handle multiple edges between the same node pair
     pub edges: HashMap<(i64, i64), Edge>,
     // Node IDs that're above
     pub intersections: HashMap<i64, Position>,
@@ -131,7 +132,7 @@ struct Way {
 
 #[derive(Serialize, Deserialize)]
 pub struct Edge {
-    way_id: i64,
+    pub way_id: i64,
     tags: Vec<(String, String)>,
     geometry: Vec<Position>,
     // Storing the derived field is negligible for file size
@@ -340,6 +341,31 @@ impl Network {
         }
 
         writeln!(file, "]}}")?;
+        Ok(())
+    }
+
+    pub fn write_csv(&self, path: &str, counts: &Counts) -> Result<()> {
+        let mut file = BufWriter::new(File::create(path)?);
+        writeln!(file, "way,node1,node2,count")?;
+
+        let mut skipped = 0;
+        for ((node1, node2), count) in &counts.count_per_edge {
+            if let Some(edge) = self
+                .edges
+                .get(&(*node1, *node2))
+                .or_else(|| self.edges.get(&(*node2, *node1)))
+            {
+                let way = edge.way_id;
+                writeln!(file, "{way},{node1},{node2},{count}")?;
+            } else {
+                skipped += 1;
+            }
+        }
+
+        println!(
+            "Skipped {} edges (started/ended mid-edge)",
+            HumanCount(skipped)
+        );
         Ok(())
     }
 }
