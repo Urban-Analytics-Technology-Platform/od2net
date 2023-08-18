@@ -48,8 +48,10 @@ with open("input/od_subset.csv") as f1:
                 {
                     "from": row["geo_code1"],
                     "to": row["geo_code2"],
-                    # TODO Could limit to only some modes if desired
-                    "count": row["all"],
+                    # TODO Change depending on the goal. To compare against
+                    # current cycle counters, just bicycle. To estimate mode
+                    # shift, driving or all could be useful
+                    "count": row["bicycle"],
                 }
             )
 
