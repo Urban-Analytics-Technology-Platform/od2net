@@ -19,7 +19,7 @@ run(
         "osmium",
         "extract",
         "-b",
-        "-3.35,55.85,-2.97,55.99",
+        "-3.49,55.80,-3.02,56.01",
         "input/scotland-latest.osm.pbf",
         "-o",
         "input/input.osm.pbf",
