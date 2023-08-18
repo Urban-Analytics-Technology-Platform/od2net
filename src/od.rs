@@ -14,6 +14,7 @@ use super::requests::Request;
 
 pub fn generate(
     pattern: ODPattern,
+    input_directory: String,
     origins_path: &str,
     destinations_path: &str,
     rng_seed: u64,
@@ -62,6 +63,9 @@ pub fn generate(
             zones_path,
             csv_path,
         } => {
+            let zones_path = format!("{input_directory}/{zones_path}");
+            let csv_path = format!("{input_directory}/{csv_path}");
+
             start = Instant::now();
             println!("Loading zones from {zones_path}");
             let zones = load_zones(&zones_path)?;

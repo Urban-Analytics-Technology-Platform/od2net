@@ -25,6 +25,7 @@ struct Args {
     /// Specify a random number seed, used only for some generated request patterns, like BetweenZones.
     #[clap(long, default_value_t = 42)]
     rng_seed: u64,
+
     /// Don't output a CSV file with each edge's counts.
     #[clap(long)]
     no_output_csv: bool,
@@ -92,6 +93,7 @@ async fn main() -> Result<()> {
             destinations_path,
         } => od::generate(
             pattern,
+            format!("{directory}/input"),
             &origins_path.unwrap_or_else(|| format!("{directory}/input/origins.geojson")),
             &destinations_path.unwrap_or_else(|| format!("{directory}/input/destinations.geojson")),
             args.rng_seed,
