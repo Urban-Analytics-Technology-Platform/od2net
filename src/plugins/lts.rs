@@ -1,8 +1,26 @@
 use crate::tags::Tags;
 
-// 1 suitable for kids, 4 high stress, 0 is unknown. Need to swap this out for something much
-// better, and maybe make it directional!
-pub fn placeholder(tags: Tags) -> usize {
+pub enum LTS {
+    NotAllowed,
+    LTS1,
+    LTS2,
+    LTS3,
+    LTS4,
+}
+
+impl LTS {
+    pub fn into_json(self) -> usize {
+        match self {
+            LTS::NotAllowed => 0,
+            LTS::LTS1 => 1,
+            LTS::LTS2 => 2,
+            LTS::LTS3 => 3,
+            LTS::LTS4 => 4,
+        }
+    }
+}
+
+pub fn placeholder(tags: Tags) -> LTS {
     // TODO Handle bicycle=no, on things like highway=footway
 
     if let Some(mph) = tags
@@ -10,31 +28,23 @@ pub fn placeholder(tags: Tags) -> usize {
         .and_then(|x| x.trim_end_matches(" mph").parse::<usize>().ok())
     {
         if mph <= 20 {
-            return 2;
+            return LTS::LTS2;
         }
         if mph >= 40 {
-            return 4;
+            return LTS::LTS4;
         }
         // Between 20 and 40
-        return 3;
+        return LTS::LTS3;
     }
 
     /*if tags.is("highway", "residential") {
-        return 1;
+        return LTS::LTS1;
     }*/
 
-    0 // TODO unknown
+    LTS::NotAllowed
 }
 
 // The below is adapted from https://raw.githubusercontent.com/BikeOttawa/stressmodel/master/stressmodel.js, MIT licensed
-
-enum LTS {
-    NotAllowed,
-    LTS1,
-    LTS2,
-    LTS3,
-    LTS4,
-}
 
 // A flow chart would explain this nicely
 fn bike_ottawa_lts(tags: Tags) -> (LTS, Vec<String>) {

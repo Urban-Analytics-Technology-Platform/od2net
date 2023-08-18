@@ -171,7 +171,7 @@ impl Edge {
         properties.insert("count".to_string(), JsonValue::from(count));
         properties.insert(
             "lts".to_string(),
-            JsonValue::from(lts::placeholder(self.cleaned_tags())),
+            JsonValue::from(lts::placeholder(self.cleaned_tags()).into_json()),
         );
         Feature {
             bbox: None,
