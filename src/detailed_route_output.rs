@@ -9,6 +9,7 @@ use super::osm2network::Network;
 use super::requests::Request;
 
 pub fn run(
+    num_requests: usize,
     ch_path: &str,
     network: &Network,
     requests: Vec<Request>,
@@ -22,9 +23,8 @@ pub fn run(
 
     let mut path_calc = fast_paths::create_calculator(&prepared_ch.ch);
 
-    let mut i = 0;
+    let mut i = 1;
     for req in requests {
-        i += 1;
         let start = closest_intersection
             .nearest_neighbor(&[req.x1, req.y1])
             .unwrap()
@@ -33,6 +33,10 @@ pub fn run(
             .nearest_neighbor(&[req.x2, req.y2])
             .unwrap()
             .data;
+        if start == end {
+            println!("Skipping degenerate request {:?} -- the start and end are both http://openstreetmap.org/node/{start}", req);
+            continue;
+        }
 
         if let Some(path) = path_calc.calc_path(&prepared_ch.ch, start, end) {
             output_detailed_route(
@@ -42,6 +46,10 @@ pub fn run(
                 network,
                 lts,
             )?;
+            if i == num_requests {
+                break;
+            }
+            i += 1;
         }
     }
 

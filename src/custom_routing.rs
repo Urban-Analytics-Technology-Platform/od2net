@@ -95,13 +95,19 @@ fn handle_request(
         .nearest_neighbor(&[req.x2, req.y2])
         .unwrap()
         .data;
+    if start == end {
+        counts.errors += 1;
+        return;
+    }
 
     // A sanity check that snapping works -- manually check these:
     if false {
         println!(
-            "req from {}, {} snaps to http://openstreetmap.org/node/{}",
+            "req from {}, {} -> {}, {} snaps to http://openstreetmap.org/node/{}",
             req.x1,
             req.y1,
+            req.x2,
+            req.y2,
             prepared_ch.node_map.translate_id(start)
         );
     }

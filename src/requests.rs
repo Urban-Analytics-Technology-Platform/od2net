@@ -1,6 +1,7 @@
 use anyhow::Result;
 use geojson::{GeoJson, Value};
 
+#[derive(Debug)]
 pub struct Request {
     pub x1: f64,
     pub y1: f64,

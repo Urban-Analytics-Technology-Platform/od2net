@@ -109,11 +109,10 @@ async fn main() -> Result<()> {
     println!("That took {:?}\n", Instant::now().duration_since(start));
 
     if let Some(num_routes) = args.detailed_routes {
-        let mut requests = requests;
-        requests.truncate(num_routes);
         match config.routing {
             config::Routing::OSRM { .. } => panic!("--detailed_routes doesn't work with OSRM"),
             config::Routing::FastPaths { cost } => detailed_route_output::run(
+                num_routes,
                 &format!("{directory}/intermediate/ch.bin"),
                 &network,
                 requests,
