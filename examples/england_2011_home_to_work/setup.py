@@ -6,22 +6,24 @@ sys.path.append("..")
 
 from utils import *
 
+run(["mkdir", "-p", "input"])
+
 download(
     url="https://download.geofabrik.de/europe/great-britain/england-latest.osm.pbf",
-    outputFilename="input.osm.pbf",
+    outputFilename="input/input.osm.pbf",
 )
-extractCentroids(pbfInput="input.osm.pbf", geojsonOutput="origins.geojson")
-run(["ln", "-s", "origins.geojson", "destinations.geojson"])
+extractCentroids(pbfInput="input/input.osm.pbf", geojsonOutput="input/origins.geojson")
+run(["ln", "-s", "input/origins.geojson", "input/destinations.geojson"])
 
 
 # Using A/B Street mirrors for data sources right now, because the original sources are hard to script against.
 download(
     url="http://play.abstreet.org/dev/data/input/shared/wu03ew_v2.csv.gz",
-    geojsonOutput="wu03ew_v2.csv.gz",
+    geojsonOutput="input/wu03ew_v2.csv.gz",
 )
-run(["gunzip", "wu03ew_v2.csv.gz"])
-with open("wu03ew_v2.csv") as f1:
-    with open("od.csv", "w") as f2:
+run(["gunzip", "input/wu03ew_v2.csv.gz"])
+with open("input/wu03ew_v2.csv") as f1:
+    with open("input/od.csv", "w") as f2:
         writer = csv.DictWriter(f2, fieldnames=["from", "to", "count"])
         writer.writeheader()
 
@@ -43,10 +45,11 @@ with open("wu03ew_v2.csv") as f1:
 
 download(
     url="http://play.abstreet.org/dev/data/input/shared/zones_core.geojson.gz",
-    outputFilename="zones_core.geojson.gz",
+    outputFilename="input/zones_core.geojson.gz",
 )
-run(["gunzip", "zones_core.geojson.gz"])
-with open("zones_core.geojson") as f1:
+# TODO Or rewrite the file in-place
+run(["gunzip", "input/zones_core.geojson.gz"])
+with open("input/zones_core.geojson") as f1:
     gj = json.load(f1)
     gj["features"] = list(
         filter(lambda f: f["properties"]["geo_code"][0] == "E", gj["features"])
@@ -55,5 +58,5 @@ with open("zones_core.geojson") as f1:
         props = {"name": f["properties"]["geo_code"]}
         f["properties"] = props
 
-    with open("zones.geojson", "w") as f2:
+    with open("input/zones.geojson", "w") as f2:
         f2.write(json.dumps(gj))

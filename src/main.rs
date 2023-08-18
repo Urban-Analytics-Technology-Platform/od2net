@@ -53,11 +53,13 @@ async fn main() -> Result<()> {
     // Assume the config file is in the directory for the area
     let absolute_path = std::fs::canonicalize(&args.config_path).unwrap();
     let directory = absolute_path.parent().unwrap().display();
+    fs_err::create_dir_all(format!("{directory}/intermediate"))?;
+    fs_err::create_dir_all(format!("{directory}/output"))?;
 
     let mut start = Instant::now();
     let network = {
-        let bin_path = format!("{directory}/network.bin");
-        let osm_pbf_path = format!("{directory}/input.osm.pbf");
+        let bin_path = format!("{directory}/intermediate/network.bin");
+        let osm_pbf_path = format!("{directory}/input/input.osm.pbf");
         println!("Trying to load network from {bin_path}");
         match osm2network::Network::load_from_bin(&bin_path) {
             Ok(network) => network,
@@ -90,8 +92,8 @@ async fn main() -> Result<()> {
             destinations_path,
         } => od::generate(
             pattern,
-            &origins_path.unwrap_or_else(|| format!("{directory}/origins.geojson")),
-            &destinations_path.unwrap_or_else(|| format!("{directory}/destinations.geojson")),
+            &origins_path.unwrap_or_else(|| format!("{directory}/input/origins.geojson")),
+            &destinations_path.unwrap_or_else(|| format!("{directory}/input/destinations.geojson")),
             args.rng_seed,
         )?,
     };
@@ -103,7 +105,7 @@ async fn main() -> Result<()> {
             osrm::run(&network, requests, concurrency.unwrap_or(10)).await?
         }
         input::Routing::FastPaths { cost } => custom_routing::run(
-            &format!("{directory}/ch.bin"),
+            &format!("{directory}/intermediate/ch.bin"),
             &network,
             requests,
             cost,
@@ -121,14 +123,14 @@ async fn main() -> Result<()> {
     if !args.no_output_csv {
         println!("Writing output CSV");
         start = Instant::now();
-        network.write_csv(&format!("{directory}/output.csv"), &counts)?;
+        network.write_csv(&format!("{directory}/output/counts.csv"), &counts)?;
         println!("That took {:?}", Instant::now().duration_since(start));
     }
 
     println!("Writing output GJ");
     start = Instant::now();
     network.write_geojson(
-        &format!("{directory}/output.geojson"),
+        &format!("{directory}/output/output.geojson"),
         counts,
         !args.no_output_od_points,
         !args.no_output_osm_tags,

@@ -34,7 +34,7 @@ It'll be slow the first time you run (compiling the tool, parsing OSM data, and 
 
 ### View the output
 
-Let's see which roads are most used. It's easiest to use the deployed web app at <https://dabreegster.github.io/routing-engines/>. Load `$AREA/output.geojson` here.
+Let's see which roads are most used. It's easiest to use the deployed web app at <https://dabreegster.github.io/routing-engines/>. Load `examples/london/output/output.geojson` here.
 
 Or you can build and run the web app yourself:
 

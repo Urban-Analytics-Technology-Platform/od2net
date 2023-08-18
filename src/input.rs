@@ -22,9 +22,9 @@ pub enum Requests {
     },
     Generate {
         pattern: ODPattern,
-        /// Defaults to <directory>/origins.geojson
+        /// Defaults to <directory>/input/origins.geojson
         origins_path: Option<String>,
-        /// Defaults to <directory>/destinations.geojson
+        /// Defaults to <directory>/input/destinations.geojson
         destinations_path: Option<String>,
     },
 }
