@@ -149,13 +149,13 @@ fn handle_request(
 }
 
 #[derive(Serialize, Deserialize)]
-struct PreparedCH {
-    ch: FastGraph,
+pub struct PreparedCH {
+    pub ch: FastGraph,
     #[serde(deserialize_with = "deserialize_nodemap")]
-    node_map: NodeMap<i64>,
+    pub node_map: NodeMap<i64>,
 }
 
-fn build_ch(path: &str, network: &Network, cost: CostFunction) -> Result<PreparedCH> {
+pub fn build_ch(path: &str, network: &Network, cost: CostFunction) -> Result<PreparedCH> {
     println!("Trying to load CH from {path}");
     match File::open(path)
         .map_err(|err| err.into())
@@ -207,7 +207,7 @@ fn build_ch(path: &str, network: &Network, cost: CostFunction) -> Result<Prepare
 // TODO We may be able to override the distance function? Does it work with WGS84?
 type IntersectionLocation = GeomWithData<[f64; 2], usize>;
 
-fn build_closest_intersection(
+pub fn build_closest_intersection(
     network: &Network,
     node_map: &NodeMap<i64>,
 ) -> RTree<IntersectionLocation> {

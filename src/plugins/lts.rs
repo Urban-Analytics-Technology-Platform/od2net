@@ -54,6 +54,7 @@ fn speed_limit_only(tags: Tags) -> (LTS, Vec<String>) {
 }
 
 // The below is adapted from https://raw.githubusercontent.com/BikeOttawa/stressmodel/master/stressmodel.js, MIT licensed
+// TODO Ask about differences: maxspeed parsing, highway=construction
 
 // A flow chart would explain this nicely
 fn bike_ottawa(tags: Tags) -> (LTS, Vec<String>) {

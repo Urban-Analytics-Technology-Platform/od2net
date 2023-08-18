@@ -184,6 +184,43 @@ impl Edge {
         }
     }
 
+    pub fn to_geojson_for_detailed_output(
+        &self,
+        node1: i64,
+        node2: i64,
+        lts: LtsMapping,
+        geometry_forwards: bool,
+    ) -> Feature {
+        let mut pts = self
+            .geometry
+            .iter()
+            .map(|pt| pt.to_degrees_vec())
+            .collect::<Vec<_>>();
+        if !geometry_forwards {
+            pts.reverse();
+        }
+        let geometry = Geometry::new(Value::LineString(pts));
+
+        let mut properties = JsonObject::new();
+        for (key, value) in &self.tags {
+            properties.insert(key.to_string(), JsonValue::from(value.to_string()));
+        }
+        properties.insert("node1".to_string(), JsonValue::from(node1));
+        properties.insert("node2".to_string(), JsonValue::from(node2));
+        properties.insert("way".to_string(), JsonValue::from(self.way_id));
+        properties.insert(
+            "lts".to_string(),
+            JsonValue::from(lts::calculate(lts, self.cleaned_tags()).0.into_json()),
+        );
+        Feature {
+            bbox: None,
+            geometry: Some(geometry),
+            id: None,
+            properties: Some(properties),
+            foreign_members: None,
+        }
+    }
+
     pub fn cleaned_tags(&self) -> Tags {
         let mut tags = Tags::new();
         for (k, v) in &self.tags {

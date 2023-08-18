@@ -3,6 +3,7 @@ extern crate anyhow;
 
 mod config;
 mod custom_routing;
+mod detailed_route_output;
 mod node_map;
 mod od;
 mod osm2network;
@@ -35,6 +36,12 @@ struct Args {
     /// Don't output OSM tags in the GeoJSON output, to reduce file size.
     #[clap(long)]
     no_output_osm_tags: bool,
+
+    /// Instead of doing what this tool normally does, instead calculate this many routes and write
+    /// a separate GeoJSON file for each of them, with full segment-level detail. This will be slow
+    /// and take lots of disk if you specify a large number.
+    #[clap(long)]
+    detailed_routes: Option<usize>,
 }
 
 #[tokio::main]
@@ -100,6 +107,24 @@ async fn main() -> Result<()> {
         )?,
     };
     println!("That took {:?}\n", Instant::now().duration_since(start));
+
+    if let Some(num_routes) = args.detailed_routes {
+        let mut requests = requests;
+        requests.truncate(num_routes);
+        match config.routing {
+            config::Routing::OSRM { .. } => panic!("--detailed_routes doesn't work with OSRM"),
+            config::Routing::FastPaths { cost } => detailed_route_output::run(
+                &format!("{directory}/intermediate/ch.bin"),
+                &network,
+                requests,
+                cost,
+                &config.uptake,
+                config.lts,
+                format!("{directory}/output/"),
+            )?,
+        }
+        return Ok(());
+    }
 
     start = Instant::now();
     let counts = match config.routing {
