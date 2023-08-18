@@ -121,7 +121,11 @@ function getMaxSpeed(way) {
         ],
       };
     } else {
-      result = parseInt(maxspeed);
+      if (maxspeed.endsWith(" mph")) {
+        result = parseInt(maxspeed.slice(0, -4)) * 1.60934;
+      } else {
+        result = parseInt(maxspeed);
+      }
       if (isNaN(result)) {
         return {
           maxspeed: 50,
@@ -132,7 +136,7 @@ function getMaxSpeed(way) {
           ],
         };
       } else {
-        return { maxspeed: maxspeed, message: [] };
+        return { maxspeed: result, message: [] };
       }
     }
   } else {
