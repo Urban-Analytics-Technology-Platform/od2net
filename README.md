@@ -25,7 +25,7 @@ You'll need:
 ```shell
 cd examples/london
 python3 setup.py
-cargo run --release ./config.json
+cargo run --release config.json
 ```
 
 This would route from every single building to the nearest school. Or to see a much more clear pattern in the output, change the pattern in `config.json` to `FromEveryOriginToOneDestination` to go from every building to one arbitrary school.

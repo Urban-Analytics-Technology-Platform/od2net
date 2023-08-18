@@ -11,7 +11,6 @@ mod plugins;
 mod requests;
 mod tags;
 
-use std::path::Path;
 use std::time::Instant;
 
 use anyhow::Result;
@@ -52,7 +51,8 @@ async fn main() -> Result<()> {
     );
 
     // Assume the config file is in the directory for the area
-    let directory = Path::new(&args.config_path).parent().unwrap().display();
+    let absolute_path = std::fs::canonicalize(&args.config_path).unwrap();
+    let directory = absolute_path.parent().unwrap().display();
 
     let mut start = Instant::now();
     let network = {
