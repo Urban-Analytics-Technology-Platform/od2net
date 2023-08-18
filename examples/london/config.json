@@ -1,0 +1,13 @@
+{
+  "requests": {
+    "Generate": {
+      "pattern": "FromEveryOriginToNearestDestination"
+    }
+  },
+  "routing": {
+    "FastPaths": {
+      "cost": "Distance"
+    }
+  },
+  "uptake": "Identity"
+}

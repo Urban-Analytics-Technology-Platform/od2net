@@ -16,49 +16,19 @@ You'll need:
 
 - Rust (1.71 or newer)
 - ogr2ogr with [OSM support](https://gdal.org/drivers/vector/osm.html)
+- Python 3 (no external dependencies) to run example scripts
 - Node (at least v18, to run the web app)
 - About X disk, Y RAM, and Z minutes to run
 
-First let's create input data. Let's explore routes starting from any building in Cornwall and going to schools.
+### Run an example
 
 ```shell
-AREA=cornwall
-URL=http://download.geofabrik.de/europe/great-britain/england/cornwall-latest.osm.pbf
-
-# Fill the $AREA directory with 3 files: input.osm.pbf, origins.geojson, and destinations.geojson
-mkdir $AREA
-curl $URL -o $AREA/input.osm.pbf
-ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE building IS NOT NULL' $AREA/origins.geojson $AREA/input.osm.pbf
-ogr2ogr -f GeoJSON -dialect sqlite -sql 'SELECT ST_Centroid(geometry) FROM multipolygons WHERE amenity = "school"' $AREA/destinations.geojson $AREA/input.osm.pbf
+cd examples/london
+python3 setup.py
+cargo run --release ./config.json
 ```
 
-### Run the pipeline
-
-Then create a file `$AREA/config.json` file containing:
-
-```
-{
-  "requests": {
-    "Generate": {
-      "pattern": "FromEveryOriginToNearestDestination"
-    }
-  },
-  "routing": {
-    "FastPaths": {
-      "cost": "Distance"
-    }
-  },
-  "uptake": "Identity",
-}
-```
-
-This would route from every single building to the nearest school. Or to see a much more clear pattern in the output, change the pattern to `FromEveryOriginToOneDestination` to go from every building to one arbitrary school.
-
-Run the pipeline on this config:
-
-```shell
-cargo run --release $AREA/config.json
-```
+This would route from every single building to the nearest school. Or to see a much more clear pattern in the output, change the pattern in `config.json` to `FromEveryOriginToOneDestination` to go from every building to one arbitrary school.
 
 It'll be slow the first time you run (compiling the tool, parsing OSM data, and building a contraction hierarchy). Subsequent runs will be faster.
 
