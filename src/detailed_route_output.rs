@@ -34,7 +34,7 @@ pub fn run(
             .unwrap()
             .data;
         if start == end {
-            println!("Skipping degenerate request {:?} -- the start and end are both http://openstreetmap.org/node/{start}", req);
+            println!("Skipping degenerate request {} -- the start and end are both http://openstreetmap.org/node/{}", req.as_geojson_string(), prepared_ch.node_map.translate_id(start));
             continue;
         }
 

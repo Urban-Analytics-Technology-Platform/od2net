@@ -150,9 +150,9 @@ async fn main() -> Result<()> {
         Instant::now().duration_since(start)
     );
     println!(
-        "There were {} errors, meaning {} succeeded\n",
+        "{} succeeded, and {} failed\n",
+        HumanCount(num_requests as u64 - counts.errors),
         HumanCount(counts.errors),
-        HumanCount(num_requests as u64 - counts.errors)
     );
 
     if !args.no_output_csv {
