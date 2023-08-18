@@ -29,6 +29,9 @@ struct Args {
     /// Don't output a CSV file with each edge's counts.
     #[clap(long)]
     no_output_csv: bool,
+    /// Don't output origin and destination points in the GeoJSON output. It may substantially bloat file size.
+    #[clap(long)]
+    no_output_od_points: bool,
 }
 
 #[tokio::main]
@@ -121,7 +124,11 @@ async fn main() -> Result<()> {
 
     println!("Writing output GJ");
     start = Instant::now();
-    network.write_geojson(&format!("{directory}/output.geojson"), counts)?;
+    network.write_geojson(
+        &format!("{directory}/output.geojson"),
+        counts,
+        !args.no_output_od_points,
+    )?;
     println!("That took {:?}", Instant::now().duration_since(start));
 
     Ok(())

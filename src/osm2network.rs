@@ -276,7 +276,7 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
 }
 
 impl Network {
-    pub fn write_geojson(&self, path: &str, counts: Counts) -> Result<()> {
+    pub fn write_geojson(&self, path: &str, counts: Counts, output_od_points: bool) -> Result<()> {
         // Write one feature at a time manually, to avoid memory problems
         let mut file = BufWriter::new(File::create(path)?);
         writeln!(file, "{{\"type\":\"FeatureCollection\", \"features\":[")?;
@@ -311,32 +311,35 @@ impl Network {
             HumanCount(skipped)
         );
 
-        // Also write origin/destination points with the number of routes to the same file. It
-        // hugely bloats the size, but keeping them together is useful right now.
-        for (key, counter) in [
-            ("origin_count", counts.count_per_origin),
-            ("destination_count", counts.count_per_destination),
-        ] {
-            for (pt, count) in counter {
-                id_counter += 1;
-                if add_comma {
-                    writeln!(file, ",")?;
-                } else {
-                    add_comma = true;
-                }
+        if output_od_points {
+            // Also write origin/destination points with the number of routes to the same file. It
+            // hugely bloats the size, but keeping them together is useful right now.
 
-                let geometry = Geometry::new(Value::Point(pt.to_degrees_vec()));
-                let mut properties = JsonObject::new();
-                properties.insert(key.to_string(), JsonValue::from(count));
-                let feature = Feature {
-                    bbox: None,
-                    geometry: Some(geometry),
-                    id: Some(Id::Number(id_counter.into())),
-                    properties: Some(properties),
-                    foreign_members: None,
-                };
-                // TODO Trim f64 precision for some savings
-                serde_json::to_writer(&mut file, &feature)?;
+            for (key, counter) in [
+                ("origin_count", counts.count_per_origin),
+                ("destination_count", counts.count_per_destination),
+            ] {
+                for (pt, count) in counter {
+                    id_counter += 1;
+                    if add_comma {
+                        writeln!(file, ",")?;
+                    } else {
+                        add_comma = true;
+                    }
+
+                    let geometry = Geometry::new(Value::Point(pt.to_degrees_vec()));
+                    let mut properties = JsonObject::new();
+                    properties.insert(key.to_string(), JsonValue::from(count));
+                    let feature = Feature {
+                        bbox: None,
+                        geometry: Some(geometry),
+                        id: Some(Id::Number(id_counter.into())),
+                        properties: Some(properties),
+                        foreign_members: None,
+                    };
+                    // TODO Trim f64 precision for some savings
+                    serde_json::to_writer(&mut file, &feature)?;
+                }
             }
         }
 
