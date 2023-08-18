@@ -107,6 +107,59 @@ pub fn generate(
                 }
             }
         }
+        // TODO Maybe refactor these -- allow zones to be empty, O and D can have named points
+        ODPattern::ZoneToPoint {
+            zones_path,
+            csv_path,
+            destinations_path,
+        } => {
+            let zones_path = format!("{input_directory}/{zones_path}");
+            let csv_path = format!("{input_directory}/{csv_path}");
+            let destinations_path = format!("{input_directory}/{destinations_path}");
+
+            start = Instant::now();
+            println!(
+                "Loading zones from {zones_path} and named destinations from {destinations_path}"
+            );
+            let zones = load_zones(&zones_path)?;
+            let destinations = load_named_points(&destinations_path)?;
+            println!(
+                "That took {:?}. Matching points to zones",
+                Instant::now().duration_since(start)
+            );
+            start = Instant::now();
+            let origins_per_zone = points_per_polygon("origin", origins, &zones)?;
+            println!(
+                "That took {:?}. Generating requests from {csv_path}",
+                Instant::now().duration_since(start)
+            );
+
+            let mut rng = WyRand::new_seed(rng_seed);
+
+            for rec in csv::Reader::from_reader(fs_err::File::open(csv_path)?).deserialize() {
+                let row: BetweenZonesRow = rec?;
+                for _ in 0..row.count {
+                    let from = match origins_per_zone.get(&row.from) {
+                        Some(points) => points[rng.generate_range(0..points.len())],
+                        None => {
+                            bail!("Unknown zone {}", row.from);
+                        }
+                    };
+                    let to = match destinations.get(&row.to) {
+                        Some(pt) => *pt,
+                        None => {
+                            bail!("Unknown destination {}", row.to);
+                        }
+                    };
+                    requests.push(Request {
+                        x1: from.0,
+                        y1: from.1,
+                        x2: to.0,
+                        y2: to.1,
+                    });
+                }
+            }
+        }
     }
 
     Ok(requests)
@@ -126,6 +179,30 @@ fn load_points(path: &str) -> Result<Vec<(f64, f64)>> {
         }
     }
     Ok(points)
+}
+
+// TODO Refactor?
+fn load_named_points(path: &str) -> Result<HashMap<String, (f64, f64)>> {
+    let gj = fs_err::read_to_string(path)?.parse::<GeoJson>()?;
+    let mut result = HashMap::new();
+    if let GeoJson::FeatureCollection(collection) = gj {
+        for feature in collection.features {
+            if let Some(name) = feature
+                .property("name")
+                .and_then(|x| x.as_str())
+                .map(|x| x.to_string())
+            {
+                if let Some(geometry) = feature.geometry {
+                    if let Value::Point(pt) = geometry.value {
+                        result.insert(name, (pt[0], pt[1]));
+                    }
+                }
+            } else {
+                bail!("Feature doesn't have a string zone \"name\": {:?}", feature);
+            }
+        }
+    }
+    Ok(result)
 }
 
 fn points_per_polygon(

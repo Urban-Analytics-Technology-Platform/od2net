@@ -1,0 +1,20 @@
+{
+  "requests": {
+    "Generate": {
+      "pattern": {
+	"ZoneToPoint": {
+	  "zones_path": "zones.geojson",
+	  "destinations_path": "destinations.geojson",
+	  "csv_path": "od.csv"
+        }
+      }
+    }
+  },
+  "routing": {
+    "FastPaths": {
+      "cost": "Distance"
+    }
+  },
+  "uptake": "Identity",
+  "lts": "BikeOttawa"
+}

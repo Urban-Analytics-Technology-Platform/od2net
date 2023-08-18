@@ -3,6 +3,10 @@ target/
 node_modules/
 __pycache__
 
-examples/*/input
-examples/*/intermediate
-examples/*/output
+examples/*/input/*
+examples/*/intermediate/*
+examples/*/output/*
+
+!examples/york/input/destinations.geojson
+!examples/york/input/zones.geojson
+!examples/york/input/od.csv

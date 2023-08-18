@@ -46,6 +46,15 @@ pub enum ODPattern {
         /// two must match zone names. "count" must be an integer.
         csv_path: String,
     },
+    ZoneToPoint {
+        /// Path to a GeoJSON file containing Polygons and MultiPolygons with a "name" property
+        zones_path: String,
+        /// Path to a CSV file that must have 3 columns "from", "to", and "count". The first
+        /// two must match zone and destination names. "count" must be an integer.
+        csv_path: String,
+        /// Path to a GeoJSON file containing Points with a "name" property
+        destinations_path: String,
+    },
 }
 
 #[derive(Serialize, Deserialize)]

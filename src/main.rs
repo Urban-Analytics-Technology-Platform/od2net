@@ -106,9 +106,10 @@ async fn main() -> Result<()> {
             args.rng_seed,
         )?,
     };
+    let num_requests = requests.len();
     println!(
         "Got {} requests. That took {:?}\n",
-        HumanCount(requests.len() as u64),
+        HumanCount(num_requests as u64),
         Instant::now().duration_since(start)
     );
 
@@ -148,7 +149,11 @@ async fn main() -> Result<()> {
         HumanCount(counts.count_per_edge.len() as u64),
         Instant::now().duration_since(start)
     );
-    println!("There were {} errors\n", HumanCount(counts.errors));
+    println!(
+        "There were {} errors, meaning {} succeeded\n",
+        HumanCount(counts.errors),
+        HumanCount(num_requests as u64 - counts.errors)
+    );
 
     if !args.no_output_csv {
         println!("Writing output CSV");
