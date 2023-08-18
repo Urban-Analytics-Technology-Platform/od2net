@@ -54,6 +54,8 @@
   let summary: string | undefined;
 
   let overrideMax = 1000;
+  let originRadius = 3;
+  let destinationRadius = 3;
 
   function loadFile(contents: string) {
     rnetGj = {
@@ -187,15 +189,31 @@
       <p>
         {originsGj.features.length} origins, {destinationsGj.features.length} destinations
       </p>
-      <label>
-        Override max for line width styling:
-        <input
-          type="number"
-          bind:value={overrideMax}
-          min={1}
-          on:change={() => adjustLineWidth(0)}
-        />
-      </label>
+
+      <div>
+        <label>
+          Override max for line width styling:<br />
+          <input
+            type="number"
+            bind:value={overrideMax}
+            min={1}
+            on:change={() => adjustLineWidth(0)}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Change origin point size:<br />
+          <input type="number" bind:value={originRadius} min={1} />
+        </label>
+      </div>
+      <div>
+        <label>
+          Change destination point size:<br />
+          <input type="number" bind:value={destinationRadius} min={1} />
+        </label>
+      </div>
+
       <Histogram
         title="Edge counts"
         data={rnetGj.features.map((f) => f.properties.count)}
@@ -228,6 +246,7 @@
           <LineLayer
             id="input-layer"
             manageHoverState
+            hoverCursor="pointer"
             paint={{
               "line-width": lineWidth,
               "line-color": [
@@ -262,7 +281,7 @@
             manageHoverState
             paint={{
               "circle-color": colors.origins,
-              "circle-radius": 3,
+              "circle-radius": originRadius,
             }}
             layout={{ visibility: "none" }}
           >
@@ -279,7 +298,7 @@
             manageHoverState
             paint={{
               "circle-color": colors.destinations,
-              "circle-radius": 3,
+              "circle-radius": destinationRadius,
             }}
             layout={{ visibility: "none" }}
           >
