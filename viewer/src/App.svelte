@@ -246,6 +246,7 @@
               ],
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
+            beforeId="Road labels"
             on:click={(e) => openOSM(e.detail.features[0])}
           >
             <Popup openOn="hover" let:features>
