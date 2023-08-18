@@ -29,9 +29,12 @@ struct Args {
     /// Don't output a CSV file with each edge's counts.
     #[clap(long)]
     no_output_csv: bool,
-    /// Don't output origin and destination points in the GeoJSON output. It may substantially bloat file size.
+    /// Don't output origin and destination points in the GeoJSON output, to reduce file size.
     #[clap(long)]
     no_output_od_points: bool,
+    /// Don't output OSM tags in the GeoJSON output, to reduce file size.
+    #[clap(long)]
+    no_output_osm_tags: bool,
 }
 
 #[tokio::main]
@@ -128,6 +131,7 @@ async fn main() -> Result<()> {
         &format!("{directory}/output.geojson"),
         counts,
         !args.no_output_od_points,
+        !args.no_output_osm_tags,
     )?;
     println!("That took {:?}", Instant::now().duration_since(start));
 

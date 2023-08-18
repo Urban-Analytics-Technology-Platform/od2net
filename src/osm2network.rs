@@ -148,13 +148,22 @@ pub struct Edge {
 }
 
 impl Edge {
-    fn to_geojson(&self, node1: i64, node2: i64, count: f64, id: usize) -> Feature {
+    fn to_geojson(
+        &self,
+        node1: i64,
+        node2: i64,
+        count: f64,
+        id: usize,
+        output_osm_tags: bool,
+    ) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
         ));
         let mut properties = JsonObject::new();
-        for (key, value) in &self.tags {
-            properties.insert(key.to_string(), JsonValue::from(value.to_string()));
+        if output_osm_tags {
+            for (key, value) in &self.tags {
+                properties.insert(key.to_string(), JsonValue::from(value.to_string()));
+            }
         }
         properties.insert("node1".to_string(), JsonValue::from(node1));
         properties.insert("node2".to_string(), JsonValue::from(node2));
@@ -284,7 +293,13 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
 }
 
 impl Network {
-    pub fn write_geojson(&self, path: &str, counts: Counts, output_od_points: bool) -> Result<()> {
+    pub fn write_geojson(
+        &self,
+        path: &str,
+        counts: Counts,
+        output_od_points: bool,
+        output_osm_tags: bool,
+    ) -> Result<()> {
         // Write one feature at a time manually, to avoid memory problems
         let mut file = BufWriter::new(File::create(path)?);
         writeln!(file, "{{\"type\":\"FeatureCollection\", \"features\":[")?;
@@ -305,7 +320,7 @@ impl Network {
                 } else {
                     add_comma = true;
                 }
-                let feature = edge.to_geojson(node1, node2, count, id_counter);
+                let feature = edge.to_geojson(node1, node2, count, id_counter, output_osm_tags);
                 // TODO Trim f64 precision for some savings
                 serde_json::to_writer(&mut file, &feature)?;
             } else {
