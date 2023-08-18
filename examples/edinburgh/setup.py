@@ -6,11 +6,6 @@ sys.path.append("..")
 
 from utils import *
 
-# Pick a sub-region from https://download.geofabrik.de/europe/great-britain/england.html
-area = "greater-london"
-# Pick from https://wiki.openstreetmap.org/wiki/Key:amenity
-amenity = "school"
-
 run(["mkdir", "-p", "input"])
 
 download(
