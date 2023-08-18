@@ -116,13 +116,21 @@ impl Position {
         (1e-7 * self.lon as f64, 1e-7 * self.lat as f64)
     }
 
-    pub fn to_degrees_vec(self) -> Vec<f64> {
-        vec![1e-7 * self.lon as f64, 1e-7 * self.lat as f64]
+    fn to_degrees_vec(self) -> Vec<f64> {
+        // Round here, since this one is used for GJ output
+        vec![
+            trim_f64(1e-7 * self.lon as f64),
+            trim_f64(1e-7 * self.lat as f64),
+        ]
     }
 
     pub fn to_degrees_array(self) -> [f64; 2] {
         [1e-7 * self.lon as f64, 1e-7 * self.lat as f64]
     }
+}
+
+fn trim_f64(x: f64) -> f64 {
+    (x * 10_000.0).round() / 10_000.0
 }
 
 struct Way {
