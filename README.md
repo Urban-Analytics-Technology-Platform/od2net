@@ -14,7 +14,7 @@ TODO: Write intro
 
 You'll need:
 
-- Rust (1.71 or newer)
+- Rust (1.71 or newer), or Docker
 - ogr2ogr with [OSM support](https://gdal.org/drivers/vector/osm.html)
 - Python 3 (no external dependencies) to run example scripts
 - Node (at least v18, to run the web app)
@@ -31,6 +31,8 @@ cargo run --release config.json
 This would route from every single building to the nearest school. Or to see a much more clear pattern in the output, change the pattern in `config.json` to `FromEveryOriginToOneDestination` to go from every building to one arbitrary school.
 
 It'll be slow the first time you run (compiling the tool, parsing OSM data, and building a contraction hierarchy). Subsequent runs will be faster.
+
+Instead of `cargo`, you can use Docker. TODO, the image isn't published yet. `docker run -v $(pwd):/app tmp_test_aggregate /app/config.json`
 
 ### View the output
 
