@@ -106,7 +106,11 @@ async fn main() -> Result<()> {
             args.rng_seed,
         )?,
     };
-    println!("That took {:?}\n", Instant::now().duration_since(start));
+    println!(
+        "Got {} requests. That took {:?}\n",
+        HumanCount(requests.len() as u64),
+        Instant::now().duration_since(start)
+    );
 
     if let Some(num_routes) = args.detailed_routes {
         match config.routing {

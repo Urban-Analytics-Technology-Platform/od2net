@@ -74,8 +74,8 @@ pub fn generate(
                 Instant::now().duration_since(start)
             );
             start = Instant::now();
-            let origins_per_zone = points_per_polygon(origins, &zones);
-            let destinations_per_zone = points_per_polygon(destinations, &zones);
+            let origins_per_zone = points_per_polygon("origin", origins, &zones)?;
+            let destinations_per_zone = points_per_polygon("destination", destinations, &zones)?;
             println!(
                 "That took {:?}. Generating requests from {csv_path}",
                 Instant::now().duration_since(start)
@@ -87,23 +87,13 @@ pub fn generate(
                 let row: BetweenZonesRow = rec?;
                 for _ in 0..row.count {
                     let from = match origins_per_zone.get(&row.from) {
-                        Some(points) => {
-                            if points.is_empty() {
-                                bail!("Zone {} has no origin points", row.from);
-                            }
-                            points[rng.generate_range(0..points.len())]
-                        }
+                        Some(points) => points[rng.generate_range(0..points.len())],
                         None => {
                             bail!("Unknown zone {}", row.from);
                         }
                     };
                     let to = match destinations_per_zone.get(&row.to) {
-                        Some(points) => {
-                            if points.is_empty() {
-                                bail!("Zone {} has no destination points", row.to);
-                            }
-                            points[rng.generate_range(0..points.len())]
-                        }
+                        Some(points) => points[rng.generate_range(0..points.len())],
                         None => {
                             bail!("Unknown zone {}", row.to);
                         }
@@ -139,11 +129,13 @@ fn load_points(path: &str) -> Result<Vec<(f64, f64)>> {
 }
 
 fn points_per_polygon(
+    name: &str,
     points: Vec<(f64, f64)>,
     polygons: &HashMap<String, MultiPolygon<f64>>,
-) -> HashMap<String, Vec<(f64, f64)>> {
+) -> Result<HashMap<String, Vec<(f64, f64)>>> {
     let tree = RTree::bulk_load(points);
 
+    let mut empty = Vec::new();
     let mut output = HashMap::new();
     for (key, polygon) in polygons {
         let mut pts_inside = Vec::new();
@@ -156,11 +148,17 @@ fn points_per_polygon(
                 pts_inside.push(*pt);
             }
         }
+        if pts_inside.is_empty() {
+            empty.push(key);
+        }
         output.insert(key.clone(), pts_inside);
     }
 
-    // TODO Check every zone has points, to fail-fast
-    output
+    if !empty.is_empty() {
+        bail!("Some zones have no matching {name} points: {:?}", empty);
+    }
+
+    Ok(output)
 }
 
 // TODO Can we use this?
