@@ -9,7 +9,7 @@ use nanorand::{Rng, WyRand};
 use rstar::{RTree, AABB};
 use serde::Deserialize;
 
-use super::input::ODPattern;
+use super::config::ODPattern;
 use super::requests::Request;
 
 pub fn generate(

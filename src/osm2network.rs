@@ -11,6 +11,7 @@ use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
+use super::config::LtsMapping;
 use super::plugins::lts;
 use super::tags::Tags;
 
@@ -155,6 +156,7 @@ impl Edge {
         count: f64,
         id: usize,
         output_osm_tags: bool,
+        lts: LtsMapping,
     ) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
@@ -171,7 +173,7 @@ impl Edge {
         properties.insert("count".to_string(), JsonValue::from(count));
         properties.insert(
             "lts".to_string(),
-            JsonValue::from(lts::placeholder(self.cleaned_tags()).into_json()),
+            JsonValue::from(lts::calculate(lts, self.cleaned_tags()).0.into_json()),
         );
         Feature {
             bbox: None,
@@ -299,6 +301,7 @@ impl Network {
         counts: Counts,
         output_od_points: bool,
         output_osm_tags: bool,
+        lts: LtsMapping,
     ) -> Result<()> {
         // Write one feature at a time manually, to avoid memory problems
         let mut file = BufWriter::new(File::create(path)?);
@@ -320,7 +323,8 @@ impl Network {
                 } else {
                     add_comma = true;
                 }
-                let feature = edge.to_geojson(node1, node2, count, id_counter, output_osm_tags);
+                let feature =
+                    edge.to_geojson(node1, node2, count, id_counter, output_osm_tags, lts);
                 // TODO Trim f64 precision for some savings
                 serde_json::to_writer(&mut file, &feature)?;
             } else {

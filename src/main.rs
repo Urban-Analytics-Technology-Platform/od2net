@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate anyhow;
 
+mod config;
 mod custom_routing;
-mod input;
 mod node_map;
 mod od;
 mod osm2network;
@@ -41,7 +41,7 @@ struct Args {
 async fn main() -> Result<()> {
     let args = Args::parse();
     let config_json = fs_err::read_to_string(&args.config_path)?;
-    let config: input::InputConfig = match serde_json::from_str(&config_json) {
+    let config: config::InputConfig = match serde_json::from_str(&config_json) {
         Ok(config) => config,
         Err(err) => panic!("{} is invalid: {err}", args.config_path),
     };
@@ -75,7 +75,7 @@ async fn main() -> Result<()> {
     println!("Loading or generating requests");
     start = Instant::now();
     let requests = match config.requests {
-        input::Requests::Odjitter {
+        config::Requests::Odjitter {
             path,
             sample_requests,
             cap_requests,
@@ -87,7 +87,7 @@ async fn main() -> Result<()> {
                 cap_requests,
             )?
         }
-        input::Requests::Generate {
+        config::Requests::Generate {
             pattern,
             origins_path,
             destinations_path,
@@ -103,10 +103,10 @@ async fn main() -> Result<()> {
 
     start = Instant::now();
     let counts = match config.routing {
-        input::Routing::OSRM { concurrency } => {
+        config::Routing::OSRM { concurrency } => {
             osrm::run(&network, requests, concurrency.unwrap_or(10)).await?
         }
-        input::Routing::FastPaths { cost } => custom_routing::run(
+        config::Routing::FastPaths { cost } => custom_routing::run(
             &format!("{directory}/intermediate/ch.bin"),
             &network,
             requests,
@@ -136,6 +136,7 @@ async fn main() -> Result<()> {
         counts,
         !args.no_output_od_points,
         !args.no_output_osm_tags,
+        config.lts,
     )?;
     println!("That took {:?}", Instant::now().duration_since(start));
 

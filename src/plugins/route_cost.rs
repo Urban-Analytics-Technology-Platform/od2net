@@ -1,4 +1,4 @@
-use crate::input::CostFunction;
+use crate::config::CostFunction;
 use crate::osm2network::Edge;
 
 pub fn edge_cost(edge: &Edge, cost: CostFunction) -> Option<usize> {

@@ -9,5 +9,6 @@
       "cost": "Distance"
     }
   },
-  "uptake": "Identity"
+  "uptake": "Identity",
+  "lts": "BikeOttawa"
 }

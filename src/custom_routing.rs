@@ -10,7 +10,7 @@ use rstar::primitives::GeomWithData;
 use rstar::RTree;
 use serde::{Deserialize, Serialize};
 
-use super::input::{CostFunction, Uptake};
+use super::config::{CostFunction, Uptake};
 use super::node_map::{deserialize_nodemap, NodeMap};
 use super::osm2network::{Counts, Network, Position};
 use super::plugins::route_cost;

@@ -8,6 +8,8 @@ pub struct InputConfig {
     pub routing: Routing,
 
     pub uptake: Uptake,
+
+    pub lts: LtsMapping,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -75,4 +77,10 @@ pub enum Uptake {
     GovTargetPCT,
     /// Defined by https://github.com/ITSLeeds/pct/blob/HEAD/R/uptake.R
     GoDutchPCT,
+}
+
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub enum LtsMapping {
+    SpeedLimitOnly,
+    BikeOttawa,
 }

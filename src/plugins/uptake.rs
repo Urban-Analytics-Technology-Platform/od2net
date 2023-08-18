@@ -1,4 +1,4 @@
-use crate::input::Uptake;
+use crate::config::Uptake;
 
 /// Given stats about a route, calculate its "uptake", between 0 and 1.
 pub fn calculate_uptake(uptake: &Uptake, total_distance_meters: f64) -> f64 {

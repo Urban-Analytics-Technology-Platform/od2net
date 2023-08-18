@@ -1,3 +1,4 @@
+use crate::config::LtsMapping;
 use crate::tags::Tags;
 
 pub enum LTS {
@@ -20,7 +21,15 @@ impl LTS {
     }
 }
 
-pub fn placeholder(tags: Tags) -> LTS {
+pub fn calculate(lts: LtsMapping, tags: Tags) -> (LTS, Vec<String>) {
+    match lts {
+        LtsMapping::SpeedLimitOnly => speed_limit_only(tags),
+        LtsMapping::BikeOttawa => bike_ottawa(tags),
+    }
+}
+
+fn speed_limit_only(tags: Tags) -> (LTS, Vec<String>) {
+    let msgs = vec!["Only looking at maxspeed".into()];
     // TODO Handle bicycle=no, on things like highway=footway
 
     if let Some(mph) = tags
@@ -28,26 +37,26 @@ pub fn placeholder(tags: Tags) -> LTS {
         .and_then(|x| x.trim_end_matches(" mph").parse::<usize>().ok())
     {
         if mph <= 20 {
-            return LTS::LTS2;
+            return (LTS::LTS2, msgs);
         }
         if mph >= 40 {
-            return LTS::LTS4;
+            return (LTS::LTS4, msgs);
         }
         // Between 20 and 40
-        return LTS::LTS3;
+        return (LTS::LTS3, msgs);
     }
 
     /*if tags.is("highway", "residential") {
         return LTS::LTS1;
     }*/
 
-    LTS::NotAllowed
+    (LTS::NotAllowed, msgs)
 }
 
 // The below is adapted from https://raw.githubusercontent.com/BikeOttawa/stressmodel/master/stressmodel.js, MIT licensed
 
 // A flow chart would explain this nicely
-fn bike_ottawa_lts(tags: Tags) -> (LTS, Vec<String>) {
+fn bike_ottawa(tags: Tags) -> (LTS, Vec<String>) {
     let mut msgs = Vec::new();
 
     if !is_biking_permitted(&tags, &mut msgs) {
@@ -173,10 +182,10 @@ fn bike_lane_case(tags: &Tags, msgs: &mut Vec<String>) -> Option<LTS> {
 
     if has_parking_lane(tags, msgs) {
         //result = bikeLaneAnalysisParkingPresent(way, message);
-        todo!()
+        None
     } else {
         //result = bikeLaneAnalysisNoParking(way, message);
-        todo!()
+        None
     }
 }
 
