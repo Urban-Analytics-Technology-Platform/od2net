@@ -131,7 +131,7 @@ impl Position {
 }
 
 fn trim_f64(x: f64) -> f64 {
-    (x * 10_000.0).round() / 10_000.0
+    (x * 10e6).round() / 10e6
 }
 
 struct Way {
