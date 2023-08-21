@@ -1,6 +1,6 @@
 # Latent demand (name TBD)
 
-WARNING: This repo is not ready for use.
+WARNING: This repo is not ready for general use. The API and input/output formats will keep changing. There are big limitations not yet documented.
 
 TODO: Write intro
 
@@ -16,6 +16,7 @@ You'll need:
 
 - Rust (1.71 or newer), or Docker
 - ogr2ogr with [OSM support](https://gdal.org/drivers/vector/osm.html)
+- [osmium](https://osmcode.org/osmium-tool/manual.html#installation)
 - Python 3 (no external dependencies) to run example scripts
 - Node (at least v18, to run the web app)
 - About X disk, Y RAM, and Z minutes to run
@@ -32,7 +33,7 @@ This would route from every single building to the nearest school. Or to see a m
 
 It'll be slow the first time you run (compiling the tool, parsing OSM data, and building a contraction hierarchy). Subsequent runs will be faster.
 
-Instead of `cargo`, you can use Docker. TODO, the image isn't published yet. `docker run -v $(pwd):/app tmp_test_aggregate /app/config.json`
+Instead of `cargo`, you can use Docker. `docker run -v $(pwd):/app abstreet/latent_demand /app/config.json`
 
 ### View the output
 
@@ -50,6 +51,18 @@ npm run dev
 Then open <http://localhost:5173/routing-engines/> (or whatever npm says) in your browser.
 
 The Level of Traffic Stress definitions shown come from [BikeOttawa](https://maps.bikeottawa.ca/lts/).
+
+### Exploring individual routes
+
+While developing OD data, a route cost function, an uptake model, etc, it can be helpful to debug individual routes produced by the tool. You can pass `--detailed-routes=50` to output 50 GeoJSON files with more detail. Here's an example in York using Docker to run:
+
+```
+cd examples/york
+python3 setup.py
+docker run -v $(pwd):/app abstreet/latent_demand /app/config.json --detailed-routes=50
+```
+
+Checkout `output/` for the result.
 
 ## Customizing
 
