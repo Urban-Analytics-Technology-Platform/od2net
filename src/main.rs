@@ -108,9 +108,9 @@ async fn main() -> Result<()> {
             &mut timer,
         )?,
     };
-    timer.stop();
     let num_requests = requests.len();
-    println!("Got {} requests\n", HumanCount(num_requests as u64));
+    println!("Got {} requests", HumanCount(num_requests as u64));
+    timer.stop();
 
     if let Some(num_routes) = args.detailed_routes {
         match config.routing {
@@ -144,17 +144,16 @@ async fn main() -> Result<()> {
             &mut timer,
         )?,
     };
-    timer.stop();
-
     println!(
         "Got counts for {} edges",
         HumanCount(counts.count_per_edge.len() as u64),
     );
     println!(
-        "{} succeeded, and {} failed\n",
+        "{} succeeded, and {} failed",
         HumanCount(num_requests as u64 - counts.errors),
         HumanCount(counts.errors),
     );
+    timer.stop();
 
     if !args.no_output_csv {
         timer.start("Writing output CSV");

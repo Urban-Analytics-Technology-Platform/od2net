@@ -22,10 +22,10 @@ pub fn generate(
     rng_seed: u64,
     timer: &mut Timer,
 ) -> Result<Vec<Request>> {
-    timer.start(format!("Loading origins from {origins_path}"));
+    timer.start("Loading origins");
     let origins = load_points(origins_path)?;
     timer.stop();
-    timer.start(format!("Loading destinations from {destinations_path}"));
+    timer.start("Loading destinations");
     let destinations = load_points(destinations_path)?;
     timer.stop();
     println!(
@@ -168,6 +168,7 @@ pub fn generate(
 
 // TODO Use geo?
 fn load_points(path: &str) -> Result<Vec<(f64, f64)>> {
+    println!("Loading points from {path}");
     let reader = FeatureReader::from_reader(BufReader::new(File::open(path)?));
     let mut points = Vec::new();
     for feature in reader.features() {

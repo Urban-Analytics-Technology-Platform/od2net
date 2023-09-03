@@ -1,7 +1,8 @@
 use std::time::{Duration, Instant};
 
+use console::style;
+
 // TODO Hierarchy is lost by linearizing
-// TODO Color or something for intermediate sections, and move logging statements around a bit
 // TODO Print final summary better
 
 // TODO API styles...
@@ -41,7 +42,10 @@ impl Timer {
             name: name.into(),
             started: Instant::now(),
         };
-        println!("{} {}", "##".repeat(block.level + 1), block.name);
+        println!(
+            "{}",
+            style(format!("{} {}", "##".repeat(block.level + 1), block.name)).cyan()
+        );
         self.stack.push(block);
     }
 
@@ -54,10 +58,14 @@ impl Timer {
             duration: Instant::now().duration_since(block.started),
         };
         println!(
-            "{} {} took {:?}",
-            "##".repeat(done.level + 1),
-            done.name,
-            done.duration
+            "{}",
+            style(format!(
+                "{} {} took {:?}",
+                "##".repeat(done.level + 1),
+                done.name,
+                done.duration
+            ))
+            .cyan()
         );
         self.done.push(done);
     }

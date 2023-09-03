@@ -24,6 +24,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "clap",
+ "console",
  "csv",
  "fast_paths",
  "fs-err",
