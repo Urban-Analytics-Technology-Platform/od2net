@@ -1,9 +1,11 @@
 use std::collections::HashMap;
+use std::io::BufReader;
 use std::time::Instant;
 
 use anyhow::Result;
+use fs_err::File;
 use geo::{BoundingRect, Contains, MultiPolygon};
-use geojson::{GeoJson, Value};
+use geojson::{FeatureReader, Value};
 use indicatif::HumanCount;
 use nanorand::{Rng, WyRand};
 use rstar::{RTree, AABB};
@@ -167,14 +169,13 @@ pub fn generate(
 
 // TODO Use geo?
 fn load_points(path: &str) -> Result<Vec<(f64, f64)>> {
-    let gj = fs_err::read_to_string(path)?.parse::<GeoJson>()?;
+    let reader = FeatureReader::from_reader(BufReader::new(File::open(path)?));
     let mut points = Vec::new();
-    if let GeoJson::FeatureCollection(collection) = gj {
-        for feature in collection.features {
-            if let Some(geometry) = feature.geometry {
-                if let Value::Point(pt) = geometry.value {
-                    points.push((pt[0], pt[1]));
-                }
+    for feature in reader.features() {
+        let feature = feature?;
+        if let Some(geometry) = feature.geometry {
+            if let Value::Point(pt) = geometry.value {
+                points.push((pt[0], pt[1]));
             }
         }
     }
@@ -183,23 +184,22 @@ fn load_points(path: &str) -> Result<Vec<(f64, f64)>> {
 
 // TODO Refactor?
 fn load_named_points(path: &str) -> Result<HashMap<String, (f64, f64)>> {
-    let gj = fs_err::read_to_string(path)?.parse::<GeoJson>()?;
+    let reader = FeatureReader::from_reader(BufReader::new(File::open(path)?));
     let mut result = HashMap::new();
-    if let GeoJson::FeatureCollection(collection) = gj {
-        for feature in collection.features {
-            if let Some(name) = feature
-                .property("name")
-                .and_then(|x| x.as_str())
-                .map(|x| x.to_string())
-            {
-                if let Some(geometry) = feature.geometry {
-                    if let Value::Point(pt) = geometry.value {
-                        result.insert(name, (pt[0], pt[1]));
-                    }
+    for feature in reader.features() {
+        let feature = feature?;
+        if let Some(name) = feature
+            .property("name")
+            .and_then(|x| x.as_str())
+            .map(|x| x.to_string())
+        {
+            if let Some(geometry) = feature.geometry {
+                if let Value::Point(pt) = geometry.value {
+                    result.insert(name, (pt[0], pt[1]));
                 }
-            } else {
-                bail!("Feature doesn't have a string zone \"name\": {:?}", feature);
             }
+        } else {
+            bail!("Feature doesn't have a string zone \"name\": {:?}", feature);
         }
     }
     Ok(result)
@@ -249,29 +249,27 @@ struct Zone {
 /// Extract multipolygon zones from a GeoJSON file, using the "name" property as the key in the
 /// resulting map.
 fn load_zones(geojson_path: &str) -> Result<HashMap<String, MultiPolygon<f64>>> {
-    let geojson_input = fs_err::read_to_string(geojson_path)?;
-    let geojson = geojson_input.parse::<GeoJson>()?;
+    let reader = FeatureReader::from_reader(BufReader::new(File::open(geojson_path)?));
 
     let mut zones: HashMap<String, MultiPolygon<f64>> = HashMap::new();
-    if let GeoJson::FeatureCollection(collection) = geojson {
-        for feature in collection.features {
-            if let Some(zone_name) = feature
-                .property("name")
-                .and_then(|x| x.as_str())
-                .map(|x| x.to_string())
-            {
-                let gj_geom: geojson::Geometry = feature.geometry.unwrap();
-                let geo_geometry: geo::Geometry<f64> = gj_geom.try_into().unwrap();
-                if let geo::Geometry::MultiPolygon(mp) = geo_geometry {
-                    zones.insert(zone_name, mp);
-                } else if let geo::Geometry::Polygon(p) = geo_geometry {
-                    zones.insert(zone_name, p.into());
-                } else {
-                    bail!("Feature has geometry other than a Polygon or MultiPolygon");
-                }
+    for feature in reader.features() {
+        let feature = feature?;
+        if let Some(zone_name) = feature
+            .property("name")
+            .and_then(|x| x.as_str())
+            .map(|x| x.to_string())
+        {
+            let gj_geom: geojson::Geometry = feature.geometry.unwrap();
+            let geo_geometry: geo::Geometry<f64> = gj_geom.try_into().unwrap();
+            if let geo::Geometry::MultiPolygon(mp) = geo_geometry {
+                zones.insert(zone_name, mp);
+            } else if let geo::Geometry::Polygon(p) = geo_geometry {
+                zones.insert(zone_name, p.into());
             } else {
-                bail!("Feature doesn't have a string zone \"name\": {:?}", feature);
+                bail!("Feature has geometry other than a Polygon or MultiPolygon");
             }
+        } else {
+            bail!("Feature doesn't have a string zone \"name\": {:?}", feature);
         }
     }
     Ok(zones)

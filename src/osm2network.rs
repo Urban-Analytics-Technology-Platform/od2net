@@ -6,7 +6,7 @@ use anyhow::Result;
 use fs_err::File;
 use geo::prelude::HaversineLength;
 use geo::LineString;
-use geojson::{feature::Id, Feature, Geometry, JsonObject, JsonValue, Value};
+use geojson::{feature::Id, Feature, FeatureWriter, Geometry, JsonObject, JsonValue, Value};
 use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
@@ -340,10 +340,8 @@ impl Network {
         output_osm_tags: bool,
         lts: LtsMapping,
     ) -> Result<()> {
-        // Write one feature at a time manually, to avoid memory problems
-        let mut file = BufWriter::new(File::create(path)?);
-        writeln!(file, "{{\"type\":\"FeatureCollection\", \"features\":[")?;
-        let mut add_comma = false;
+        // Write one feature at a time to avoid memory problems
+        let mut writer = FeatureWriter::from_writer(BufWriter::new(File::create(path)?));
 
         let mut skipped = 0;
         let mut id_counter = 0;
@@ -355,15 +353,9 @@ impl Network {
                 .or_else(|| self.edges.get(&(node2, node1)))
             {
                 id_counter += 1;
-                if add_comma {
-                    writeln!(file, ",")?;
-                } else {
-                    add_comma = true;
-                }
                 let feature =
                     edge.to_geojson(node1, node2, count, id_counter, output_osm_tags, lts);
-                // TODO Trim f64 precision for some savings
-                serde_json::to_writer(&mut file, &feature)?;
+                writer.write_feature(&feature)?;
             } else {
                 // TODO We don't handle routes starting or ending in the middle of an edge yet
                 //println!("No edge from https://www.openstreetmap.org/node/{node1} to https://www.openstreetmap.org/node/{node2} or vice versa");
@@ -385,29 +377,20 @@ impl Network {
             ] {
                 for (pt, count) in counter {
                     id_counter += 1;
-                    if add_comma {
-                        writeln!(file, ",")?;
-                    } else {
-                        add_comma = true;
-                    }
-
                     let geometry = Geometry::new(Value::Point(pt.to_degrees_vec()));
                     let mut properties = JsonObject::new();
                     properties.insert(key.to_string(), JsonValue::from(count));
-                    let feature = Feature {
+                    writer.write_feature(&Feature {
                         bbox: None,
                         geometry: Some(geometry),
                         id: Some(Id::Number(id_counter.into())),
                         properties: Some(properties),
                         foreign_members: None,
-                    };
-                    // TODO Trim f64 precision for some savings
-                    serde_json::to_writer(&mut file, &feature)?;
+                    })?;
                 }
             }
         }
 
-        writeln!(file, "]}}")?;
         Ok(())
     }
 

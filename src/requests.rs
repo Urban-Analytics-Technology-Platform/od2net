@@ -1,5 +1,6 @@
 use anyhow::Result;
-use geojson::{GeoJson, Geometry, Value};
+use fs_err::File;
+use geojson::{FeatureReader, Geometry, Value};
 
 pub struct Request {
     pub x1: f64,
@@ -24,32 +25,31 @@ impl Request {
         sample_requests: usize,
         cap_requests: Option<usize>,
     ) -> Result<Vec<Request>> {
-        let gj = fs_err::read_to_string(path)?.parse::<GeoJson>()?;
+        let reader = FeatureReader::from_reader(std::io::BufReader::new(File::open(path)?));
         let mut requests = Vec::new();
         let mut total = 0;
-        if let GeoJson::FeatureCollection(collection) = gj {
-            for feature in collection.features {
-                total += 1;
-                // TODO Off by 1
-                if total % 1000 > sample_requests {
-                    continue;
+        for feature in reader.features() {
+            let feature = feature?;
+            total += 1;
+            // TODO Off by 1
+            if total % 1000 > sample_requests {
+                continue;
+            }
+            if let Some(cap) = cap_requests {
+                if requests.len() == cap {
+                    break;
                 }
-                if let Some(cap) = cap_requests {
-                    if requests.len() == cap {
-                        break;
-                    }
-                }
+            }
 
-                if let Some(geometry) = feature.geometry {
-                    if let Value::LineString(line_string) = geometry.value {
-                        assert_eq!(2, line_string.len());
-                        requests.push(Request {
-                            x1: line_string[0][0],
-                            y1: line_string[0][1],
-                            x2: line_string[1][0],
-                            y2: line_string[1][1],
-                        });
-                    }
+            if let Some(geometry) = feature.geometry {
+                if let Value::LineString(line_string) = geometry.value {
+                    assert_eq!(2, line_string.len());
+                    requests.push(Request {
+                        x1: line_string[0][0],
+                        y1: line_string[0][1],
+                        x2: line_string[1][0],
+                        y2: line_string[1][1],
+                    });
                 }
             }
         }
