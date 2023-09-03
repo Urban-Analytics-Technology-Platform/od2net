@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::io::{BufReader, BufWriter, Write};
-use std::time::Instant;
 
 use anyhow::Result;
 use fs_err::File;
@@ -14,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use super::config::LtsMapping;
 use super::plugins::lts;
 use super::tags::Tags;
+use super::timer::Timer;
 
 #[derive(Serialize, Deserialize)]
 pub struct Network {
@@ -63,30 +63,31 @@ impl Counts {
 }
 
 impl Network {
-    pub fn make_from_pbf(osm_pbf_path: &str, bin_path: &str) -> Result<Network> {
-        let mut start = Instant::now();
+    pub fn make_from_pbf(osm_pbf_path: &str, bin_path: &str, timer: &mut Timer) -> Result<Network> {
+        timer.start("Make Network from pbf");
+        timer.start("Scrape OSM data");
         let (nodes, ways) = scrape_elements(osm_pbf_path)?;
+        timer.stop();
         println!(
-            "  Got {} nodes and {} ways. That took {:?}",
+            "  Got {} nodes and {} ways",
             HumanCount(nodes.len() as u64),
-            HumanCount(ways.len() as u64),
-            Instant::now().duration_since(start)
+            HumanCount(ways.len() as u64)
         );
 
-        start = Instant::now();
+        timer.start("Split into edges");
         let network = split_edges(nodes, ways);
+        timer.stop();
         println!(
-            "  Split into {} edges. That took {:?}",
+            "  Split into {} edges",
             HumanCount(network.edges.len() as u64),
-            start
         );
 
-        println!("  Saving to {bin_path}");
-        start = Instant::now();
+        timer.start(format!("Saving to {bin_path}"));
         let writer = BufWriter::new(File::create(bin_path)?);
         bincode::serialize_into(writer, &network)?;
-        println!("  That took {:?}", Instant::now().duration_since(start));
+        timer.stop();
 
+        timer.stop();
         Ok(network)
     }
 

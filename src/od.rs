@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::io::BufReader;
-use std::time::Instant;
 
 use anyhow::Result;
 use fs_err::File;
@@ -13,6 +12,7 @@ use serde::Deserialize;
 
 use super::config::ODPattern;
 use super::requests::Request;
+use super::timer::Timer;
 
 pub fn generate(
     pattern: ODPattern,
@@ -20,17 +20,14 @@ pub fn generate(
     origins_path: &str,
     destinations_path: &str,
     rng_seed: u64,
+    timer: &mut Timer,
 ) -> Result<Vec<Request>> {
-    let mut start = Instant::now();
-    println!("Loading origins from {origins_path}");
+    timer.start(format!("Loading origins from {origins_path}"));
     let origins = load_points(origins_path)?;
-    println!(
-        "That took {:?}. Loading destinations from {destinations_path}",
-        Instant::now().duration_since(start)
-    );
-    start = Instant::now();
+    timer.stop();
+    timer.start(format!("Loading destinations from {destinations_path}"));
     let destinations = load_points(destinations_path)?;
-    println!("That took {:?}", Instant::now().duration_since(start));
+    timer.stop();
     println!(
         "Got {} origins and {} destination",
         HumanCount(origins.len() as u64),
@@ -40,6 +37,10 @@ pub fn generate(
     let mut requests = Vec::new();
     match pattern {
         ODPattern::FromEveryOriginToOneDestination => {
+            timer.start(format!(
+                "FromEveryOriginToOneDestination for {} origins",
+                HumanCount(origins.len() as u64),
+            ));
             for pt in origins {
                 requests.push(Request {
                     x1: pt.0,
@@ -48,9 +49,16 @@ pub fn generate(
                     y2: destinations[0].1,
                 });
             }
+            timer.stop();
         }
         ODPattern::FromEveryOriginToNearestDestination => {
+            timer.start("Prep rtree for destinations");
             let closest = RTree::bulk_load(destinations);
+            timer.stop();
+            timer.start(format!(
+                "FromEveryOriginToNearestDestination for {} origins",
+                HumanCount(origins.len() as u64),
+            ));
             for pt in origins {
                 let goto = closest.nearest_neighbor(&pt).unwrap();
                 requests.push(Request {
@@ -60,6 +68,7 @@ pub fn generate(
                     y2: goto.1,
                 });
             }
+            timer.stop();
         }
         ODPattern::BetweenZones {
             zones_path,
@@ -68,21 +77,15 @@ pub fn generate(
             let zones_path = format!("{input_directory}/{zones_path}");
             let csv_path = format!("{input_directory}/{csv_path}");
 
-            start = Instant::now();
-            println!("Loading zones from {zones_path}");
+            timer.start(format!("Loading zones from {zones_path}"));
             let zones = load_zones(&zones_path)?;
-            println!(
-                "That took {:?}. Matching points to zones",
-                Instant::now().duration_since(start)
-            );
-            start = Instant::now();
+            timer.stop();
+            timer.start("Matching points to zones");
             let origins_per_zone = points_per_polygon("origin", origins, &zones)?;
             let destinations_per_zone = points_per_polygon("destination", destinations, &zones)?;
-            println!(
-                "That took {:?}. Generating requests from {csv_path}",
-                Instant::now().duration_since(start)
-            );
+            timer.stop();
 
+            timer.start(format!("Generating requests from {csv_path}"));
             let mut rng = WyRand::new_seed(rng_seed);
 
             for rec in csv::Reader::from_reader(fs_err::File::open(csv_path)?).deserialize() {
@@ -108,6 +111,7 @@ pub fn generate(
                     });
                 }
             }
+            timer.stop();
         }
         // TODO Maybe refactor these -- allow zones to be empty, O and D can have named points
         ODPattern::ZoneToPoint {
@@ -119,23 +123,17 @@ pub fn generate(
             let csv_path = format!("{input_directory}/{csv_path}");
             let destinations_path = format!("{input_directory}/{destinations_path}");
 
-            start = Instant::now();
-            println!(
+            timer.start(format!(
                 "Loading zones from {zones_path} and named destinations from {destinations_path}"
-            );
+            ));
             let zones = load_zones(&zones_path)?;
             let destinations = load_named_points(&destinations_path)?;
-            println!(
-                "That took {:?}. Matching points to zones",
-                Instant::now().duration_since(start)
-            );
-            start = Instant::now();
+            timer.stop();
+            timer.start("Matching points to zones");
             let origins_per_zone = points_per_polygon("origin", origins, &zones)?;
-            println!(
-                "That took {:?}. Generating requests from {csv_path}",
-                Instant::now().duration_since(start)
-            );
+            timer.stop();
 
+            timer.start(format!("Generating requests from {csv_path}"));
             let mut rng = WyRand::new_seed(rng_seed);
 
             for rec in csv::Reader::from_reader(fs_err::File::open(csv_path)?).deserialize() {
@@ -161,6 +159,7 @@ pub fn generate(
                     });
                 }
             }
+            timer.stop();
         }
     }
 

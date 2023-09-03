@@ -7,6 +7,7 @@ use super::config::{CostFunction, LtsMapping, Uptake};
 use super::custom_routing::{build_ch, build_closest_intersection, PreparedCH};
 use super::osm2network::Network;
 use super::requests::Request;
+use super::timer::Timer;
 
 pub fn run(
     num_requests: usize,
@@ -17,9 +18,10 @@ pub fn run(
     uptake: &Uptake,
     lts: LtsMapping,
     output_directory: String,
+    timer: &mut Timer,
 ) -> Result<()> {
-    let prepared_ch = build_ch(ch_path, network, cost)?;
-    let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map);
+    let prepared_ch = build_ch(ch_path, network, cost, timer)?;
+    let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map, timer);
 
     let mut path_calc = fast_paths::create_calculator(&prepared_ch.ch);
 

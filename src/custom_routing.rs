@@ -1,5 +1,4 @@
 use std::io::{BufReader, BufWriter};
-use std::time::Instant;
 
 use anyhow::Result;
 use fast_paths::{FastGraph, InputGraph, PathCalculator};
@@ -16,6 +15,7 @@ use super::osm2network::{Counts, Network, Position};
 use super::plugins::route_cost;
 use super::plugins::uptake;
 use super::requests::Request;
+use super::timer::Timer;
 
 // TODO Vary ch_path with CostFunction
 pub fn run(
@@ -24,9 +24,10 @@ pub fn run(
     requests: Vec<Request>,
     cost: CostFunction,
     uptake: &Uptake,
+    timer: &mut Timer,
 ) -> Result<Counts> {
-    let prepared_ch = build_ch(ch_path, network, cost)?;
-    let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map);
+    let prepared_ch = build_ch(ch_path, network, cost, timer)?;
+    let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map, timer);
 
     let progress = ProgressBar::new(requests.len() as u64).with_style(ProgressStyle::with_template(
             "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
@@ -161,7 +162,12 @@ pub struct PreparedCH {
     pub node_map: NodeMap<i64>,
 }
 
-pub fn build_ch(path: &str, network: &Network, cost: CostFunction) -> Result<PreparedCH> {
+pub fn build_ch(
+    path: &str,
+    network: &Network,
+    cost: CostFunction,
+    timer: &mut Timer,
+) -> Result<PreparedCH> {
     println!("Trying to load CH from {path}");
     match File::open(path)
         .map_err(|err| err.into())
@@ -175,8 +181,7 @@ pub fn build_ch(path: &str, network: &Network, cost: CostFunction) -> Result<Pre
         }
     }
 
-    let mut start = Instant::now();
-    println!("Building InputGraph");
+    timer.start("Building InputGraph");
     let mut input_graph = InputGraph::new();
     let mut node_map = NodeMap::new();
     for ((node1, node2), edge) in &network.edges {
@@ -191,17 +196,11 @@ pub fn build_ch(path: &str, network: &Network, cost: CostFunction) -> Result<Pre
         }
     }
     input_graph.freeze();
-    println!(
-        "That took {:?}. Now preparing the CH",
-        Instant::now().duration_since(start)
-    );
+    timer.stop();
 
-    start = Instant::now();
+    timer.start("Preparing the CH");
     let ch = fast_paths::prepare(&input_graph);
-    println!(
-        "Preparing the CH took {:?}\n",
-        Instant::now().duration_since(start)
-    );
+    timer.stop();
 
     let result = PreparedCH { ch, node_map };
     let writer = BufWriter::new(File::create(path)?);
@@ -216,9 +215,9 @@ type IntersectionLocation = GeomWithData<[f64; 2], usize>;
 pub fn build_closest_intersection(
     network: &Network,
     node_map: &NodeMap<i64>,
+    timer: &mut Timer,
 ) -> RTree<IntersectionLocation> {
-    println!("Building RTree for matching request points to OSM nodes");
-    let start = Instant::now();
+    timer.start("Building RTree for matching request points to OSM nodes");
     let mut points = Vec::new();
     for (id, pt) in &network.intersections {
         points.push(IntersectionLocation::new(
@@ -227,6 +226,6 @@ pub fn build_closest_intersection(
         ));
     }
     let rtree = RTree::bulk_load(points);
-    println!("That took {:?}\n", Instant::now().duration_since(start));
+    timer.stop();
     rtree
 }

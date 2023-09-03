@@ -11,8 +11,7 @@ mod osrm;
 mod plugins;
 mod requests;
 mod tags;
-
-use std::time::Instant;
+mod timer;
 
 use anyhow::Result;
 use clap::Parser;
@@ -64,23 +63,25 @@ async fn main() -> Result<()> {
     fs_err::create_dir_all(format!("{directory}/intermediate"))?;
     fs_err::create_dir_all(format!("{directory}/output"))?;
 
-    let mut start = Instant::now();
+    let mut timer = timer::Timer::new();
+
+    timer.start("Load network");
     let network = {
         let bin_path = format!("{directory}/intermediate/network.bin");
         let osm_pbf_path = format!("{directory}/input/input.osm.pbf");
         println!("Trying to load network from {bin_path}");
+        // TODO timer around something fallible is annoying
         match osm2network::Network::load_from_bin(&bin_path) {
             Ok(network) => network,
             Err(err) => {
                 println!("That failed ({err}), so generating it from {osm_pbf_path}");
-                osm2network::Network::make_from_pbf(&osm_pbf_path, &bin_path)?
+                osm2network::Network::make_from_pbf(&osm_pbf_path, &bin_path, &mut timer)?
             }
         }
     };
-    println!("That took {:?}\n", Instant::now().duration_since(start));
+    timer.stop();
 
-    println!("Loading or generating requests");
-    start = Instant::now();
+    timer.start("Loading or generating requests");
     let requests = match config.requests {
         config::Requests::Odjitter {
             path,
@@ -104,14 +105,12 @@ async fn main() -> Result<()> {
             &origins_path.unwrap_or_else(|| format!("{directory}/input/origins.geojson")),
             &destinations_path.unwrap_or_else(|| format!("{directory}/input/destinations.geojson")),
             args.rng_seed,
+            &mut timer,
         )?,
     };
+    timer.stop();
     let num_requests = requests.len();
-    println!(
-        "Got {} requests. That took {:?}\n",
-        HumanCount(num_requests as u64),
-        Instant::now().duration_since(start)
-    );
+    println!("Got {} requests\n", HumanCount(num_requests as u64));
 
     if let Some(num_routes) = args.detailed_routes {
         match config.routing {
@@ -125,12 +124,13 @@ async fn main() -> Result<()> {
                 &config.uptake,
                 config.lts,
                 format!("{directory}/output/"),
+                &mut timer,
             )?,
         }
         return Ok(());
     }
 
-    start = Instant::now();
+    timer.start("Routing");
     let counts = match config.routing {
         config::Routing::OSRM { concurrency } => {
             osrm::run(&network, requests, concurrency.unwrap_or(10)).await?
@@ -141,13 +141,14 @@ async fn main() -> Result<()> {
             requests,
             cost,
             &config.uptake,
+            &mut timer,
         )?,
     };
+    timer.stop();
 
     println!(
-        "Got counts for {} edges. That took {:?}",
+        "Got counts for {} edges",
         HumanCount(counts.count_per_edge.len() as u64),
-        Instant::now().duration_since(start)
     );
     println!(
         "{} succeeded, and {} failed\n",
@@ -156,14 +157,12 @@ async fn main() -> Result<()> {
     );
 
     if !args.no_output_csv {
-        println!("Writing output CSV");
-        start = Instant::now();
+        timer.start("Writing output CSV");
         network.write_csv(&format!("{directory}/output/counts.csv"), &counts)?;
-        println!("That took {:?}", Instant::now().duration_since(start));
+        timer.stop();
     }
 
-    println!("Writing output GJ");
-    start = Instant::now();
+    timer.start("Writing output GJ");
     network.write_geojson(
         &format!("{directory}/output/output.geojson"),
         counts,
@@ -171,7 +170,7 @@ async fn main() -> Result<()> {
         !args.no_output_osm_tags,
         config.lts,
     )?;
-    println!("That took {:?}", Instant::now().duration_since(start));
+    timer.stop();
 
     Ok(())
 }
