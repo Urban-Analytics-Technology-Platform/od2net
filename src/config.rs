@@ -59,13 +59,7 @@ pub enum ODPattern {
 
 #[derive(Serialize, Deserialize)]
 pub enum Routing {
-    OSRM {
-        /// How many requests to OSRM to have in-flight at once. Defaults to 10.
-        concurrency: Option<usize>,
-    },
-    FastPaths {
-        cost: CostFunction,
-    },
+    FastPaths { cost: CostFunction },
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]

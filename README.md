@@ -97,30 +97,6 @@ The pipeline currently has two methods for calculating a route, specified by `"r
     - `"cost": "AvoidMainRoads"` uses hardcoded multipliers for main roads
   - No penalty for elevation gain
   - No handling for turn restrictions, penalties for crossing intersections, etc
-- Calling a local instance of [OSRM](https://project-osrm.org)
-  - The built-in routing profiles can be used and customized
-  - The overhead of calling even a local instance of OSRM is tremendous, because we're going through HTTP and parsing JSON on both ends.
-
-Note to use OSRM, you additionally need Docker and to prepare OSRM in your area:
-
-```shell
-cd $AREA
-mkdir osrm
-cd osrm
-ln -s ../inputosm.pbf .
-cd ..
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-extract -p /opt/bicycle.lua /data/osrm/input.osm.pbf
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-contract /data/osrm/input.osrm
-```
-
-And then run OSRM on prepared data:
-
-```shell
-docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed /data/osrm/input.osrm
-
-# To send a sample request:
-curl 'http://localhost:5000/route/v1/driving/-0.24684906005859372,51.42955782907472;-0.3240966796875,51.51515248101072?overview=false&alternatives=false&steps=false&annotations=nodes'
-```
 
 ### Scoring route likelihood
 

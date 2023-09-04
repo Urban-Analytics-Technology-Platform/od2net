@@ -11,7 +11,6 @@ console = "0.15.7"
 csv = "1.2.2"
 fast_paths = { git = "https://github.com/easbar/fast_paths" }
 fs-err = "2.9.0"
-futures = "0.3.28"
 geo = "0.26.0"
 geojson = "0.24.1"
 indicatif = { version = "0.17.6", features = ["rayon"] }
@@ -19,8 +18,6 @@ nanorand = { version = "0.7.0", default-features = false, features = ["wyrand"] 
 num_cpus = "1.16.0"
 osmpbf = "0.3.1"
 rayon = "1.7.0"
-reqwest = { version = "0.11.20", default-features = false }
 rstar = "0.11.0"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.105"
-tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }

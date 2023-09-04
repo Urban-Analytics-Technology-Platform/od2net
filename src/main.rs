@@ -7,7 +7,6 @@ mod detailed_route_output;
 mod node_map;
 mod od;
 mod osm2network;
-mod osrm;
 mod plugins;
 mod requests;
 mod tags;
@@ -43,8 +42,7 @@ struct Args {
     detailed_routes: Option<usize>,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let args = Args::parse();
     let config_json = fs_err::read_to_string(&args.config_path)?;
     let config: config::InputConfig = match serde_json::from_str(&config_json) {
@@ -114,7 +112,6 @@ async fn main() -> Result<()> {
 
     if let Some(num_routes) = args.detailed_routes {
         match config.routing {
-            config::Routing::OSRM { .. } => panic!("--detailed_routes doesn't work with OSRM"),
             config::Routing::FastPaths { cost } => detailed_route_output::run(
                 num_routes,
                 &format!("{directory}/intermediate/ch.bin"),
@@ -132,9 +129,6 @@ async fn main() -> Result<()> {
 
     timer.start("Routing");
     let counts = match config.routing {
-        config::Routing::OSRM { concurrency } => {
-            osrm::run(&network, requests, concurrency.unwrap_or(10)).await?
-        }
         config::Routing::FastPaths { cost } => custom_routing::run(
             &format!("{directory}/intermediate/ch.bin"),
             &network,
