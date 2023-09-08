@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "wasm": "wasm-pack build --release --target web ../lts",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "fmt": "npx prettier --write *.html src/**"
@@ -21,7 +22,8 @@
     "svelte-check": "^3.4.4",
     "tslib": "^2.6.0",
     "typescript": "^5.1.3",
-    "vite": "^4.3.9"
+    "vite": "^4.3.9",
+    "vite-plugin-wasm-pack": "0.1.11"
   },
   "dependencies": {
     "@turf/bbox": "^6.5.0",

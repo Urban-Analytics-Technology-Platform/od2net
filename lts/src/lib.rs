@@ -2,6 +2,8 @@ mod bike_ottawa;
 mod parse;
 mod speed_limit_only;
 mod tags;
+#[cfg(target_arch = "wasm32")]
+mod wasm;
 
 pub use bike_ottawa::bike_ottawa;
 pub use speed_limit_only::speed_limit_only;

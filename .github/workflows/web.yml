@@ -17,10 +17,20 @@ jobs:
           cache: 'npm'
           cache-dependency-path: viewer/package-lock.json
 
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+
+      - name: Cache WASM build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: doesnt-matter-share-everything
+
       - name: Build web app
         run: |
           cd viewer
           npm ci
+          npm run wasm
           npm run build --if-present
 
       - name: Publish

@@ -1,10 +1,12 @@
 <script lang="ts">
   import turfBbox from "@turf/bbox";
   import type { Feature, FeatureCollection } from "geojson";
+  import init from "lts";
   import type {
     DataDrivenPropertyValueSpecification,
     Map as MapType,
   } from "maplibre-gl";
+  import { onMount } from "svelte";
   import {
     CircleLayer,
     GeoJSON,
@@ -19,6 +21,10 @@
   import { evaluateLTS } from "./lts";
   import PropertiesTable from "./PropertiesTable.svelte";
   import ToggleLayer from "./ToggleLayer.svelte";
+
+  onMount(async () => {
+    await init();
+  });
 
   let colors = {
     origins: "blue",

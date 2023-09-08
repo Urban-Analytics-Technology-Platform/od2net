@@ -1,14 +1,26 @@
 <script lang="ts">
-  import { evaluateLTS } from "./lts";
+  import { calculate } from "lts";
 
   export let properties: { [name: string]: any };
 
-  let result = evaluateLTS({ tags: properties });
+  let tags = structuredClone(properties);
+  // TODO Organize the GJ output better in the first-place, nest OSM tags elsewhere
+  delete tags.count;
+  delete tags.lts;
+  delete tags.node1;
+  delete tags.node2;
+  delete tags.way;
+
+  let ltsResult = calculate({
+    method: "bike_ottawa",
+    tags,
+  });
 </script>
 
 <b>Count: {properties.count.toFixed(2)}</b>
+<b>LTS (Rust): {ltsResult.lts}</b>
 <ul>
-  {#each result.message as msg}
+  {#each ltsResult.messages as msg}
     <li>{msg}</li>
   {/each}
 </ul>

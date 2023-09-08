@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import { resolve } from "path";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import wasmPack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
   base: "/routing-engines/",
@@ -11,11 +12,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [svelte()],
-  // TODO For the symlinks in assets
-  server: {
-    fs: {
-      allow: [".."],
-    },
-  },
+  plugins: [svelte(), wasmPack(["../lts"], [])]
 })
