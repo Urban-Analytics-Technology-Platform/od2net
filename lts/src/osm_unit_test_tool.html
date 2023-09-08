@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>OpenStreetMap Unit Test tool</title>
+    <script>
+      async function generate() {
+        document.getElementById("output").value = "";
+
+        let wayID = document.getElementById("wayID").value;
+        let url = `https://api.openstreetmap.org/api/0.6/way/${wayID}.json`;
+        try {
+          let resp = await fetch(url);
+          let json = await resp.json();
+          let tags = json.elements[0].tags;
+
+          // Remove tags likely to not influence the output at all
+          delete tags["name"];
+          let tagsArray = Object.entries(tags)
+            .map(([k, v]) => `"${k}=${v}"`)
+            .join(", ");
+
+          document.getElementById(
+            "output"
+          ).value = `(${wayID}, vec![${tagsArray}], LTS::),`;
+        } catch (err) {
+          document.getElementById("output").value = `Error: ${err}`;
+        }
+      }
+
+      function copy() {
+        navigator.clipboard.writeText(document.getElementById("output").value);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>OpenStreetMap Unit Test tool</h1>
+    <label for="wayID">Enter OpenStreetMap Way ID:</label>
+    <input type="text" id="wayID" />
+    <button onclick="generate()">Generate</button>
+    <br />
+
+    <h2>Output:</h2>
+    <button onclick="copy()">Copy</button>
+    <br />
+    <textarea id="output" rows="10" cols="100" readonly></textarea>
+  </body>
+</html>
