@@ -3,30 +3,24 @@
 
   export let properties: { [name: string]: any };
 
-  let tags = structuredClone(properties);
-  // TODO Organize the GJ output better in the first-place, nest OSM tags elsewhere
-  delete tags.count;
-  delete tags.lts;
-  delete tags.node1;
-  delete tags.node2;
-  delete tags.way;
-
-  let ltsResult = calculate({
+  // Get detailed messages. Remember maplibre compacts nested feature properties, so we have to parse as JSON!
+  let tags = JSON.parse(properties.osm_tags);
+  let { messages } = calculate({
     method: "bike_ottawa",
     tags,
   });
 </script>
 
 <b>Count: {properties.count.toFixed(2)}</b>
-<b>LTS (Rust): {ltsResult.lts}</b>
+<b>LTS: {properties.lts}</b>
 <ul>
-  {#each ltsResult.messages as msg}
+  {#each messages as msg}
     <li>{msg}</li>
   {/each}
 </ul>
 <table>
   <tbody>
-    {#each Object.entries(properties) as [key, value]}
+    {#each Object.entries(tags) as [key, value]}
       <tr><td>{key}</td><td>{value}</td></tr>
     {/each}
   </tbody>

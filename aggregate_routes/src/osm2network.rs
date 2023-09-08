@@ -163,9 +163,11 @@ impl Edge {
         ));
         let mut properties = JsonObject::new();
         if output_osm_tags {
+            let mut tags = JsonObject::new();
             for (key, value) in &self.tags {
-                properties.insert(key.to_string(), JsonValue::from(value.to_string()));
+                tags.insert(key.to_string(), JsonValue::from(value.to_string()));
             }
+            properties.insert("osm_tags".to_string(), tags.into());
         }
         properties.insert("node1".to_string(), JsonValue::from(node1));
         properties.insert("node2".to_string(), JsonValue::from(node2));
@@ -202,9 +204,11 @@ impl Edge {
         let geometry = Geometry::new(Value::LineString(pts));
 
         let mut properties = JsonObject::new();
+        let mut tags = JsonObject::new();
         for (key, value) in &self.tags {
-            properties.insert(key.to_string(), JsonValue::from(value.to_string()));
+            tags.insert(key.to_string(), JsonValue::from(value.to_string()));
         }
+        properties.insert("osm_tags".to_string(), tags.into());
         properties.insert("node1".to_string(), JsonValue::from(node1));
         properties.insert("node2".to_string(), JsonValue::from(node2));
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
