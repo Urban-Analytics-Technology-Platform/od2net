@@ -1,6 +1,7 @@
 use crate::config::LtsMapping;
 use crate::tags::Tags;
 
+#[derive(PartialEq, PartialOrd)]
 pub enum LTS {
     NotAllowed,
     LTS1,
@@ -73,11 +74,8 @@ fn bike_ottawa(tags: Tags) -> (LTS, Vec<String>) {
         return (lts, msgs);
     }
 
-    /*const ibl = isBikeLane(way);
-    if (ibl.isBikeLane) {
-      return ibl.result;
-    }
-    const imt = isMixedTraffic(way);
+    // TODO
+    /*const imt = isMixedTraffic(way);
     if (imt.isMixedTraffic) {
       return imt.result;
     }*/
@@ -182,11 +180,10 @@ fn bike_lane_case(tags: &Tags, msgs: &mut Vec<String>) -> Option<LTS> {
     }
 
     if has_parking_lane(tags, msgs) {
-        //result = bikeLaneAnalysisParkingPresent(way, message);
         None
+        //bike_lane_with_parking(tags, msgs)
     } else {
-        //result = bikeLaneAnalysisNoParking(way, message);
-        None
+        bike_lane_no_parking(tags, msgs)
     }
 }
 
@@ -206,4 +203,89 @@ fn has_parking_lane(tags: &Tags, msgs: &mut Vec<String>) -> bool {
 
     msgs.push("No parking lane".into());
     false
+}
+
+fn bike_lane_no_parking(tags: &Tags, msgs: &mut Vec<String>) -> Option<LTS> {
+    let is_residential = tags.is("highway", "residential");
+    let num_lanes = get_num_lanes(tags, msgs);
+    let speed_mph = get_maxspeed_mph(tags, msgs);
+
+    // TODO The logic is very mutable. Can we simplify it?
+    let mut lts = LTS::LTS1;
+    // TODO This is undefined
+    let has_separating_median = false;
+    if num_lanes == 3 && has_separating_median {
+        msgs.push(format!(
+            "3 lanes, separating median, and no parking, so at least LTS 2"
+        ));
+        lts = LTS::LTS2;
+    }
+    if num_lanes >= 3 {
+        msgs.push(format!("3 or more lanes and no parking, so at least LTS 3"));
+        lts = LTS::LTS3;
+    }
+    // The original has some cases based on width, but width is pretty much always unknown
+    // Note some of the km/h values here are rounded/adjusted a bit from the original
+    if speed_mph > 30 {
+        if speed_mph < 40 {
+            if lts <= LTS::LTS3 {
+                msgs.push(format!(
+                    "No parking, speed between 30-40 mph, so at least LTS 3"
+                ));
+                lts = LTS::LTS3;
+            }
+        } else if lts <= LTS::LTS4 {
+            msgs.push(format!("No parking, speed over 40 mph, so at least LTS 4"));
+            lts = LTS::LTS4;
+        }
+    }
+    if !is_residential && lts < LTS::LTS3 {
+        msgs.push(format!(
+            "Non-residential road with a bike lane and no parking, so at least LTS 3"
+        ));
+        lts = LTS::LTS3;
+    }
+
+    if lts == LTS::LTS1 {
+        msgs.push(format!(
+            "No parking, speed under 30mph, highway=residential, and 2 lanes or less"
+        ));
+    }
+
+    Some(lts)
+}
+
+fn get_num_lanes(tags: &Tags, msgs: &mut Vec<String>) -> usize {
+    // TODO The original checks for semicolons in lanes. That's not on the wiki and pretty much
+    // doesn't happen: https://taginfo.openstreetmap.org/keys/lanes#values
+    if let Some(n) = tags.get("lanes").and_then(|x| x.parse::<usize>().ok()) {
+        return n;
+    }
+    // TODO What about one-ways?
+    msgs.push(format!("Missing or invalid 'lanes' tag, so assuming 2"));
+    2
+}
+
+fn get_maxspeed_mph(tags: &Tags, msgs: &mut Vec<String>) -> usize {
+    if let Some(maxspeed) = tags.get("maxspeed") {
+        if let Ok(kmph) = maxspeed.parse::<f64>() {
+            return (kmph * 0.621371).round() as usize;
+        }
+        if let Some(mph) = maxspeed
+            .strip_suffix(" mph")
+            .and_then(|x| x.parse::<usize>().ok())
+        {
+            return mph;
+        }
+    }
+    // TODO Regional defaults
+    let default = match tags.get("highway").unwrap().as_str() {
+        "motorway" => 60,
+        "primary" | "secondary" => 50,
+        _ => 30,
+    };
+    msgs.push(format!(
+        "Guessing max speed is {default} mph based on highway tag"
+    ));
+    default
 }
