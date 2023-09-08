@@ -1,64 +1,10 @@
-use crate::config::LtsMapping;
-use crate::tags::Tags;
-
-#[derive(PartialEq, PartialOrd)]
-pub enum LTS {
-    NotAllowed,
-    LTS1,
-    LTS2,
-    LTS3,
-    LTS4,
-}
-
-impl LTS {
-    pub fn into_json(self) -> usize {
-        match self {
-            LTS::NotAllowed => 0,
-            LTS::LTS1 => 1,
-            LTS::LTS2 => 2,
-            LTS::LTS3 => 3,
-            LTS::LTS4 => 4,
-        }
-    }
-}
-
-pub fn calculate(lts: LtsMapping, tags: Tags) -> (LTS, Vec<String>) {
-    match lts {
-        LtsMapping::SpeedLimitOnly => speed_limit_only(tags),
-        LtsMapping::BikeOttawa => bike_ottawa(tags),
-    }
-}
-
-fn speed_limit_only(tags: Tags) -> (LTS, Vec<String>) {
-    let msgs = vec!["Only looking at maxspeed".into()];
-    // TODO Handle bicycle=no, on things like highway=footway
-
-    if let Some(mph) = tags
-        .get("maxspeed")
-        .and_then(|x| x.trim_end_matches(" mph").parse::<usize>().ok())
-    {
-        if mph <= 20 {
-            return (LTS::LTS2, msgs);
-        }
-        if mph >= 40 {
-            return (LTS::LTS4, msgs);
-        }
-        // Between 20 and 40
-        return (LTS::LTS3, msgs);
-    }
-
-    /*if tags.is("highway", "residential") {
-        return LTS::LTS1;
-    }*/
-
-    (LTS::NotAllowed, msgs)
-}
+use crate::{parse, Tags, LTS};
 
 // The below is adapted from https://raw.githubusercontent.com/BikeOttawa/stressmodel/master/stressmodel.js, MIT licensed
 // TODO Ask about differences: maxspeed parsing, highway=construction
 
 // A flow chart would explain this nicely
-fn bike_ottawa(tags: Tags) -> (LTS, Vec<String>) {
+pub fn bike_ottawa(tags: Tags) -> (LTS, Vec<String>) {
     let mut msgs = Vec::new();
 
     if !is_biking_permitted(&tags, &mut msgs) {
@@ -207,8 +153,8 @@ fn has_parking_lane(tags: &Tags, msgs: &mut Vec<String>) -> bool {
 
 fn bike_lane_no_parking(tags: &Tags, msgs: &mut Vec<String>) -> Option<LTS> {
     let is_residential = tags.is("highway", "residential");
-    let num_lanes = get_num_lanes(tags, msgs);
-    let speed_mph = get_maxspeed_mph(tags, msgs);
+    let num_lanes = parse::get_num_lanes(tags, msgs);
+    let speed_mph = parse::get_maxspeed_mph(tags, msgs);
 
     // TODO The logic is very mutable. Can we simplify it?
     let mut lts = LTS::LTS1;
@@ -253,39 +199,4 @@ fn bike_lane_no_parking(tags: &Tags, msgs: &mut Vec<String>) -> Option<LTS> {
     }
 
     Some(lts)
-}
-
-fn get_num_lanes(tags: &Tags, msgs: &mut Vec<String>) -> usize {
-    // TODO The original checks for semicolons in lanes. That's not on the wiki and pretty much
-    // doesn't happen: https://taginfo.openstreetmap.org/keys/lanes#values
-    if let Some(n) = tags.get("lanes").and_then(|x| x.parse::<usize>().ok()) {
-        return n;
-    }
-    // TODO What about one-ways?
-    msgs.push(format!("Missing or invalid 'lanes' tag, so assuming 2"));
-    2
-}
-
-fn get_maxspeed_mph(tags: &Tags, msgs: &mut Vec<String>) -> usize {
-    if let Some(maxspeed) = tags.get("maxspeed") {
-        if let Ok(kmph) = maxspeed.parse::<f64>() {
-            return (kmph * 0.621371).round() as usize;
-        }
-        if let Some(mph) = maxspeed
-            .strip_suffix(" mph")
-            .and_then(|x| x.parse::<usize>().ok())
-        {
-            return mph;
-        }
-    }
-    // TODO Regional defaults
-    let default = match tags.get("highway").unwrap().as_str() {
-        "motorway" => 60,
-        "primary" | "secondary" => 50,
-        _ => 30,
-    };
-    msgs.push(format!(
-        "Guessing max speed is {default} mph based on highway tag"
-    ));
-    default
 }

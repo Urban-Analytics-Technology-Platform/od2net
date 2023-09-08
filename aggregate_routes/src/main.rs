@@ -9,7 +9,6 @@ mod od;
 mod osm2network;
 mod plugins;
 mod requests;
-mod tags;
 mod timer;
 
 use anyhow::Result;

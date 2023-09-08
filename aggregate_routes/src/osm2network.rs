@@ -11,9 +11,8 @@ use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
 use super::config::LtsMapping;
-use super::plugins::lts;
-use super::tags::Tags;
 use super::timer::Timer;
+use lts::Tags;
 
 #[derive(Serialize, Deserialize)]
 pub struct Network {
@@ -174,7 +173,7 @@ impl Edge {
         properties.insert("count".to_string(), JsonValue::from(count));
         properties.insert(
             "lts".to_string(),
-            JsonValue::from(lts::calculate(lts, self.cleaned_tags()).0.into_json()),
+            JsonValue::from(calculate_lts(lts, self.cleaned_tags()).0.into_json()),
         );
         Feature {
             bbox: None,
@@ -211,7 +210,7 @@ impl Edge {
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
         properties.insert(
             "lts".to_string(),
-            JsonValue::from(lts::calculate(lts, self.cleaned_tags()).0.into_json()),
+            JsonValue::from(calculate_lts(lts, self.cleaned_tags()).0.into_json()),
         );
         Feature {
             bbox: None,
@@ -425,4 +424,11 @@ fn calculate_length_meters(pts: &[Position]) -> f64 {
     let line_string =
         LineString::<f64>::from(pts.iter().map(|pt| pt.to_degrees()).collect::<Vec<_>>());
     line_string.haversine_length()
+}
+
+fn calculate_lts(lts: LtsMapping, tags: Tags) -> (lts::LTS, Vec<String>) {
+    match lts {
+        LtsMapping::SpeedLimitOnly => lts::speed_limit_only(tags),
+        LtsMapping::BikeOttawa => lts::bike_ottawa(tags),
+    }
 }
