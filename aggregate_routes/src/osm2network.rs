@@ -342,6 +342,7 @@ impl Network {
         counts: Counts,
         output_od_points: bool,
         output_osm_tags: bool,
+        skip_edges_with_low_count: Option<usize>,
         lts: LtsMapping,
     ) -> Result<()> {
         // Write one feature at a time to avoid memory problems
@@ -350,6 +351,13 @@ impl Network {
         let mut skipped = 0;
         let mut id_counter = 0;
         for ((node1, node2), count) in counts.count_per_edge {
+            if let Some(min) = skip_edges_with_low_count {
+                if (count as usize) < min {
+                    skipped += 1;
+                    continue;
+                }
+            }
+
             // TODO Track forwards and backwards counts separately, and optionally merge later?
             if let Some(edge) = self
                 .edges
@@ -367,7 +375,7 @@ impl Network {
             }
         }
         println!(
-            "Skipped {} edges (started/ended mid-edge)",
+            "Skipped {} edges (started/ended mid-edge, or count too low)",
             HumanCount(skipped)
         );
 
