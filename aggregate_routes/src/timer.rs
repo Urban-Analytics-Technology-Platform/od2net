@@ -73,6 +73,11 @@ impl Timer {
 
 impl Drop for Timer {
     fn drop(&mut self) {
+        if let Some(current) = self.stack.last() {
+            println!("WARNING: Dropping timer during block {}. Probably crashing.", current.name);
+            return;
+        }
+
         assert!(self.stack.is_empty());
         // TODO Formatted like a flamegraph? Emphasize the proportionally expensive sections
         println!("\n\n\nSummary:");

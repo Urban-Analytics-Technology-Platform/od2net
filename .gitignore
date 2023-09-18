@@ -10,3 +10,5 @@ examples/*/output/*
 !examples/york/input/destinations.geojson
 !examples/york/input/zones.geojson
 !examples/york/input/od.csv
+
+!examples/liverpool/input/destinations.geojson
