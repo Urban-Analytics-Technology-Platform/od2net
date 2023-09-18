@@ -18,6 +18,7 @@
   import Histogram from "./Histogram.svelte";
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
+  import { evaluateLTS } from "./lts";
   import PropertiesTable from "./PropertiesTable.svelte";
   import ToggleLayer from "./ToggleLayer.svelte";
 
@@ -82,6 +83,11 @@
       if (f.geometry.type == "LineString") {
         min = Math.min(min, f.properties.count);
         max = Math.max(max, f.properties.count);
+
+        // TODO The Rust LTS isn't ready yet
+        let result = evaluateLTS({ tags: f.properties.osm_tags });
+        f.properties.lts = result.lts;
+
         rnetGj.features.push(f);
       } else if (f.properties.origin_count) {
         originsGj.features.push(f);
