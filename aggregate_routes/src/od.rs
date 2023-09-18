@@ -3,7 +3,7 @@ use std::io::BufReader;
 
 use anyhow::Result;
 use fs_err::File;
-use geo::{BoundingRect, Contains, MultiPolygon};
+use geo::{BoundingRect, Centroid, Contains, MultiPolygon};
 use geojson::{FeatureReader, Value};
 use indicatif::HumanCount;
 use nanorand::{Rng, WyRand};
@@ -81,8 +81,9 @@ pub fn generate(
             let zones = load_zones(&zones_path)?;
             timer.stop();
             timer.start("Matching points to zones");
-            let origins_per_zone = points_per_polygon("origin", origins, &zones)?;
-            let destinations_per_zone = points_per_polygon("destination", destinations, &zones)?;
+            let origins_per_zone = points_per_polygon("origin", origins, &zones, false)?;
+            let destinations_per_zone =
+                points_per_polygon("destination", destinations, &zones, false)?;
             timer.stop();
 
             timer.start(format!("Generating requests from {csv_path}"));
@@ -118,6 +119,7 @@ pub fn generate(
             zones_path,
             csv_path,
             destinations_path,
+            origin_zone_centroid_fallback,
         } => {
             let zones_path = format!("{input_directory}/{zones_path}");
             let csv_path = format!("{input_directory}/{csv_path}");
@@ -130,7 +132,8 @@ pub fn generate(
             let destinations = load_named_points(&destinations_path)?;
             timer.stop();
             timer.start("Matching points to zones");
-            let origins_per_zone = points_per_polygon("origin", origins, &zones)?;
+            let origins_per_zone =
+                points_per_polygon("origin", origins, &zones, origin_zone_centroid_fallback)?;
             timer.stop();
 
             timer.start(format!("Generating requests from {csv_path}"));
@@ -209,6 +212,7 @@ fn points_per_polygon(
     name: &str,
     points: Vec<(f64, f64)>,
     polygons: &HashMap<String, MultiPolygon<f64>>,
+    use_centroids_for_empty_zones: bool,
 ) -> Result<HashMap<String, Vec<(f64, f64)>>> {
     let tree = RTree::bulk_load(points);
 
@@ -231,8 +235,19 @@ fn points_per_polygon(
         output.insert(key.clone(), pts_inside);
     }
 
-    if !empty.is_empty() {
+    if !empty.is_empty() && !use_centroids_for_empty_zones {
         bail!("Some zones have no matching {name} points: {:?}", empty);
+    }
+    println!(
+        "{} zones have no matching {name} points. Using centroid instead.",
+        HumanCount(empty.len() as u64)
+    );
+    for key in empty {
+        if let Some(centroid) = polygons[key].centroid() {
+            output.insert(key.clone(), vec![centroid.into()]);
+        } else {
+            bail!("{key} had no matching {name} points, and couldn't calculate its centroid");
+        }
     }
 
     Ok(output)

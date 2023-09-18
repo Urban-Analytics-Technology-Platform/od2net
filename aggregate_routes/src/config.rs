@@ -54,6 +54,8 @@ pub enum ODPattern {
         csv_path: String,
         /// Path to a GeoJSON file containing Points with a "name" property
         destinations_path: String,
+        /// If a zone doesn't have any matching origin points, use the zone's centroid instead.
+        origin_zone_centroid_fallback: bool,
     },
 }
 

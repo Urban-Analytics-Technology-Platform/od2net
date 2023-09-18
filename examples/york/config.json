@@ -5,7 +5,8 @@
 	"ZoneToPoint": {
 	  "zones_path": "zones.geojson",
 	  "destinations_path": "destinations.geojson",
-	  "csv_path": "od.csv"
+	  "csv_path": "od.csv",
+	  "origin_zone_centroid_fallback": false
         }
       }
     }

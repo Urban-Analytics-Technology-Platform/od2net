@@ -74,7 +74,10 @@ impl Timer {
 impl Drop for Timer {
     fn drop(&mut self) {
         if let Some(current) = self.stack.last() {
-            println!("WARNING: Dropping timer during block {}. Probably crashing.", current.name);
+            println!(
+                "WARNING: Dropping timer during block {}. Probably crashing.",
+                current.name
+            );
             return;
         }
 
