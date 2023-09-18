@@ -45,11 +45,13 @@ run(
 )
 
 # Then manually fix properties
+oa_ids = set()
 with open("input/clipped_oas.geojson") as f1:
     gj = json.load(f1)
     for f in gj["features"]:
         props = {"name": f["properties"]["OA11CD"]}
         f["properties"] = props
+        oa_ids.add(props["name"])
 
     with open("input/zones.geojson", "w") as f2:
         f2.write(json.dumps(gj))
@@ -66,14 +68,22 @@ with open("input/wf01aew_oa_v1.csv") as f1:
         writer.writeheader()
 
         for row in csv.reader(f1):
+            from_oa = row[0]
+            # This dataset doesn't break down by mode
+            count = int(row[2])
+
             if row[1] != target_wpz:
+                continue
+            if from_oa not in oa_ids:
+                print(
+                    f"Warning: skipping {count} trips from {from_oa}, because they're outside the clipped area around Liverpool"
+                )
                 continue
 
             writer.writerow(
                 {
-                    "from": row[0],
+                    "from": from_oa,
                     "to": "hospital",
-                    # This dataset doesn't break down by mode
-                    "count": int(row[2]),
+                    "count": count,
                 }
             )
