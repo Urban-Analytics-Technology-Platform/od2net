@@ -58,6 +58,7 @@
   };
   let lineWidth: DataDrivenPropertyValueSpecification<number> | undefined;
   let summary: string | undefined;
+  let config: any | undefined;
 
   let overrideMax = 1000;
   let originRadius = 3;
@@ -77,9 +78,12 @@
       features: [],
     };
 
+    let gj = JSON.parse(contents);
+    config = gj.config;
+
     let min = Number.MAX_VALUE;
     let max = Number.MIN_VALUE;
-    for (let f of JSON.parse(contents).features) {
+    for (let f of gj.features) {
       if (f.geometry.type == "LineString") {
         min = Math.min(min, f.properties.count);
         max = Math.max(max, f.properties.count);
@@ -172,6 +176,14 @@
   <div slot="left">
     <h1>Latent demand</h1>
     <input bind:this={fileInput} on:change={fileLoaded} type="file" />
+    {#if config}
+      <div>
+        <button
+          on:click={() => window.alert(JSON.stringify(config, null, "  "))}
+          >See config</button
+        >
+      </div>
+    {/if}
     {#if rnetGj}
       <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
       <ToggleLayer layer="endcaps-layer" {map} show={false}

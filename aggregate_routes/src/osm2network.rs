@@ -10,7 +10,7 @@ use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
-use super::config::LtsMapping;
+use super::config::{InputConfig, LtsMapping};
 use super::timer::Timer;
 use lts::Tags;
 
@@ -343,10 +343,13 @@ impl Network {
         output_od_points: bool,
         output_osm_tags: bool,
         skip_edges_with_low_count: Option<usize>,
-        lts: LtsMapping,
+        config: &InputConfig,
     ) -> Result<()> {
         // Write one feature at a time to avoid memory problems
         let mut writer = FeatureWriter::from_writer(BufWriter::new(File::create(path)?));
+        let mut foreign_member = JsonObject::new();
+        foreign_member.insert("config".to_string(), serde_json::to_value(&config)?);
+        writer.write_foreign_members(&foreign_member)?;
 
         let mut skipped = 0;
         let mut id_counter = 0;
@@ -366,7 +369,7 @@ impl Network {
             {
                 id_counter += 1;
                 let feature =
-                    edge.to_geojson(node1, node2, count, id_counter, output_osm_tags, lts);
+                    edge.to_geojson(node1, node2, count, id_counter, output_osm_tags, config.lts);
                 writer.write_feature(&feature)?;
             } else {
                 // TODO We don't handle routes starting or ending in the middle of an edge yet
@@ -402,6 +405,8 @@ impl Network {
                 }
             }
         }
+
+        writer.finish()?;
 
         Ok(())
     }

@@ -423,8 +423,7 @@ dependencies = [
 [[package]]
 name = "geojson"
 version = "0.24.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5d728c1df1fbf328d74151efe6cb0586f79ee813346ea981add69bd22c9241b"
+source = "git+https://github.com/dabreegster/geojson?branch=foreign_members_writer#0bb9399c115f268f6f9402388fea67ae6eeb955e"
 dependencies = [
  "geo-types",
  "log",

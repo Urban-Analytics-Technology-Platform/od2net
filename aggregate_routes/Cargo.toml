@@ -12,7 +12,7 @@ csv = "1.2.2"
 fast_paths = { git = "https://github.com/easbar/fast_paths" }
 fs-err = "2.9.0"
 geo = "0.26.0"
-geojson = "0.24.1"
+geojson = { git = "https://github.com/dabreegster/geojson", branch = "foreign_members_writer" }
 indicatif = { version = "0.17.6", features = ["rayon"] }
 lts = { path = "../lts" }
 nanorand = { version = "0.7.0", default-features = false, features = ["wyrand"] }

@@ -12,7 +12,7 @@ pub struct InputConfig {
     pub lts: LtsMapping,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum Requests {
     Odjitter {
         /// A GeoJSON file with LineString requests
@@ -31,7 +31,7 @@ pub enum Requests {
     },
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum ODPattern {
     /// One trip from every origin to just the first destination
     FromEveryOriginToOneDestination,

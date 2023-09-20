@@ -82,7 +82,7 @@ fn main() -> Result<()> {
     timer.stop();
 
     timer.start("Loading or generating requests");
-    let requests = match config.requests {
+    let requests = match config.requests.clone() {
         config::Requests::Odjitter {
             path,
             sample_requests,
@@ -164,7 +164,7 @@ fn main() -> Result<()> {
         !args.no_output_od_points,
         !args.no_output_osm_tags,
         args.skip_edges_with_low_count,
-        config.lts,
+        &config,
     )?;
     timer.stop();
 
