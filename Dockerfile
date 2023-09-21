@@ -1,7 +1,8 @@
 FROM rust:latest as builder
 WORKDIR /app
 COPY Cargo.lock Cargo.toml .
-COPY src ./src
+COPY aggregate_routes ./aggregate_routes
+COPY lts ./lts
 RUN cargo build --release
 
 FROM debian:bullseye-slim
