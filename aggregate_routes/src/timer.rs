@@ -30,10 +30,12 @@ struct FinishedBlock {
 
 impl Timer {
     pub fn new() -> Self {
-        Self {
+        let mut timer = Self {
             done: Vec::new(),
             stack: Vec::new(),
-        }
+        };
+        timer.start("everything");
+        timer
     }
 
     pub fn start<I: Into<String>>(&mut self, name: I) {
@@ -73,6 +75,7 @@ impl Timer {
 
 impl Drop for Timer {
     fn drop(&mut self) {
+        self.stop();
         if let Some(current) = self.stack.last() {
             println!(
                 "WARNING: Dropping timer during block {}. Probably crashing.",
@@ -81,7 +84,6 @@ impl Drop for Timer {
             return;
         }
 
-        assert!(self.stack.is_empty());
         // TODO Formatted like a flamegraph? Emphasize the proportionally expensive sections
         println!("\n\n\nSummary:");
         for block in &self.done {
