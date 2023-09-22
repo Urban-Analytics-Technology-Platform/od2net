@@ -40,7 +40,8 @@
   };
 
   let fileInput: HTMLInputElement;
-  function fileLoaded(e: Event) {
+  async function fileLoaded(e: Event) {
+    // tippecanoe output.geojson -o rnet.pmtiles -l rnet -zg -y count -y ltsf --drop-fraction-as-needed --extend-zooms-if-still-dropping
     let files = fileInput.files!;
     let pmtilesFile = new PMTiles(new FileAPISource(files[0]));
     let protocol = new Protocol();
@@ -49,13 +50,17 @@
     console.log(`all that worked somehow`);
     window.x = pmtilesFile;
 
+    let header = await pmtilesFile.getHeader();
+    let bounds = [header.minLon, header.minLat, header.maxLon, header.maxLat];
     map.addSource("pmtilesSource", {
       type: "vector",
       tiles: ["pmtiles://" + pmtilesFile.source.getKey() + "/{z}/{x}/{y}"],
-      /*minzoom: header.minZoom,
-          maxzoom: header.maxZoom,
-          bounds: bounds,*/
+      minzoom: header.minZoom,
+      maxzoom: header.maxZoom,
+      bounds,
     });
+    map.fitBounds(bounds, { padding: 100, duration: 500 });
+    adjustLineWidth(1);
 
     gotPmtiles = true;
   }
@@ -273,7 +278,7 @@
           manageHoverState
           hoverCursor="pointer"
           paint={{
-            "line-width": 10,
+            "line-width": lineWidth,
             "line-color": [
               // Colors from https://github.com/BikeOttawa/maps.bikeottawa.ca-frontend/blob/master/lts/index.html
               "match",
