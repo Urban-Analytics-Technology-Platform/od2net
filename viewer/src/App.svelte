@@ -2,10 +2,12 @@
   import turfBbox from "@turf/bbox";
   import type { Feature, FeatureCollection } from "geojson";
   import init from "lts";
+  import maplibregl from "maplibre-gl";
   import type {
     DataDrivenPropertyValueSpecification,
     Map as MapType,
   } from "maplibre-gl";
+  import { FileAPISource, PMTiles, Protocol } from "pmtiles";
   import { onMount } from "svelte";
   import {
     CircleLayer,
@@ -39,16 +41,28 @@
 
   let fileInput: HTMLInputElement;
   function fileLoaded(e: Event) {
-    let reader = new FileReader();
-    reader.onload = (e) => {
-      loadFile(e.target!.result as string);
-    };
     let files = fileInput.files!;
-    reader.readAsText(files[0]);
+    let pmtilesFile = new PMTiles(new FileAPISource(files[0]));
+    let protocol = new Protocol();
+    maplibregl.addProtocol("pmtiles", protocol.tile);
+    protocol.add(pmtilesFile);
+    console.log(`all that worked somehow`);
+    window.x = pmtilesFile;
+
+    map.addSource("pmtilesSource", {
+      type: "vector",
+      tiles: ["pmtiles://" + pmtilesFile.source.getKey() + "/{z}/{x}/{y}"],
+      /*minzoom: header.minZoom,
+          maxzoom: header.maxZoom,
+          bounds: bounds,*/
+    });
+
+    gotPmtiles = true;
   }
 
   let map: MapType;
 
+  let gotPmtiles = false;
   let rnetGj: FeatureCollection | undefined;
   let originsGj: FeatureCollection | undefined;
   let destinationsGj: FeatureCollection | undefined;
@@ -251,6 +265,40 @@
       standardControls
       bind:map
     >
+      {#if gotPmtiles}
+        <LineLayer
+          id="pmtiles-input-layer"
+          source="pmtilesSource"
+          sourceLayer="rnet"
+          manageHoverState
+          hoverCursor="pointer"
+          paint={{
+            "line-width": 10,
+            "line-color": [
+              // Colors from https://github.com/BikeOttawa/maps.bikeottawa.ca-frontend/blob/master/lts/index.html
+              "match",
+              ["get", "lts"],
+              1,
+              colors.lts1,
+              2,
+              colors.lts2,
+              3,
+              colors.lts3,
+              4,
+              colors.lts4,
+              colors.lts_unknown,
+            ],
+            "line-opacity": hoverStateFilter(1.0, 0.5),
+          }}
+          beforeId="Road labels"
+          on:click={(e) => openOSM(e.detail.features[0])}
+        >
+          <Popup openOn="hover" let:features>
+            <PropertiesTable properties={features[0].properties} />
+          </Popup>
+        </LineLayer>
+      {/if}
+
       {#if rnetGj}
         <GeoJSON id="endcaps" data={endcaps}>
           <CircleLayer
