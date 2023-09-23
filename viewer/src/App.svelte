@@ -46,8 +46,6 @@
     let protocol = new Protocol();
     maplibregl.addProtocol("pmtiles", protocol.tile);
     protocol.add(pmtilesFile);
-    console.log(`all that worked somehow`);
-    window.x = pmtilesFile;
 
     let header = await pmtilesFile.getHeader();
     let bounds = [header.minLon, header.minLat, header.maxLon, header.maxLat];
@@ -277,6 +275,8 @@
           id="pmtiles-input-layer"
           source="pmtilesSource"
           sourceLayer="rnet"
+          filter={// Ignore OD points
+          ["==", ["geometry-type"], "LineString"]}
           manageHoverState
           hoverCursor="pointer"
           paint={{
