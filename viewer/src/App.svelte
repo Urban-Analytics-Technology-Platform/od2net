@@ -61,6 +61,9 @@
     map.fitBounds(bounds, { padding: 100, duration: 500 });
     adjustLineWidth(1);
 
+    let metadata = await pmtilesFile.getMetadata();
+    config = JSON.parse(metadata.description);
+
     gotPmtiles = true;
   }
 

@@ -181,6 +181,9 @@ fn main() -> Result<()> {
         .arg("-zg") // Guess the zoom
         .arg("--drop-fraction-as-needed") // TODO Drop based on low counts
         .arg("--extend-zooms-if-still-dropping")
+        // Plumb through the config as a JSON string in the description
+        .arg("--description")
+        .arg(serde_json::to_string(&config)?)
         .status()?;
     if !status.success() {
         bail!("tippecanoe failed");
