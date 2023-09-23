@@ -15,6 +15,7 @@ TODO: Write intro
 You'll need:
 
 - Rust (1.71 or newer), or Docker
+- [tippecanoe](https://github.com/felt/tippecanoe)
 - ogr2ogr with [OSM support](https://gdal.org/drivers/vector/osm.html)
 - [osmium](https://osmcode.org/osmium-tool/manual.html#installation)
 - Python 3 (no external dependencies) to run example scripts

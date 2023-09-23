@@ -67,14 +67,9 @@
 
   let map: MapType;
 
+  // TODO Rename as 'loaded' or something, or maybe even store the protocol to later unload it
   let gotPmtiles = false;
   let rnetGj: FeatureCollection | undefined;
-  let originsGj: FeatureCollection | undefined;
-  let destinationsGj: FeatureCollection | undefined;
-  let endcaps: FeatureCollection = {
-    type: "FeatureCollection",
-    features: [],
-  };
   let lineWidth: DataDrivenPropertyValueSpecification<number> | undefined;
   let summary: string | undefined;
   let config: any | undefined;
@@ -85,14 +80,6 @@
 
   function loadFile(contents: string) {
     rnetGj = {
-      type: "FeatureCollection",
-      features: [],
-    };
-    originsGj = {
-      type: "FeatureCollection",
-      features: [],
-    };
-    destinationsGj = {
       type: "FeatureCollection",
       features: [],
     };
@@ -112,16 +99,10 @@
         f.properties.lts = result.lts;
 
         rnetGj.features.push(f);
-      } else if (f.properties.origin_count) {
-        originsGj.features.push(f);
-      } else {
-        destinationsGj.features.push(f);
       }
     }
 
     map.fitBounds(bbox(rnetGj!), { padding: 100, duration: 500 });
-
-    //recalculateEndcaps();
 
     summary = `Route segment counts from ${min.toFixed(2)} to ${max.toFixed(
       2
@@ -131,33 +112,6 @@
 
     // Make sure Svelte sees the update
     rnetGj = rnetGj;
-    originsGj = originsGj;
-    destinationsGj = destinationsGj;
-  }
-
-  function recalculateEndcaps() {
-    let counts = new Map();
-    for (let f of rnetGj.features) {
-      for (let pt of [
-        f.geometry.coordinates[0],
-        f.geometry.coordinates[f.geometry.coordinates.length - 1],
-      ]) {
-        // TODO Overwrite arbitrarily for now
-        counts.set(pt, f.properties.count);
-      }
-    }
-    endcaps.features = [];
-    for (let [coordinates, count] of counts.entries()) {
-      endcaps.features.push({
-        type: "Feature",
-        properties: { count },
-        geometry: {
-          type: "Point",
-          coordinates,
-        },
-      });
-    }
-    endcaps = endcaps;
   }
 
   function adjustLineWidth(min: number) {
@@ -203,11 +157,8 @@
         >
       </div>
     {/if}
-    {#if rnetGj}
+    {#if gotPmtiles}
       <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
-      <ToggleLayer layer="endcaps-layer" {map} show={false}
-        >Endcaps for routes</ToggleLayer
-      >
       <ToggleLayer layer="origins-layer" {map} show={false}
         ><span style="color: {colors.origins}">Origins</span></ToggleLayer
       >
@@ -224,9 +175,6 @@
         ]}
       />
       <p>{summary}</p>
-      <p>
-        {originsGj.features.length} origins, {destinationsGj.features.length} destinations
-      </p>
 
       <div>
         <label>
@@ -252,10 +200,6 @@
         </label>
       </div>
 
-      <Histogram
-        title="Edge counts"
-        data={rnetGj.features.map((f) => f.properties.count)}
-      />
       <p>
         Note: LTS model from <a
           href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
@@ -272,11 +216,10 @@
     >
       {#if gotPmtiles}
         <LineLayer
-          id="pmtiles-input-layer"
+          id="input-layer"
           source="pmtilesSource"
           sourceLayer="rnet"
-          filter={// Ignore OD points
-          ["==", ["geometry-type"], "LineString"]}
+          filter={["==", ["geometry-type"], "LineString"]}
           manageHoverState
           hoverCursor="pointer"
           paint={{
@@ -304,83 +247,40 @@
             <PropertiesTable properties={features[0].properties} />
           </Popup>
         </LineLayer>
-      {/if}
 
-      {#if rnetGj}
-        <GeoJSON id="endcaps" data={endcaps}>
-          <CircleLayer
-            id="endcaps-layer"
-            paint={{
-              "circle-color": "red",
-              "circle-radius": ["/", lineWidth, 2.0],
-            }}
-          />
-        </GeoJSON>
-        <GeoJSON id="input" data={rnetGj}>
-          <LineLayer
-            id="input-layer"
-            manageHoverState
-            hoverCursor="pointer"
-            paint={{
-              "line-width": lineWidth,
-              "line-color": [
-                // Colors from https://github.com/BikeOttawa/maps.bikeottawa.ca-frontend/blob/master/lts/index.html
-                "match",
-                ["get", "lts"],
-                1,
-                colors.lts1,
-                2,
-                colors.lts2,
-                3,
-                colors.lts3,
-                4,
-                colors.lts4,
-                colors.lts_unknown,
-              ],
-              "line-opacity": hoverStateFilter(1.0, 0.5),
-            }}
-            beforeId="Road labels"
-            on:click={(e) => openOSM(e.detail.features[0])}
-          >
-            <Popup openOn="hover" let:features>
-              <PropertiesTable properties={features[0].properties} />
-            </Popup>
-          </LineLayer>
-        </GeoJSON>
-      {/if}
-      {#if originsGj}
-        <GeoJSON id="origins" data={originsGj}>
-          <CircleLayer
-            id="origins-layer"
-            manageHoverState
-            paint={{
-              "circle-color": colors.origins,
-              "circle-radius": originRadius,
-            }}
-            layout={{ visibility: "none" }}
-          >
-            <Popup openOn="hover" let:features>
-              {features[0].properties.origin_count} routes start here
-            </Popup>
-          </CircleLayer>
-        </GeoJSON>
-      {/if}
-      {#if destinationsGj}
-        <GeoJSON id="destinations" data={destinationsGj}>
-          <CircleLayer
-            id="destinations-layer"
-            manageHoverState
-            paint={{
-              "circle-color": colors.destinations,
-              "circle-radius": destinationRadius,
-            }}
-            layout={{ visibility: "none" }}
-          >
-            <Popup openOn="hover" let:features>
-              {features[0].properties.destination_count} routes end here
-            </Popup>
-          </CircleLayer>
-        </GeoJSON>
+        <CircleLayer
+          id="origins-layer"
+          source="pmtilesSource"
+          sourceLayer="rnet"
+          filter={["has", "origin_count"]}
+          manageHoverState
+          paint={{
+            "circle-color": colors.origins,
+            "circle-radius": originRadius,
+          }}
+          layout={{ visibility: "none" }}
+        >
+          <Popup openOn="hover" let:features>
+            {features[0].properties.origin_count} routes start here
+          </Popup>
+        </CircleLayer>
+
+        <CircleLayer
+          id="destinations-layer"
+          source="pmtilesSource"
+          sourceLayer="rnet"
+          filter={["has", "destination_count"]}
+          manageHoverState
+          paint={{
+            "circle-color": colors.destinations,
+            "circle-radius": destinationRadius,
+          }}
+          layout={{ visibility: "none" }}
+        >
+          <Popup openOn="hover" let:features>
+            {features[0].properties.destination_count} routes end here
+          </Popup>
+        </CircleLayer>
       {/if}
     </MapLibre>
   </div>
