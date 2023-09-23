@@ -17,7 +17,6 @@
     MapLibre,
     Popup,
   } from "svelte-maplibre";
-  import Histogram from "./Histogram.svelte";
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
   import { evaluateLTS } from "./lts";
