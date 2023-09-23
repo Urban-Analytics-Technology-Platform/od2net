@@ -34,8 +34,30 @@
     lts_unknown: "black",
   };
 
+  function cleanupSource(id: string) {
+    if (map.getSource(id)) {
+      // First remove all layers using this source
+      let layers = [];
+      for (let layer of map.getStyle().layers) {
+        if ("source" in layer && layer.source == id) {
+          layers.push(layer.id);
+        }
+      }
+      for (let layer of layers) {
+        map.removeLayer(layer);
+      }
+
+      map.removeSource(id);
+    }
+  }
+
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
+    let source = "pmtilesSource";
+    // Teardown previous file if needed
+    // TODO Do we need to removeProtocol? Any memory leak?
+    cleanupSource(source);
+
     let files = fileInput.files!;
     let pmtilesFile = new PMTiles(new FileAPISource(files[0]));
     let protocol = new Protocol();
@@ -49,7 +71,7 @@
       header.maxLon,
       header.maxLat,
     ];
-    map.addSource("pmtilesSource", {
+    map.addSource(source, {
       type: "vector",
       tiles: ["pmtiles://" + pmtilesFile.source.getKey() + "/{z}/{x}/{y}"],
       minzoom: header.minZoom,
@@ -62,13 +84,13 @@
     let metadata = await pmtilesFile.getMetadata();
     config = JSON.parse(metadata.description);
 
-    gotPmtiles = true;
+    loadedFileCount++;
   }
 
   let map: MapType;
 
-  // TODO Rename as 'loaded' or something, or maybe even store the protocol to later unload it
-  let gotPmtiles = false;
+  // TODO Use a counter to recreate layers after cleaning up a source. Hack.
+  let loadedFileCount = 0;
   let lineWidth: DataDrivenPropertyValueSpecification<number> | undefined;
   let config: any | undefined;
 
@@ -95,7 +117,7 @@
     lineWidth = ["+", thin, ["*", range_output, calculatePercent]];
   }
 
-  function openOSM(feature: Feature) {
+  function openOSM(feature) {
     let id = feature.properties.way;
     window.open(`http://openstreetmap.org/way/${id}`, "_blank");
   }
@@ -113,7 +135,7 @@
         >
       </div>
     {/if}
-    {#if gotPmtiles}
+    {#if loadedFileCount > 0}
       <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
       <div>
         <label>
@@ -171,73 +193,75 @@
       standardControls
       bind:map
     >
-      {#if gotPmtiles}
-        <LineLayer
-          id="input-layer"
-          source="pmtilesSource"
-          sourceLayer="rnet"
-          filter={["==", ["geometry-type"], "LineString"]}
-          manageHoverState
-          hoverCursor="pointer"
-          paint={{
-            "line-width": lineWidth,
-            "line-color": [
-              // Colors from https://github.com/BikeOttawa/maps.bikeottawa.ca-frontend/blob/master/lts/index.html
-              "match",
-              ["get", "lts"],
-              1,
-              colors.lts1,
-              2,
-              colors.lts2,
-              3,
-              colors.lts3,
-              4,
-              colors.lts4,
-              colors.lts_unknown,
-            ],
-            "line-opacity": hoverStateFilter(1.0, 0.5),
-          }}
-          beforeId="Road labels"
-          on:click={(e) => openOSM(e.detail.features[0])}
-        >
-          <Popup openOn="hover" let:features>
-            <PropertiesTable properties={features[0].properties} />
-          </Popup>
-        </LineLayer>
+      {#if loadedFileCount > 0}
+        {#key loadedFileCount}
+          <LineLayer
+            id="input-layer"
+            source="pmtilesSource"
+            sourceLayer="rnet"
+            filter={["==", ["geometry-type"], "LineString"]}
+            manageHoverState
+            hoverCursor="pointer"
+            paint={{
+              "line-width": lineWidth,
+              "line-color": [
+                // Colors from https://github.com/BikeOttawa/maps.bikeottawa.ca-frontend/blob/master/lts/index.html
+                "match",
+                ["get", "lts"],
+                1,
+                colors.lts1,
+                2,
+                colors.lts2,
+                3,
+                colors.lts3,
+                4,
+                colors.lts4,
+                colors.lts_unknown,
+              ],
+              "line-opacity": hoverStateFilter(1.0, 0.5),
+            }}
+            beforeId="Road labels"
+            on:click={(e) => openOSM(e.detail.features[0])}
+          >
+            <Popup openOn="hover" let:features>
+              <PropertiesTable properties={features[0].properties} />
+            </Popup>
+          </LineLayer>
 
-        <CircleLayer
-          id="origins-layer"
-          source="pmtilesSource"
-          sourceLayer="rnet"
-          filter={["has", "origin_count"]}
-          manageHoverState
-          paint={{
-            "circle-color": colors.origins,
-            "circle-radius": originRadius,
-          }}
-          layout={{ visibility: "none" }}
-        >
-          <Popup openOn="hover" let:features>
-            {features[0].properties.origin_count} routes start here
-          </Popup>
-        </CircleLayer>
+          <CircleLayer
+            id="origins-layer"
+            source="pmtilesSource"
+            sourceLayer="rnet"
+            filter={["has", "origin_count"]}
+            manageHoverState
+            paint={{
+              "circle-color": colors.origins,
+              "circle-radius": originRadius,
+            }}
+            layout={{ visibility: "none" }}
+          >
+            <Popup openOn="hover" let:features>
+              {features[0].properties.origin_count} routes start here
+            </Popup>
+          </CircleLayer>
 
-        <CircleLayer
-          id="destinations-layer"
-          source="pmtilesSource"
-          sourceLayer="rnet"
-          filter={["has", "destination_count"]}
-          manageHoverState
-          paint={{
-            "circle-color": colors.destinations,
-            "circle-radius": destinationRadius,
-          }}
-          layout={{ visibility: "none" }}
-        >
-          <Popup openOn="hover" let:features>
-            {features[0].properties.destination_count} routes end here
-          </Popup>
-        </CircleLayer>
+          <CircleLayer
+            id="destinations-layer"
+            source="pmtilesSource"
+            sourceLayer="rnet"
+            filter={["has", "destination_count"]}
+            manageHoverState
+            paint={{
+              "circle-color": colors.destinations,
+              "circle-radius": destinationRadius,
+            }}
+            layout={{ visibility: "none" }}
+          >
+            <Popup openOn="hover" let:features>
+              {features[0].properties.destination_count} routes end here
+            </Popup>
+          </CircleLayer>
+        {/key}
       {/if}
     </MapLibre>
   </div>
