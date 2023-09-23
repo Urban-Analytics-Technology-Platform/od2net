@@ -35,9 +35,6 @@ struct Args {
     /// Don't output OSM tags in the GeoJSON output, to reduce file size.
     #[clap(long)]
     no_output_osm_tags: bool,
-    /// Don't output edges with total counts below this threshold.
-    #[clap(long)]
-    skip_edges_with_low_count: Option<usize>,
 
     /// Instead of doing what this tool normally does, instead calculate this many routes and write
     /// a separate GeoJSON file for each of them, with full segment-level detail. This will be slow
@@ -165,7 +162,6 @@ fn main() -> Result<()> {
         counts,
         !args.no_output_od_points,
         !args.no_output_osm_tags,
-        args.skip_edges_with_low_count,
         &config,
     )?;
     timer.stop();
