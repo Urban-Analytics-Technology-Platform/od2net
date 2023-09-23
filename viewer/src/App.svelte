@@ -157,24 +157,9 @@
       </div>
     {/if}
     {#if gotPmtiles}
-      <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
-      <ToggleLayer layer="origins-layer" {map} show={false}
-        ><span style="color: {colors.origins}">Origins</span></ToggleLayer
-      >
-      <ToggleLayer layer="destinations-layer" {map} show={false}
-        ><span style="color: {colors.destinations}">Destinations</span
-        ></ToggleLayer
-      >
-      <Legend
-        rows={[
-          ["LTS 1 - suitable for children", colors.lts1],
-          ["LTS 2 - low stress", colors.lts2],
-          ["LTS 3 - medium stress", colors.lts3],
-          ["LTS 4 - high stress", colors.lts4],
-        ]}
-      />
       <p>{summary}</p>
 
+      <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
       <div>
         <label>
           Override max for line width styling:<br />
@@ -186,12 +171,21 @@
           />
         </label>
       </div>
+
+      <ToggleLayer layer="origins-layer" {map} show={false}
+        ><span style="color: {colors.origins}">Origins</span></ToggleLayer
+      >
       <div>
         <label>
           Change origin point size:<br />
           <input type="number" bind:value={originRadius} min={1} />
         </label>
       </div>
+
+      <ToggleLayer layer="destinations-layer" {map} show={false}
+        ><span style="color: {colors.destinations}">Destinations</span
+        ></ToggleLayer
+      >
       <div>
         <label>
           Change destination point size:<br />
@@ -199,6 +193,15 @@
         </label>
       </div>
 
+      <hr />
+      <Legend
+        rows={[
+          ["LTS 1 - suitable for children", colors.lts1],
+          ["LTS 2 - low stress", colors.lts2],
+          ["LTS 3 - medium stress", colors.lts3],
+          ["LTS 4 - high stress", colors.lts4],
+        ]}
+      />
       <p>
         Note: LTS model from <a
           href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
