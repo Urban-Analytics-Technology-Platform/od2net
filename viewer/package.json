@@ -15,7 +15,6 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.0.2",
     "@sveltejs/vite-plugin-svelte": "^2.4.2",
     "@tsconfig/svelte": "^4.0.1",
-    "@types/geojson": "^7946.0.10",
     "prettier": "^2.8.8",
     "prettier-plugin-svelte": "^2.10.1",
     "svelte": "^4.0.0",
@@ -26,7 +25,6 @@
     "vite-plugin-wasm-pack": "0.1.11"
   },
   "dependencies": {
-    "@turf/bbox": "^6.5.0",
     "pmtiles": "^2.10.0",
     "svelte-maplibre": "^0.3.1"
   }

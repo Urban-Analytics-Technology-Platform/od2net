@@ -1,6 +1,4 @@
 <script lang="ts">
-  import turfBbox from "@turf/bbox";
-  import type { Feature, FeatureCollection } from "geojson";
   import init from "lts";
   import maplibregl from "maplibre-gl";
   import type {
@@ -11,7 +9,6 @@
   import { onMount } from "svelte";
   import {
     CircleLayer,
-    GeoJSON,
     hoverStateFilter,
     LineLayer,
     MapLibre,
@@ -19,7 +16,6 @@
   } from "svelte-maplibre";
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
-  import { evaluateLTS } from "./lts";
   import PropertiesTable from "./PropertiesTable.svelte";
   import ToggleLayer from "./ToggleLayer.svelte";
 
@@ -47,7 +43,12 @@
     protocol.add(pmtilesFile);
 
     let header = await pmtilesFile.getHeader();
-    let bounds = [header.minLon, header.minLat, header.maxLon, header.maxLat];
+    let bounds: [number, number, number, number] = [
+      header.minLon,
+      header.minLat,
+      header.maxLon,
+      header.maxLat,
+    ];
     map.addSource("pmtilesSource", {
       type: "vector",
       tiles: ["pmtiles://" + pmtilesFile.source.getKey() + "/{z}/{x}/{y}"],
@@ -56,7 +57,7 @@
       bounds,
     });
     map.fitBounds(bounds, { padding: 100, duration: 500 });
-    adjustLineWidth(1);
+    adjustLineWidth();
 
     let metadata = await pmtilesFile.getMetadata();
     config = JSON.parse(metadata.description);
@@ -68,54 +69,15 @@
 
   // TODO Rename as 'loaded' or something, or maybe even store the protocol to later unload it
   let gotPmtiles = false;
-  let rnetGj: FeatureCollection | undefined;
   let lineWidth: DataDrivenPropertyValueSpecification<number> | undefined;
-  let summary: string | undefined;
   let config: any | undefined;
 
-  let overrideMax = 1000;
+  let max = 1000;
   let originRadius = 3;
   let destinationRadius = 3;
 
-  function loadFile(contents: string) {
-    rnetGj = {
-      type: "FeatureCollection",
-      features: [],
-    };
-
-    let gj = JSON.parse(contents);
-    config = gj.config;
-
-    let min = Number.MAX_VALUE;
-    let max = Number.MIN_VALUE;
-    for (let f of gj.features) {
-      if (f.geometry.type == "LineString") {
-        min = Math.min(min, f.properties.count);
-        max = Math.max(max, f.properties.count);
-
-        // TODO The Rust LTS isn't ready yet
-        let result = evaluateLTS({ tags: f.properties.osm_tags });
-        f.properties.lts = result.lts;
-
-        rnetGj.features.push(f);
-      }
-    }
-
-    map.fitBounds(bbox(rnetGj!), { padding: 100, duration: 500 });
-
-    summary = `Route segment counts from ${min.toFixed(2)} to ${max.toFixed(
-      2
-    )}`;
-
-    adjustLineWidth(min);
-
-    // Make sure Svelte sees the update
-    rnetGj = rnetGj;
-  }
-
-  function adjustLineWidth(min: number) {
-    // Manually fake the max, and clamp below
-    let max = overrideMax;
+  function adjustLineWidth() {
+    let min = 0;
 
     // Linearly interpolate between thin and thick, based on the percent each count is between min and max
     let thin = 2;
@@ -131,11 +93,6 @@
     ];
     // thin + range_output * percent
     lineWidth = ["+", thin, ["*", range_output, calculatePercent]];
-  }
-
-  // Suitable for passing to map.fitBounds. Work around https://github.com/Turfjs/turf/issues/1807.
-  function bbox(gj: FeatureCollection): [number, number, number, number] {
-    return turfBbox(gj) as [number, number, number, number];
   }
 
   function openOSM(feature: Feature) {
@@ -157,17 +114,15 @@
       </div>
     {/if}
     {#if gotPmtiles}
-      <p>{summary}</p>
-
       <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
       <div>
         <label>
-          Override max for line width styling:<br />
+          Max for line width styling:<br />
           <input
             type="number"
-            bind:value={overrideMax}
+            bind:value={max}
             min={1}
-            on:change={() => adjustLineWidth(0)}
+            on:change={() => adjustLineWidth()}
           />
         </label>
       </div>
