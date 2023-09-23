@@ -11,6 +11,8 @@ mod plugins;
 mod requests;
 mod timer;
 
+use std::process::Command;
+
 use anyhow::Result;
 use clap::Parser;
 use indicatif::HumanCount;
@@ -166,6 +168,23 @@ fn main() -> Result<()> {
         args.skip_edges_with_low_count,
         &config,
     )?;
+    timer.stop();
+
+    timer.start("Converting to pmtiles for rendering");
+    let status = Command::new("tippecanoe")
+        .arg(format!("{directory}/output/output.geojson"))
+        .arg("-o")
+        .arg(format!("{directory}/output/rnet.pmtiles"))
+        .arg("--force") // Overwrite existing output
+        .arg("-l")
+        .arg("rnet")
+        .arg("-zg") // Guess the zoom
+        .arg("--drop-fraction-as-needed") // TODO Drop based on low counts
+        .arg("--extend-zooms-if-still-dropping")
+        .status()?;
+    if !status.success() {
+        bail!("tippecanoe failed");
+    }
     timer.stop();
 
     Ok(())

@@ -41,7 +41,6 @@
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
-    // tippecanoe output.geojson -o rnet.pmtiles -l rnet -zg -y count -y ltsf --drop-fraction-as-needed --extend-zooms-if-still-dropping
     let files = fileInput.files!;
     let pmtilesFile = new PMTiles(new FileAPISource(files[0]));
     let protocol = new Protocol();

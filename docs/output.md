@@ -10,6 +10,10 @@ The main mode of the tool outputs a GeoJSON FeatureCollection, with each LineStr
 - `count` represents the sum of trips along the segment. This is equal to the number of trips crossing the segment when the uptake model is "Identity", and something weighted for other uptake models.
 - `lts` is the Level of Traffic Stress for the segment, based on the chosen configuration. `0` means not allowed, `1` is suitable for children, and `4` is high stress.
 
+TODO: counts.csv
+
+TODO: the pmtiles for rendering
+
 ## Detailed routes
 
 If you call the tool with `--detailed_routes`, you'll get individual GeoJSON files, each representing one route. The route is broken into LineStrings representing each segment. The direction followed across the segment is indicated both by the order of points and `node1` and `node2`. The properties for each Feature are the same as above, except there's no `count`, since this is just a single route.
