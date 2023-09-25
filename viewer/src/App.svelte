@@ -53,38 +53,45 @@
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
-    let source = "pmtilesSource";
-    // Teardown previous file if needed
-    // TODO Do we need to removeProtocol? Any memory leak?
-    cleanupSource(source);
+    try {
+      let files = fileInput.files!;
+      let pmtilesFile = new PMTiles(new FileAPISource(files[0]));
+      let protocol = new Protocol();
+      maplibregl.addProtocol("pmtiles", protocol.tile);
+      protocol.add(pmtilesFile);
 
-    let files = fileInput.files!;
-    let pmtilesFile = new PMTiles(new FileAPISource(files[0]));
-    let protocol = new Protocol();
-    maplibregl.addProtocol("pmtiles", protocol.tile);
-    protocol.add(pmtilesFile);
+      let header = await pmtilesFile.getHeader();
+      let bounds: [number, number, number, number] = [
+        header.minLon,
+        header.minLat,
+        header.maxLon,
+        header.maxLat,
+      ];
 
-    let header = await pmtilesFile.getHeader();
-    let bounds: [number, number, number, number] = [
-      header.minLon,
-      header.minLat,
-      header.maxLon,
-      header.maxLat,
-    ];
-    map.addSource(source, {
-      type: "vector",
-      tiles: ["pmtiles://" + pmtilesFile.source.getKey() + "/{z}/{x}/{y}"],
-      minzoom: header.minZoom,
-      maxzoom: header.maxZoom,
-      bounds,
-    });
-    map.fitBounds(bounds, { padding: 100, duration: 500 });
-    adjustLineWidth();
+      let source = "pmtilesSource";
+      // Teardown previous file if needed
+      // TODO Do we need to removeProtocol? Any memory leak?
+      cleanupSource(source);
 
-    let metadata = await pmtilesFile.getMetadata();
-    config = JSON.parse(metadata.description);
+      map.addSource(source, {
+        type: "vector",
+        tiles: ["pmtiles://" + pmtilesFile.source.getKey() + "/{z}/{x}/{y}"],
+        minzoom: header.minZoom,
+        maxzoom: header.maxZoom,
+        bounds,
+      });
+      map.fitBounds(bounds, { padding: 100, duration: 500 });
+      adjustLineWidth();
 
-    loadedFileCount++;
+      let metadata = await pmtilesFile.getMetadata();
+      config = JSON.parse(metadata.description);
+
+      loadedFileCount++;
+    } catch (err) {
+      window.alert(
+        `Problem loading this PMTiles file. Don't open the GeoJSON file; make sure to select .pmtiles. Error: ${err}`
+      );
+    }
   }
 
   let map: MapType;
@@ -126,7 +133,13 @@
 <Layout>
   <div slot="left">
     <h1>Latent demand</h1>
-    <input bind:this={fileInput} on:change={fileLoaded} type="file" />
+    <label>
+      {#if loadedFileCount == 0}
+        Open a <i>.pmtiles</i> file produced by the tool. Note this file stays in
+        your browser; it doesn't get uploaded anywhere.
+      {/if}
+      <input bind:this={fileInput} on:change={fileLoaded} type="file" />
+    </label>
     {#if config}
       <div>
         <button
