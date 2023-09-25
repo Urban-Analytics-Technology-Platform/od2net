@@ -16,6 +16,7 @@ use std::process::Command;
 use anyhow::Result;
 use clap::Parser;
 use indicatif::HumanCount;
+use serde::Serialize;
 
 #[derive(Parser)]
 #[clap(about, version, author)]
@@ -156,13 +157,18 @@ fn main() -> Result<()> {
         timer.stop();
     }
 
+    let output_metadata = OutputMetadata {
+        config,
+        num_origins: counts.count_per_origin.len(),
+        num_destinations: counts.count_per_destination.len(),
+    };
     timer.start("Writing output GJ");
     network.write_geojson(
         &format!("{directory}/output/output.geojson"),
         counts,
         !args.no_output_od_points,
         !args.no_output_osm_tags,
-        &config,
+        &output_metadata.config,
     )?;
     timer.stop();
 
@@ -179,7 +185,7 @@ fn main() -> Result<()> {
         .arg("--extend-zooms-if-still-dropping")
         // Plumb through the config as a JSON string in the description
         .arg("--description")
-        .arg(serde_json::to_string(&config)?)
+        .arg(serde_json::to_string(&output_metadata)?)
         .status()?;
     if !status.success() {
         bail!("tippecanoe failed");
@@ -187,4 +193,12 @@ fn main() -> Result<()> {
     timer.stop();
 
     Ok(())
+}
+
+// TODO Move, maybe an output.rs with big chunks of osm2network too
+#[derive(Serialize)]
+struct OutputMetadata {
+    config: config::InputConfig,
+    num_origins: usize,
+    num_destinations: usize,
 }

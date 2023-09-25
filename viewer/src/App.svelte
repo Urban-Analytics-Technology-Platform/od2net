@@ -84,7 +84,7 @@
       adjustLineWidth();
 
       let metadata = await pmtilesFile.getMetadata();
-      config = JSON.parse(metadata.description);
+      outputMetadata = JSON.parse(metadata.description);
 
       loadedFileCount++;
     } catch (err) {
@@ -99,7 +99,7 @@
   // TODO Use a counter to recreate layers after cleaning up a source. Hack.
   let loadedFileCount = 0;
   let lineWidth: DataDrivenPropertyValueSpecification<number> | undefined;
-  let config: any | undefined;
+  let outputMetadata: any | undefined;
 
   let max = 1000;
   let originRadius = 3;
@@ -140,10 +140,11 @@
       {/if}
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
-    {#if config}
+    {#if outputMetadata}
       <div>
         <button
-          on:click={() => window.alert(JSON.stringify(config, null, "  "))}
+          on:click={() =>
+            window.alert(JSON.stringify(outputMetadata.config, null, "  "))}
           >See config</button
         >
       </div>
@@ -163,7 +164,9 @@
       </div>
 
       <ToggleLayer layer="origins-layer" {map} show={false}
-        ><span style="color: {colors.origins}">Origins</span></ToggleLayer
+        ><span style="color: {colors.origins}"
+          >Origins ({outputMetadata.num_origins.toLocaleString()})</span
+        ></ToggleLayer
       >
       <div>
         <label>
@@ -173,7 +176,8 @@
       </div>
 
       <ToggleLayer layer="destinations-layer" {map} show={false}
-        ><span style="color: {colors.destinations}">Destinations</span
+        ><span style="color: {colors.destinations}"
+          >Destinations ({outputMetadata.num_destinations.toLocaleString()})</span
         ></ToggleLayer
       >
       <div>
