@@ -13,7 +13,7 @@ struct Input {
 
 #[derive(Serialize)]
 struct Output {
-    lts: usize,
+    lts: LTS,
     messages: Vec<String>,
 }
 
@@ -36,7 +36,7 @@ pub fn calculate(input: JsValue) -> Result<JsValue, JsValue> {
         )
     };
     let result = serde_wasm_bindgen::to_value(&Output {
-        lts: lts.into_json(),
+        lts,
         messages,
     })?;
     Ok(result)

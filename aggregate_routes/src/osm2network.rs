@@ -190,7 +190,7 @@ impl Edge {
         properties.insert("node2".to_string(), JsonValue::from(node2));
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
         properties.insert("count".to_string(), JsonValue::from(count));
-        properties.insert("lts".to_string(), JsonValue::from(self.lts.into_json()));
+        properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
         Feature {
             bbox: None,
             geometry: Some(geometry),
@@ -225,7 +225,7 @@ impl Edge {
         properties.insert("node1".to_string(), JsonValue::from(node1));
         properties.insert("node2".to_string(), JsonValue::from(node2));
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
-        properties.insert("lts".to_string(), JsonValue::from(self.lts.into_json()));
+        properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
         Feature {
             bbox: None,
             geometry: Some(geometry),
@@ -372,13 +372,7 @@ impl Network {
                 .or_else(|| self.edges.get(&(node2, node1)))
             {
                 id_counter += 1;
-                let feature = edge.to_geojson(
-                    node1,
-                    node2,
-                    count,
-                    id_counter,
-                    output_osm_tags,
-                );
+                let feature = edge.to_geojson(node1, node2, count, id_counter, output_osm_tags);
                 writer.write_feature(&feature)?;
             } else {
                 // TODO We don't handle routes starting or ending in the middle of an edge yet
