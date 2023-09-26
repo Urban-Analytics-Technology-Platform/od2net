@@ -3,7 +3,7 @@ use std::io::BufWriter;
 use anyhow::Result;
 use fs_err::File;
 
-use super::config::{CostFunction, LtsMapping, Uptake};
+use super::config::{CostFunction, Uptake};
 use super::custom_routing::{build_ch, build_closest_intersection, PreparedCH};
 use super::osm2network::Network;
 use super::requests::Request;
@@ -16,7 +16,6 @@ pub fn run(
     requests: Vec<Request>,
     cost: CostFunction,
     uptake: &Uptake,
-    lts: &LtsMapping,
     output_directory: String,
     timer: &mut Timer,
 ) -> Result<()> {
@@ -46,7 +45,6 @@ pub fn run(
                 path,
                 &prepared_ch,
                 network,
-                lts,
             )?;
             if i == num_requests {
                 break;
@@ -63,7 +61,6 @@ fn output_detailed_route(
     path: fast_paths::ShortestPath,
     prepared_ch: &PreparedCH,
     network: &Network,
-    lts: &LtsMapping,
 ) -> Result<()> {
     // TODO Include uptake and stats about the entire route
 
@@ -77,7 +74,7 @@ fn output_detailed_route(
         } else {
             (network.edges.get(&(i2, i1)).unwrap(), false)
         };
-        features.push(edge.to_geojson_for_detailed_output(i1, i2, lts, geometry_forwards));
+        features.push(edge.to_geojson_for_detailed_output(i1, i2, geometry_forwards));
     }
 
     let gj = geojson::FeatureCollection {

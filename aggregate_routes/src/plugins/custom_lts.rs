@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 
 use lts::{Tags, LTS};
 
-pub fn external_command(command: &str, tags: Tags) -> Result<(LTS, Vec<String>)> {
+pub fn external_command(command: &str, tags: Tags) -> Result<LTS> {
     let args: Vec<&str> = command.split(" ").collect();
 
     let mut cmd = Command::new(args[0])
@@ -19,5 +19,5 @@ pub fn external_command(command: &str, tags: Tags) -> Result<(LTS, Vec<String>)>
     let output = String::from_utf8(cmd.wait_with_output()?.stdout)?;
     let num = output.trim().parse::<usize>()?;
     let lts = LTS::from_json(num).context("Unknown LTS number")?;
-    Ok((lts, Vec::new()))
+    Ok(lts)
 }

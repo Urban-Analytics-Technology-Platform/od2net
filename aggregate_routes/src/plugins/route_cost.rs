@@ -12,6 +12,7 @@ pub fn edge_cost(edge: &Edge, cost: CostFunction) -> Option<usize> {
 
     let output = match cost {
         CostFunction::Distance => edge.length_meters,
+        // TODO Reframe this to just penalize by LTS?
         CostFunction::AvoidMainRoads => {
             // TODO Match the LTS definitoins
             let penalty = if tags.is("highway", "residential") || tags.is("highway", "cycleway") {

@@ -6,14 +6,14 @@ use fs_err::File;
 use geo::prelude::HaversineLength;
 use geo::LineString;
 use geojson::{feature::Id, Feature, FeatureWriter, Geometry, JsonObject, JsonValue, Value};
-use indicatif::HumanCount;
+use indicatif::{HumanCount, ProgressBar, ProgressStyle};
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
 use super::config::{InputConfig, LtsMapping};
 use super::plugins;
 use super::timer::Timer;
-use lts::Tags;
+use lts::{Tags, LTS};
 
 #[derive(Serialize, Deserialize)]
 pub struct Network {
@@ -63,7 +63,12 @@ impl Counts {
 }
 
 impl Network {
-    pub fn make_from_pbf(osm_pbf_path: &str, bin_path: &str, timer: &mut Timer) -> Result<Network> {
+    pub fn make_from_pbf(
+        osm_pbf_path: &str,
+        bin_path: &str,
+        lts: &LtsMapping,
+        timer: &mut Timer,
+    ) -> Result<Network> {
         timer.start("Make Network from pbf");
         timer.start("Scrape OSM data");
         let (nodes, ways) = scrape_elements(osm_pbf_path)?;
@@ -75,12 +80,22 @@ impl Network {
         );
 
         timer.start("Split into edges");
-        let network = split_edges(nodes, ways);
+        let mut network = split_edges(nodes, ways);
         timer.stop();
         println!(
             "  Split into {} edges",
             HumanCount(network.edges.len() as u64),
         );
+
+        timer.start("Calculate LTS for all edges");
+        // TODO Refactor helper?
+        let progress = ProgressBar::new(network.edges.len() as u64).with_style(ProgressStyle::with_template(
+                "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
+        for edge in network.edges.values_mut() {
+            progress.inc(1);
+            edge.lts = calculate_lts(lts, edge.cleaned_tags());
+        }
+        timer.stop();
 
         timer.start(format!("Saving to {bin_path}"));
         let writer = BufWriter::new(File::create(bin_path)?);
@@ -143,10 +158,12 @@ struct Way {
 #[derive(Serialize, Deserialize)]
 pub struct Edge {
     pub way_id: i64,
+    // TODO Why not store Tags? Could even serialize as this
     tags: Vec<(String, String)>,
     geometry: Vec<Position>,
     // Storing the derived field is negligible for file size
     pub length_meters: f64,
+    lts: LTS,
 }
 
 impl Edge {
@@ -157,7 +174,6 @@ impl Edge {
         count: f64,
         id: usize,
         output_osm_tags: bool,
-        lts: &LtsMapping,
     ) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
@@ -174,10 +190,7 @@ impl Edge {
         properties.insert("node2".to_string(), JsonValue::from(node2));
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
         properties.insert("count".to_string(), JsonValue::from(count));
-        properties.insert(
-            "lts".to_string(),
-            JsonValue::from(calculate_lts(lts, self.cleaned_tags()).0.into_json()),
-        );
+        properties.insert("lts".to_string(), JsonValue::from(self.lts.into_json()));
         Feature {
             bbox: None,
             geometry: Some(geometry),
@@ -191,7 +204,6 @@ impl Edge {
         &self,
         node1: i64,
         node2: i64,
-        lts: &LtsMapping,
         geometry_forwards: bool,
     ) -> Feature {
         let mut pts = self
@@ -213,10 +225,7 @@ impl Edge {
         properties.insert("node1".to_string(), JsonValue::from(node1));
         properties.insert("node2".to_string(), JsonValue::from(node2));
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
-        properties.insert(
-            "lts".to_string(),
-            JsonValue::from(calculate_lts(lts, self.cleaned_tags()).0.into_json()),
-        );
+        properties.insert("lts".to_string(), JsonValue::from(self.lts.into_json()));
         Feature {
             bbox: None,
             geometry: Some(geometry),
@@ -320,6 +329,8 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
                         tags: way.tags.clone(),
                         geometry: std::mem::take(&mut pts),
                         length_meters,
+                        // Temporary
+                        lts: LTS::NotAllowed,
                     },
                 );
 
@@ -367,7 +378,6 @@ impl Network {
                     count,
                     id_counter,
                     output_osm_tags,
-                    &config.lts,
                 );
                 writer.write_feature(&feature)?;
             } else {
@@ -442,10 +452,10 @@ fn calculate_length_meters(pts: &[Position]) -> f64 {
     line_string.haversine_length()
 }
 
-fn calculate_lts(lts: &LtsMapping, tags: Tags) -> (lts::LTS, Vec<String>) {
+fn calculate_lts(lts: &LtsMapping, tags: Tags) -> LTS {
     match lts {
-        LtsMapping::SpeedLimitOnly => lts::speed_limit_only(tags),
-        LtsMapping::BikeOttawa => lts::bike_ottawa(tags),
+        LtsMapping::SpeedLimitOnly => lts::speed_limit_only(tags).0,
+        LtsMapping::BikeOttawa => lts::bike_ottawa(tags).0,
         LtsMapping::ExternalCommand(command) => {
             plugins::custom_lts::external_command(command, tags).unwrap()
         }

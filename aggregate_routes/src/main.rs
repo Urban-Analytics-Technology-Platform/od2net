@@ -75,7 +75,12 @@ fn main() -> Result<()> {
             Ok(network) => network,
             Err(err) => {
                 println!("That failed ({err}), so generating it from {osm_pbf_path}");
-                osm2network::Network::make_from_pbf(&osm_pbf_path, &bin_path, &mut timer)?
+                osm2network::Network::make_from_pbf(
+                    &osm_pbf_path,
+                    &bin_path,
+                    &config.lts,
+                    &mut timer,
+                )?
             }
         }
     };
@@ -121,7 +126,6 @@ fn main() -> Result<()> {
                 requests,
                 cost,
                 &config.uptake,
-                &config.lts,
                 format!("{directory}/output/"),
                 &mut timer,
             )?,
