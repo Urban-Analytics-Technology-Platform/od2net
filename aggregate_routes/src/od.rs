@@ -202,7 +202,10 @@ fn load_named_points(path: &str) -> Result<HashMap<String, (f64, f64)>> {
                 }
             }
         } else {
-            bail!("Feature doesn't have a string zone \"name\": {:?}", feature);
+            bail!(
+                "A feature in {path} doesn't have a string \"name\". Properties: {:?}",
+                feature.properties
+            );
         }
     }
     Ok(result)
@@ -281,10 +284,15 @@ fn load_zones(geojson_path: &str) -> Result<HashMap<String, MultiPolygon<f64>>> 
             } else if let geo::Geometry::Polygon(p) = geo_geometry {
                 zones.insert(zone_name, p.into());
             } else {
-                bail!("Feature has geometry other than a Polygon or MultiPolygon");
+                bail!(
+                    "A feature in {geojson_path} has geometry other than a Polygon or MultiPolygon"
+                );
             }
         } else {
-            bail!("Feature doesn't have a string zone \"name\": {:?}", feature);
+            bail!(
+                "A feature in {geojson_path} doesn't have a string \"name\". Properties: {:?}",
+                feature.properties
+            );
         }
     }
     Ok(zones)
