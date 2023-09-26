@@ -13,13 +13,13 @@ download(
     outputFilename="input/input.osm.pbf",
 )
 extractCentroids(pbfInput="input/input.osm.pbf", geojsonOutput="input/origins.geojson")
-run(["ln", "-s", "input/origins.geojson", "input/destinations.geojson"])
+run(["ln", "-s", "origins.geojson", "input/destinations.geojson"])
 
 
 # Using A/B Street mirrors for data sources right now, because the original sources are hard to script against.
 download(
     url="http://play.abstreet.org/dev/data/input/shared/wu03ew_v2.csv.gz",
-    geojsonOutput="input/wu03ew_v2.csv.gz",
+    outputFilename="input/wu03ew_v2.csv.gz",
 )
 run(["gunzip", "input/wu03ew_v2.csv.gz"])
 with open("input/wu03ew_v2.csv") as f1:
