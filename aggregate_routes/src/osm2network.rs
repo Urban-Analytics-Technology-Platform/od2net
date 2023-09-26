@@ -91,9 +91,18 @@ impl Network {
         // TODO Refactor helper?
         let progress = ProgressBar::new(network.edges.len() as u64).with_style(ProgressStyle::with_template(
                 "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
-        for edge in network.edges.values_mut() {
-            progress.inc(1);
-            edge.lts = calculate_lts(lts, edge.cleaned_tags());
+        // LTS calculations can have high overhead in one case, so calculate them in batches
+        let all_keys: Vec<(i64, i64)> = network.edges.keys().cloned().collect();
+        for key_batch in all_keys.chunks(1000) {
+            let tags_batch: Vec<Tags> = key_batch
+                .iter()
+                .map(|e| network.edges[&e].cleaned_tags())
+                .collect();
+            let lts_batch = calculate_lts_batch(lts, tags_batch);
+            for (key, lts) in key_batch.into_iter().zip(lts_batch) {
+                progress.inc(1);
+                network.edges.get_mut(&key).unwrap().lts = lts;
+            }
         }
         timer.stop();
 
@@ -446,12 +455,18 @@ fn calculate_length_meters(pts: &[Position]) -> f64 {
     line_string.haversine_length()
 }
 
-fn calculate_lts(lts: &LtsMapping, tags: Tags) -> LTS {
+fn calculate_lts_batch(lts: &LtsMapping, tags_batch: Vec<Tags>) -> Vec<LTS> {
     match lts {
-        LtsMapping::SpeedLimitOnly => lts::speed_limit_only(tags).0,
-        LtsMapping::BikeOttawa => lts::bike_ottawa(tags).0,
+        LtsMapping::SpeedLimitOnly => tags_batch
+            .into_iter()
+            .map(|tags| lts::speed_limit_only(tags).0)
+            .collect(),
+        LtsMapping::BikeOttawa => tags_batch
+            .into_iter()
+            .map(|tags| lts::bike_ottawa(tags).0)
+            .collect(),
         LtsMapping::ExternalCommand(command) => {
-            plugins::custom_lts::external_command(command, tags).unwrap()
+            plugins::custom_lts::external_command(command, tags_batch).unwrap()
         }
     }
 }

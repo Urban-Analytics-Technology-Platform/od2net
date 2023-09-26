@@ -88,5 +88,8 @@ pub enum Uptake {
 pub enum LtsMapping {
     SpeedLimitOnly,
     BikeOttawa,
+    /// Run this command to calculate LTS. STDIN will contain a JSON array of objects, each with
+    /// OSM tags representing one segment. The output must be an equally sized JSON array of
+    /// numbers 0-4, representing the resulting LTS.
     ExternalCommand(String),
 }

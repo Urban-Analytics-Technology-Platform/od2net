@@ -1,11 +1,17 @@
 import json
 import sys
 
-# Read OSM tags as a JSON dictionary from STDIN
-tags = json.loads(sys.stdin.read())
+# Output 0 (not allowed), 1 (suitable for children), 2 (low stress), 3 (low stress), or 4 (high stress)
+def calculate(tags):
+    if tags["highway"] == "residential":
+        return 2
+    else:
+        return 4
 
-# Output 0 (not allowed), 1 (suitable for children), 2, 3, or 4 (high stress)
-if tags["highway"] == "residential":
-    print(2)
-else:
-    print(4)
+
+# Read an array of JSON dictionaries from STDIN
+tags_batch = json.loads(sys.stdin.read())
+# Calculate LTS for each one
+lts_results = list(map(calculate, tags_batch))
+# Write a JSON array of the resulting numbers
+print(json.dumps(lts_results))

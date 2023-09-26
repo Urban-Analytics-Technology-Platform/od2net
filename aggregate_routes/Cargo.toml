@@ -14,6 +14,7 @@ fs-err = "2.9.0"
 geo = "0.26.0"
 geojson = { git = "https://github.com/dabreegster/geojson", branch = "foreign_members_writer" }
 indicatif = { version = "0.17.6", features = ["rayon"] }
+itertools = "0.11.0"
 lts = { path = "../lts" }
 nanorand = { version = "0.7.0", default-features = false, features = ["wyrand"] }
 num_cpus = "1.16.0"
