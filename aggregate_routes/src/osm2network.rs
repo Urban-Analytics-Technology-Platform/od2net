@@ -11,6 +11,7 @@ use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
 use super::config::{InputConfig, LtsMapping};
+use super::plugins;
 use super::timer::Timer;
 use lts::Tags;
 
@@ -156,7 +157,7 @@ impl Edge {
         count: f64,
         id: usize,
         output_osm_tags: bool,
-        lts: LtsMapping,
+        lts: &LtsMapping,
     ) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
@@ -190,7 +191,7 @@ impl Edge {
         &self,
         node1: i64,
         node2: i64,
-        lts: LtsMapping,
+        lts: &LtsMapping,
         geometry_forwards: bool,
     ) -> Feature {
         let mut pts = self
@@ -360,8 +361,14 @@ impl Network {
                 .or_else(|| self.edges.get(&(node2, node1)))
             {
                 id_counter += 1;
-                let feature =
-                    edge.to_geojson(node1, node2, count, id_counter, output_osm_tags, config.lts);
+                let feature = edge.to_geojson(
+                    node1,
+                    node2,
+                    count,
+                    id_counter,
+                    output_osm_tags,
+                    &config.lts,
+                );
                 writer.write_feature(&feature)?;
             } else {
                 // TODO We don't handle routes starting or ending in the middle of an edge yet
@@ -435,9 +442,12 @@ fn calculate_length_meters(pts: &[Position]) -> f64 {
     line_string.haversine_length()
 }
 
-fn calculate_lts(lts: LtsMapping, tags: Tags) -> (lts::LTS, Vec<String>) {
+fn calculate_lts(lts: &LtsMapping, tags: Tags) -> (lts::LTS, Vec<String>) {
     match lts {
         LtsMapping::SpeedLimitOnly => lts::speed_limit_only(tags),
         LtsMapping::BikeOttawa => lts::bike_ottawa(tags),
+        LtsMapping::ExternalCommand(command) => {
+            plugins::custom_lts::external_command(command, tags).unwrap()
+        }
     }
 }

@@ -41,4 +41,8 @@ impl Tags {
         }
         None
     }
+
+    pub fn inner(&self) -> &HashMap<String, String> {
+        &self.0
+    }
 }

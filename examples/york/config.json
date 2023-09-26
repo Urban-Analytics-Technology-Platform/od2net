@@ -17,5 +17,7 @@
     }
   },
   "uptake": "Identity",
-  "lts": "BikeOttawa"
+  "lts": {
+	  "ExternalCommand": "python3 lts.py"
+  }
 }

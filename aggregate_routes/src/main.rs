@@ -121,7 +121,7 @@ fn main() -> Result<()> {
                 requests,
                 cost,
                 &config.uptake,
-                config.lts,
+                &config.lts,
                 format!("{directory}/output/"),
                 &mut timer,
             )?,

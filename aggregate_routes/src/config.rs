@@ -84,8 +84,9 @@ pub enum Uptake {
     GoDutchPCT,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub enum LtsMapping {
     SpeedLimitOnly,
     BikeOttawa,
+    ExternalCommand(String),
 }

@@ -16,7 +16,7 @@ pub fn run(
     requests: Vec<Request>,
     cost: CostFunction,
     uptake: &Uptake,
-    lts: LtsMapping,
+    lts: &LtsMapping,
     output_directory: String,
     timer: &mut Timer,
 ) -> Result<()> {
@@ -63,7 +63,7 @@ fn output_detailed_route(
     path: fast_paths::ShortestPath,
     prepared_ch: &PreparedCH,
     network: &Network,
-    lts: LtsMapping,
+    lts: &LtsMapping,
 ) -> Result<()> {
     // TODO Include uptake and stats about the entire route
 
