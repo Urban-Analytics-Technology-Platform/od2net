@@ -17,3 +17,5 @@ TODO: the pmtiles for rendering
 ## Detailed routes
 
 If you call the tool with `--detailed_routes`, you'll get individual GeoJSON files, each representing one route. The route is broken into LineStrings representing each segment. The direction followed across the segment is indicated both by the order of points and `node1` and `node2`. The properties for each Feature are the same as above, except there's no `count`, since this is just a single route.
+
+The top-level FeatureCollection has additional foreign members: `total_distance_meters` and `uptake`

@@ -16,6 +16,7 @@ pub struct InputConfig {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Requests {
+    pub description: String,
     pub pattern: ODPattern,
     /// Path to a GeoJSON file with points to use as origins
     pub origins_path: String,

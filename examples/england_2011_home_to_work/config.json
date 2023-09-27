@@ -1,5 +1,6 @@
 {
   "requests": {
+    "description": "2011 home to work trips made by driving (or being a passenger) in England from MSOA-level census data. Origins and destinations are all buildings.",
     "pattern": {
       "BetweenZones": {
         "zones_path": "zones.geojson",

@@ -1,5 +1,6 @@
 {
   "requests": {
+    "description": "From every single building in London to the nearest school",
     "pattern": "FromEveryOriginToNearestDestination",
     "origins_path": "buildings.geojson",
     "destinations_path": "schools.geojson"

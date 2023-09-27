@@ -1,5 +1,6 @@
 {
   "requests": {
+    "description": "All trips from OA-level 2011 census data from home to one particular workplace zone in Liverpool with a hospital.",
     "pattern": {
       "ZoneToPoint": {
         "zones_path": "zones.geojson",

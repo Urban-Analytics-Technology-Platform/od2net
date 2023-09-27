@@ -1,5 +1,6 @@
 {
   "requests": {
+    "description": "Manually drawn zones and flows to a few named destination points",
     "pattern": {
       "ZoneToPoint": {
         "zones_path": "zones.geojson",

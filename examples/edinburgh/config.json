@@ -1,5 +1,6 @@
 {
   "requests": {
+    "description": "Existing home to school cycling trips in Edinburgh, from NPT data. The origins and destinations are both building centroids, since not every zone has a school.",
     "pattern": {
       "BetweenZones": {
         "zones_path": "zones.geojson",

@@ -141,6 +141,7 @@
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
     {#if outputMetadata}
+      <p>{outputMetadata.config.requests.description}</p>
       <div>
         <button
           on:click={() =>
