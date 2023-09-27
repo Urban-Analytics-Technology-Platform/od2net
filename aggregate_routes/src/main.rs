@@ -145,6 +145,10 @@ fn main() -> Result<()> {
         config,
         num_origins: counts.count_per_origin.len(),
         num_destinations: counts.count_per_destination.len(),
+        num_requests,
+        num_succeeded_requests: num_requests - (counts.errors as usize),
+        num_failed_requests: counts.errors as usize,
+        num_edges_with_count: counts.count_per_edge.len(),
     };
     timer.start("Writing output GJ");
     network.write_geojson(
@@ -176,6 +180,24 @@ fn main() -> Result<()> {
     }
     timer.stop();
 
+    drop(timer);
+    println!("");
+
+    println!("Input: {}", output_metadata.config.requests.description);
+    for (label, count) in [
+        ("Origins", output_metadata.num_origins),
+        ("Destinations", output_metadata.num_destinations),
+        ("Requests", output_metadata.num_requests),
+        (
+            "Requests (succeeded)",
+            output_metadata.num_succeeded_requests,
+        ),
+        ("Requests (failed)", output_metadata.num_failed_requests),
+        ("Edges with a count", output_metadata.num_edges_with_count),
+    ] {
+        println!("- {label}: {}", HumanCount(count as u64));
+    }
+
     Ok(())
 }
 
@@ -185,4 +207,8 @@ struct OutputMetadata {
     config: config::InputConfig,
     num_origins: usize,
     num_destinations: usize,
+    num_requests: usize,
+    num_succeeded_requests: usize,
+    num_failed_requests: usize,
+    num_edges_with_count: usize,
 }
