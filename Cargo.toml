@@ -1,2 +1,3 @@
 [workspace]
 members = ["aggregate_routes", "lts"]
+resolver = "2"
