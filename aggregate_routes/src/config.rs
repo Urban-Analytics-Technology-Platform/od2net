@@ -13,22 +13,12 @@ pub struct InputConfig {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub enum Requests {
-    Odjitter {
-        /// A GeoJSON file with LineString requests
-        path: String,
-        /// A percent (0 to 1000 -- note NOT 100) of requests to use. Defaults to all of them.
-        sample_requests: Option<usize>,
-        /// Cap requests to exactly this many.
-        cap_requests: Option<usize>,
-    },
-    Generate {
-        pattern: ODPattern,
-        /// Defaults to <directory>/input/origins.geojson
-        origins_path: Option<String>,
-        /// Defaults to <directory>/input/destinations.geojson
-        destinations_path: Option<String>,
-    },
+pub struct Requests {
+    pub pattern: ODPattern,
+    /// Defaults to <directory>/input/origins.geojson
+    pub origins_path: Option<String>,
+    /// Defaults to <directory>/input/destinations.geojson
+    pub destinations_path: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]

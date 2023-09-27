@@ -87,32 +87,22 @@ fn main() -> Result<()> {
     timer.stop();
 
     timer.start("Loading or generating requests");
-    let requests = match config.requests.clone() {
-        config::Requests::Odjitter {
-            path,
-            sample_requests,
-            cap_requests,
-        } => {
-            println!("Loading requests from {path}");
-            requests::Request::load_from_geojson(
-                &path,
-                sample_requests.unwrap_or(1000),
-                cap_requests,
-            )?
-        }
-        config::Requests::Generate {
-            pattern,
-            origins_path,
-            destinations_path,
-        } => od::generate(
-            pattern,
-            format!("{directory}/input"),
-            &origins_path.unwrap_or_else(|| format!("{directory}/input/origins.geojson")),
-            &destinations_path.unwrap_or_else(|| format!("{directory}/input/destinations.geojson")),
-            args.rng_seed,
-            &mut timer,
-        )?,
-    };
+    let requests = od::generate_requests(
+        config.requests.pattern.clone(),
+        format!("{directory}/input"),
+        config
+            .requests
+            .origins_path
+            .clone()
+            .unwrap_or_else(|| format!("{directory}/input/origins.geojson")),
+        config
+            .requests
+            .destinations_path
+            .clone()
+            .unwrap_or_else(|| format!("{directory}/input/destinations.geojson")),
+        args.rng_seed,
+        &mut timer,
+    )?;
     let num_requests = requests.len();
     println!("Got {} requests", HumanCount(num_requests as u64));
     timer.stop();

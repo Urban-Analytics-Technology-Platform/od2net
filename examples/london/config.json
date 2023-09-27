@@ -1,8 +1,6 @@
 {
   "requests": {
-    "Generate": {
-      "pattern": "FromEveryOriginToNearestDestination"
-    }
+    "pattern": "FromEveryOriginToNearestDestination"
   },
   "routing": {
     "FastPaths": {

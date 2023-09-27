@@ -14,19 +14,19 @@ use super::config::ODPattern;
 use super::requests::Request;
 use super::timer::Timer;
 
-pub fn generate(
+pub fn generate_requests(
     pattern: ODPattern,
     input_directory: String,
-    origins_path: &str,
-    destinations_path: &str,
+    origins_path: String,
+    destinations_path: String,
     rng_seed: u64,
     timer: &mut Timer,
 ) -> Result<Vec<Request>> {
     timer.start("Loading origins");
-    let origins = load_points(origins_path)?;
+    let origins = load_points(&origins_path)?;
     timer.stop();
     timer.start("Loading destinations");
-    let destinations = load_points(destinations_path)?;
+    let destinations = load_points(&destinations_path)?;
     timer.stop();
     println!(
         "Got {} origins and {} destination",

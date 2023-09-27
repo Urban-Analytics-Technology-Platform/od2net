@@ -1,13 +1,11 @@
 {
   "requests": {
-    "Generate": {
-      "pattern": {
-	"ZoneToPoint": {
-	  "zones_path": "zones.geojson",
-	  "destinations_path": "destinations.geojson",
-	  "csv_path": "od.csv",
-	  "origin_zone_centroid_fallback": false
-        }
+    "pattern": {
+      "ZoneToPoint": {
+        "zones_path": "zones.geojson",
+        "destinations_path": "destinations.geojson",
+        "csv_path": "od.csv",
+        "origin_zone_centroid_fallback": false
       }
     }
   },
@@ -18,6 +16,6 @@
   },
   "uptake": "Identity",
   "lts": {
-	  "ExternalCommand": "python3 lts.py"
+    "ExternalCommand": "python3 lts.py"
   }
 }

@@ -1,11 +1,9 @@
 {
   "requests": {
-    "Generate": {
-      "pattern": {
-	"BetweenZones": {
-	  "zones_path": "zones.geojson",
-	  "csv_path": "od.csv"
-        }
+    "pattern": {
+      "BetweenZones": {
+        "zones_path": "zones.geojson",
+        "csv_path": "od.csv"
       }
     }
   },
