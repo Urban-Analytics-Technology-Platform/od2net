@@ -36,6 +36,10 @@ struct Args {
     /// Don't output OSM tags in the GeoJSON output, to reduce file size.
     #[clap(long)]
     no_output_osm_tags: bool,
+    /// Don't create a PMTiles file from the GeoJSON output. The results won't be viewable in the
+    /// web app.
+    #[clap(long)]
+    no_output_pmtiles: bool,
 
     /// Instead of doing what this tool normally does, instead calculate this many routes and write
     /// a separate GeoJSON file for each of them, with full segment-level detail. This will be slow
@@ -160,25 +164,27 @@ fn main() -> Result<()> {
     )?;
     timer.stop();
 
-    timer.start("Converting to pmtiles for rendering");
-    let status = Command::new("tippecanoe")
-        .arg(format!("{directory}/output/output.geojson"))
-        .arg("-o")
-        .arg(format!("{directory}/output/rnet.pmtiles"))
-        .arg("--force") // Overwrite existing output
-        .arg("-l")
-        .arg("rnet")
-        .arg("-zg") // Guess the zoom
-        .arg("--drop-fraction-as-needed") // TODO Drop based on low counts
-        .arg("--extend-zooms-if-still-dropping")
-        // Plumb through the config as a JSON string in the description
-        .arg("--description")
-        .arg(serde_json::to_string(&output_metadata)?)
-        .status()?;
-    if !status.success() {
-        bail!("tippecanoe failed");
+    if !args.no_output_pmtiles {
+        timer.start("Converting to pmtiles for rendering");
+        let status = Command::new("tippecanoe")
+            .arg(format!("{directory}/output/output.geojson"))
+            .arg("-o")
+            .arg(format!("{directory}/output/rnet.pmtiles"))
+            .arg("--force") // Overwrite existing output
+            .arg("-l")
+            .arg("rnet")
+            .arg("-zg") // Guess the zoom
+            .arg("--drop-fraction-as-needed") // TODO Drop based on low counts
+            .arg("--extend-zooms-if-still-dropping")
+            // Plumb through the config as a JSON string in the description
+            .arg("--description")
+            .arg(serde_json::to_string(&output_metadata)?)
+            .status()?;
+        if !status.success() {
+            bail!("tippecanoe failed");
+        }
+        timer.stop();
     }
-    timer.stop();
 
     drop(timer);
     println!("");
