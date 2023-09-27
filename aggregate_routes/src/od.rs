@@ -10,23 +10,21 @@ use nanorand::{Rng, WyRand};
 use rstar::{RTree, AABB};
 use serde::Deserialize;
 
-use super::config::ODPattern;
+use super::config::{ODPattern, Requests};
 use super::requests::Request;
 use super::timer::Timer;
 
 pub fn generate_requests(
-    pattern: ODPattern,
+    config: &Requests,
     input_directory: String,
-    origins_path: String,
-    destinations_path: String,
     rng_seed: u64,
     timer: &mut Timer,
 ) -> Result<Vec<Request>> {
     timer.start("Loading origins");
-    let origins = load_points(&origins_path)?;
+    let origins = load_points(format!("{input_directory}/{}", config.origins_path))?;
     timer.stop();
     timer.start("Loading destinations");
-    let destinations = load_points(&destinations_path)?;
+    let destinations = load_points(format!("{input_directory}/{}", config.destinations_path))?;
     timer.stop();
     println!(
         "Got {} origins and {} destination",
@@ -35,7 +33,7 @@ pub fn generate_requests(
     );
 
     let mut requests = Vec::new();
-    match pattern {
+    match &config.pattern {
         ODPattern::FromEveryOriginToOneDestination => {
             timer.start(format!(
                 "FromEveryOriginToOneDestination for {} origins",
@@ -89,7 +87,7 @@ pub fn generate_requests(
             timer.start(format!("Generating requests from {csv_path}"));
             let mut rng = WyRand::new_seed(rng_seed);
 
-            for rec in csv::Reader::from_reader(fs_err::File::open(csv_path)?).deserialize() {
+            for rec in csv::Reader::from_reader(File::open(csv_path)?).deserialize() {
                 let row: BetweenZonesRow = rec?;
                 for _ in 0..row.count {
                     let from = match origins_per_zone.get(&row.from) {
@@ -133,13 +131,13 @@ pub fn generate_requests(
             timer.stop();
             timer.start("Matching points to zones");
             let origins_per_zone =
-                points_per_polygon("origin", origins, &zones, origin_zone_centroid_fallback)?;
+                points_per_polygon("origin", origins, &zones, *origin_zone_centroid_fallback)?;
             timer.stop();
 
             timer.start(format!("Generating requests from {csv_path}"));
             let mut rng = WyRand::new_seed(rng_seed);
 
-            for rec in csv::Reader::from_reader(fs_err::File::open(csv_path)?).deserialize() {
+            for rec in csv::Reader::from_reader(File::open(csv_path)?).deserialize() {
                 let row: BetweenZonesRow = rec?;
                 for _ in 0..row.count {
                     let from = match origins_per_zone.get(&row.from) {
@@ -170,7 +168,7 @@ pub fn generate_requests(
 }
 
 // TODO Use geo?
-fn load_points(path: &str) -> Result<Vec<(f64, f64)>> {
+fn load_points(path: String) -> Result<Vec<(f64, f64)>> {
     println!("Loading points from {path}");
     let reader = FeatureReader::from_reader(BufReader::new(File::open(path)?));
     let mut points = Vec::new();

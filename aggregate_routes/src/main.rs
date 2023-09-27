@@ -88,18 +88,8 @@ fn main() -> Result<()> {
 
     timer.start("Loading or generating requests");
     let requests = od::generate_requests(
-        config.requests.pattern.clone(),
+        &config.requests,
         format!("{directory}/input"),
-        config
-            .requests
-            .origins_path
-            .clone()
-            .unwrap_or_else(|| format!("{directory}/input/origins.geojson")),
-        config
-            .requests
-            .destinations_path
-            .clone()
-            .unwrap_or_else(|| format!("{directory}/input/destinations.geojson")),
         args.rng_seed,
         &mut timer,
     )?;

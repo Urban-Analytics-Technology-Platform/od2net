@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-/// Everything needed to run the pipeline
+/// Everything needed to run the pipeline.
+///
+/// All paths are relative to the `input/` directory.
 #[derive(Serialize, Deserialize)]
 pub struct InputConfig {
     pub requests: Requests,
@@ -15,10 +17,10 @@ pub struct InputConfig {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Requests {
     pub pattern: ODPattern,
-    /// Defaults to <directory>/input/origins.geojson
-    pub origins_path: Option<String>,
-    /// Defaults to <directory>/input/destinations.geojson
-    pub destinations_path: Option<String>,
+    /// Path to a GeoJSON file with points to use as origins
+    pub origins_path: String,
+    /// Path to a GeoJSON file with points to use as destinations
+    pub destinations_path: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -29,7 +31,6 @@ pub enum ODPattern {
     FromEveryOriginToNearestDestination,
     /// Trips between named zones
     BetweenZones {
-        // TODO Maybe use default filenames here too
         /// Path to a GeoJSON file containing Polygons and MultiPolygons with a "name" property
         zones_path: String,
         /// Path to a CSV file that must have 3 columns "from", "to", and "count". The first

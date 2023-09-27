@@ -7,7 +7,9 @@
         "csv_path": "od.csv",
         "origin_zone_centroid_fallback": true
       }
-    }
+    },
+    "origins_path": "buildings.geojson",
+    "destinations_path": "buildings.geojson"
   },
   "routing": {
     "FastPaths": {

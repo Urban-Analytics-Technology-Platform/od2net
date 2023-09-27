@@ -5,7 +5,9 @@
         "zones_path": "zones.geojson",
         "csv_path": "od.csv"
       }
-    }
+    },
+    "origins_path": "buildings.geojson",
+    "destinations_path": "buildings.geojson"
   },
   "routing": {
     "FastPaths": {

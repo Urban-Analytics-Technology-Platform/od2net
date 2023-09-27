@@ -26,12 +26,9 @@ run(
     ]
 )
 
-extractCentroids(pbfInput="input/input.osm.pbf", geojsonOutput="input/origins.geojson")
-# Not every zone has a school, so for now, just use all buildings for origins
-# and destinations
-extractCentroids(
-    pbfInput="input/input.osm.pbf", geojsonOutput="input/destinations.geojson"
-)
+# Not every zone has a school, so for now, just use all buildings for both
+# origins and destinations
+extractCentroids(pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson")
 
 download(
     url="https://raw.githubusercontent.com/nptscot/npt/main/data-raw/od_subset.csv",

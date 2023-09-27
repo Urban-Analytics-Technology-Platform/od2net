@@ -27,4 +27,4 @@ run(
     ]
 )
 
-extractCentroids(pbfInput="input/input.osm.pbf", geojsonOutput="input/origins.geojson")
+extractCentroids(pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson")
