@@ -424,7 +424,7 @@ dependencies = [
 [[package]]
 name = "geojson"
 version = "0.24.1"
-source = "git+https://github.com/dabreegster/geojson?branch=foreign_members_writer#0bb9399c115f268f6f9402388fea67ae6eeb955e"
+source = "git+https://github.com/georust/geojson#4cd8882d0b75ab646644a66f7a835b118a8d020c"
 dependencies = [
  "geo-types",
  "log",

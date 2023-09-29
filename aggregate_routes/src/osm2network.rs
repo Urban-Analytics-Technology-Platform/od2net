@@ -367,9 +367,7 @@ impl Network {
     ) -> Result<()> {
         // Write one feature at a time to avoid memory problems
         let mut writer = FeatureWriter::from_writer(BufWriter::new(File::create(path)?));
-        let mut foreign_member = JsonObject::new();
-        foreign_member.insert("config".to_string(), serde_json::to_value(&config)?);
-        writer.write_foreign_members(&foreign_member)?;
+        writer.write_foreign_member("config", &config)?;
 
         let mut skipped = 0;
         let mut id_counter = 0;
