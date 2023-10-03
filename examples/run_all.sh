@@ -1,10 +1,5 @@
 #!/bin/bash
 
-set -e
-set -x
-
-# TODO Check for tools?
-
 function run_example {
 	echo "Running example ${1}"
 	cd $1
@@ -17,9 +12,29 @@ function run_example {
 
 	# Run the pipeline
 	cargo run --release -- config.json
+	# TODO or with docker
 
 	cd ..
 }
+
+function check_dependencies {
+	echo "Checking dependencies"
+
+	# TODO Slightly different for docker
+	for dep in python3 cargo curl ogr2ogr tippecanoe osmium gunzip; do
+		if which $dep > /dev/null; then
+			true
+		else
+			echo "You're missing a dependency: $dep";
+			exit 1;
+		fi
+	done
+}
+
+check_dependencies
+
+set -e
+set -x
 
 # Small ones
 run_example york
