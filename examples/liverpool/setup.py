@@ -13,7 +13,14 @@ download(
     outputFilename="input/input.osm.pbf",
 )
 
-extractCentroids(pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson")
+extractCentroids(
+    pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
+)
+
+writeFixedOutputFile(
+    "input/destinations.geojson",
+    """{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"name":"hospital"},"geometry":{"coordinates":[-2.89492,53.41828],"type":"Point"}}]}""",
+)
 
 # You have to manually download the Geopackage from https://geoportal.statistics.gov.uk/datasets/ons::output-areas-dec-2011-boundaries-ew-bgc/explore and put Output_Areas_Dec_2011_Boundaries_EW_BGC_2022_7971430631129549274.gpkg in input/
 

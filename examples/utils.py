@@ -31,3 +31,8 @@ def extractCentroids(pbfInput, geojsonOutput, where="building IS NOT NULL"):
             pbfInput,
         ]
     )
+
+
+def writeFixedOutputFile(path, contents):
+    with open(path, "w") as f:
+        f.write(contents)

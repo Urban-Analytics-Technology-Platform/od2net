@@ -12,7 +12,9 @@ download(
     url="https://download.geofabrik.de/europe/great-britain/england-latest.osm.pbf",
     outputFilename="input/input.osm.pbf",
 )
-extractCentroids(pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson")
+extractCentroids(
+    pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
+)
 
 
 # Using A/B Street mirrors for data sources right now, because the original sources are hard to script against.

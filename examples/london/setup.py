@@ -11,7 +11,9 @@ download(
     outputFilename="input/input.osm.pbf",
 )
 
-extractCentroids(pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson")
+extractCentroids(
+    pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
+)
 extractCentroids(
     pbfInput="input/input.osm.pbf",
     geojsonOutput="input/schools.geojson",
