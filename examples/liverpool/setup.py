@@ -27,7 +27,8 @@ writeFixedOutputFile(
 # First convert the CRS
 run(
     [
-        "ogr2ogr" "-f",
+        "ogr2ogr",
+        "-f",
         "GeoJSON",
         "input/all_oas.geojson",
         "input/Output_Areas_Dec_2011_Boundaries_EW_BGC_2022_7971430631129549274.gpkg",

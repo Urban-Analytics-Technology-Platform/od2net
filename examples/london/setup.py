@@ -17,5 +17,5 @@ extractCentroids(
 extractCentroids(
     pbfInput="input/input.osm.pbf",
     geojsonOutput="input/schools.geojson",
-    where=f"amenity = 'amenity'",
+    where=f"amenity = 'school'",
 )
