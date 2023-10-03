@@ -10,9 +10,10 @@ use indicatif::{HumanCount, ProgressBar, ProgressStyle};
 use osmpbf::{Element, ElementReader};
 use serde::{Deserialize, Serialize};
 
-use super::config::{InputConfig, LtsMapping};
+use super::config::LtsMapping;
 use super::plugins;
 use super::timer::Timer;
+use super::OutputMetadata;
 use lts::{Tags, LTS};
 
 #[derive(Serialize, Deserialize)]
@@ -363,11 +364,11 @@ impl Network {
         counts: Counts,
         output_od_points: bool,
         output_osm_tags: bool,
-        config: &InputConfig,
+        output_metadata: &OutputMetadata,
     ) -> Result<()> {
         // Write one feature at a time to avoid memory problems
         let mut writer = FeatureWriter::from_writer(BufWriter::new(File::create(path)?));
-        writer.write_foreign_member("config", &config)?;
+        writer.write_foreign_member("config", output_metadata)?;
 
         let mut skipped = 0;
         let mut id_counter = 0;

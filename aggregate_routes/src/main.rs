@@ -160,7 +160,7 @@ fn main() -> Result<()> {
         counts,
         !args.no_output_od_points,
         !args.no_output_osm_tags,
-        &output_metadata.config,
+        &output_metadata,
     )?;
     timer.stop();
 
@@ -209,7 +209,7 @@ fn main() -> Result<()> {
 
 // TODO Move, maybe an output.rs with big chunks of osm2network too
 #[derive(Serialize)]
-struct OutputMetadata {
+pub struct OutputMetadata {
     config: config::InputConfig,
     num_origins: usize,
     num_destinations: usize,
