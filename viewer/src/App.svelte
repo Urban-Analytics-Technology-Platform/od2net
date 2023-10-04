@@ -133,7 +133,7 @@
     map.on("moveend", () => {
       let counts = [];
       // TODO To be paranoid, dedupe by feature ID;
-      for (let f of map.queryRenderedFeatures(null, {
+      for (let f of map.queryRenderedFeatures(undefined, {
         layers: ["input-layer"],
       })) {
         counts.push(f.properties.count);
@@ -226,6 +226,7 @@
     <MapLibre
       style="https://api.maptiler.com/maps/dataviz/style.json?key=MZEJTanw3WpxRvt7qDfo"
       standardControls
+      hash
       bind:map
     >
       {#if loadedFileCount > 0}
