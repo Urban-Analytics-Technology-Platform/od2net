@@ -166,8 +166,8 @@ fn main() -> Result<()> {
 
     if !args.no_output_pmtiles {
         timer.start("Converting to pmtiles for rendering");
-        let status = Command::new("tippecanoe")
-            .arg(format!("{directory}/output/output.geojson"))
+        let mut cmd = Command::new("tippecanoe");
+        cmd.arg(format!("{directory}/output/output.geojson"))
             .arg("-o")
             .arg(format!("{directory}/output/rnet.pmtiles"))
             .arg("--force") // Overwrite existing output
@@ -178,9 +178,9 @@ fn main() -> Result<()> {
             .arg("--extend-zooms-if-still-dropping")
             // Plumb through the config as a JSON string in the description
             .arg("--description")
-            .arg(serde_json::to_string(&output_metadata)?)
-            .status()?;
-        if !status.success() {
+            .arg(serde_json::to_string(&output_metadata)?);
+        println!("Running: {cmd:?}");
+        if !cmd.status()?.success() {
             bail!("tippecanoe failed");
         }
         timer.stop();
