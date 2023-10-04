@@ -128,6 +128,23 @@
     let id = feature.properties.way;
     window.open(`http://openstreetmap.org/way/${id}`, "_blank");
   }
+
+  $: if (map) {
+    map.on("moveend", () => {
+      let counts = [];
+      // TODO To be paranoid, dedupe by feature ID;
+      for (let f of map.queryRenderedFeatures(null, {
+        layers: ["input-layer"],
+      })) {
+        counts.push(f.properties.count);
+      }
+      let min = Math.min(...counts);
+      let max = Math.max(...counts);
+      let count = counts.length;
+      // TODO Displaying a histogram could be helpful, at least to debug
+      console.log({ min, max, count });
+    });
+  }
 </script>
 
 <Layout>
