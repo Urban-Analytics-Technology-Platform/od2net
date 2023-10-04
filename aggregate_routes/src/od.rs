@@ -20,12 +20,22 @@ pub fn generate_requests(
     rng_seed: u64,
     timer: &mut Timer,
 ) -> Result<Vec<Request>> {
-    timer.start("Loading origins");
-    let origins = load_points(format!("{input_directory}/{}", config.origins_path))?;
-    timer.stop();
-    timer.start("Loading destinations");
-    let destinations = load_points(format!("{input_directory}/{}", config.destinations_path))?;
-    timer.stop();
+    let origins = if config.origins_path.is_empty() {
+        Vec::new()
+    } else {
+        timer.start("Loading origins");
+        let origins = load_points(format!("{input_directory}/{}", config.origins_path))?;
+        timer.stop();
+        origins
+    };
+    let destinations = if config.destinations_path.is_empty() {
+        Vec::new()
+    } else {
+        timer.start("Loading destinations");
+        let destinations = load_points(format!("{input_directory}/{}", config.destinations_path))?;
+        timer.stop();
+        destinations
+    };
     println!(
         "Got {} origins and {} destination",
         HumanCount(origins.len() as u64),
@@ -160,6 +170,11 @@ pub fn generate_requests(
                     });
                 }
             }
+            timer.stop();
+        }
+        ODPattern::LineStrings(path) => {
+            timer.start(format!("Loading LineString requests from {path}"));
+            requests = Request::load_from_geojson(format!("{input_directory}/{path}"))?;
             timer.stop();
         }
     }

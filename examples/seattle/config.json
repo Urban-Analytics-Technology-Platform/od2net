@@ -1,0 +1,17 @@
+{
+  "requests": {
+    "description": "Every trip taken by the 2014 synthetic population in Seattle, from the PSRC Soundcast model",
+    "pattern": {
+      "LineStrings": "trips.geojson"
+    },
+    "origins_path": "",
+    "destinations_path": ""
+  },
+  "routing": {
+    "FastPaths": {
+      "cost": "AvoidMainRoads"
+    }
+  },
+  "uptake": "Identity",
+  "lts": "BikeOttawa"
+}

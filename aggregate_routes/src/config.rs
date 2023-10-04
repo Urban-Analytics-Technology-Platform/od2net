@@ -18,6 +18,7 @@ pub struct InputConfig {
 pub struct Requests {
     pub description: String,
     pub pattern: ODPattern,
+    // TODO These are irrelevant for some cases
     /// Path to a GeoJSON file with points to use as origins
     pub origins_path: String,
     /// Path to a GeoJSON file with points to use as destinations
@@ -49,6 +50,8 @@ pub enum ODPattern {
         /// If a zone doesn't have any matching origin points, use the zone's centroid instead.
         origin_zone_centroid_fallback: bool,
     },
+    /// Just read GeoJSON LineStrings from this path
+    LineStrings(String),
 }
 
 #[derive(Serialize, Deserialize)]
