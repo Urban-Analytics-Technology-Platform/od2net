@@ -145,8 +145,8 @@
       <div>
         <button
           on:click={() =>
-            window.alert(JSON.stringify(outputMetadata.config, null, "  "))}
-          >See config</button
+            window.alert(JSON.stringify(outputMetadata, null, "  "))}
+          >See all output details</button
         >
       </div>
     {/if}
