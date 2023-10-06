@@ -11,7 +11,7 @@ function run_example {
 	python3 setup.py
 
 	# Run the pipeline
-	cargo run --release -- config.json
+	cargo run --release -- config.json --output-metadata
 	# TODO or with docker
 
 	cd ..
@@ -47,3 +47,5 @@ run_example london
 # Huge
 #run_example england_2011_home_to_work
 #run_example seattle
+
+python3 summarize_results.py */output/metadata.json

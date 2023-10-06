@@ -41,6 +41,10 @@ struct Args {
     #[clap(long)]
     no_output_pmtiles: bool,
 
+    /// Create an `output/metadata.json` file summarizing the run.
+    #[clap(long)]
+    output_metadata: bool,
+
     /// Instead of doing what this tool normally does, instead calculate this many routes and write
     /// a separate GeoJSON file for each of them, with full segment-level detail. This will be slow
     /// and take lots of disk if you specify a large number.
@@ -188,20 +192,11 @@ fn main() -> Result<()> {
 
     drop(timer);
     println!("");
+    output_metadata.describe();
 
-    println!("Input: {}", output_metadata.config.requests.description);
-    for (label, count) in [
-        ("Origins", output_metadata.num_origins),
-        ("Destinations", output_metadata.num_destinations),
-        ("Requests", output_metadata.num_requests),
-        (
-            "Requests (succeeded)",
-            output_metadata.num_succeeded_requests,
-        ),
-        ("Requests (failed)", output_metadata.num_failed_requests),
-        ("Edges with a count", output_metadata.num_edges_with_count),
-    ] {
-        println!("- {label}: {}", HumanCount(count as u64));
+    if args.output_metadata {
+        let mut file = fs_err::File::create("output/metadata.json")?;
+        serde_json::to_writer(&mut file, &output_metadata)?;
     }
 
     Ok(())
@@ -217,4 +212,20 @@ pub struct OutputMetadata {
     num_succeeded_requests: usize,
     num_failed_requests: usize,
     num_edges_with_count: usize,
+}
+
+impl OutputMetadata {
+    fn describe(&self) {
+        println!("Input: {}", self.config.requests.description);
+        for (label, count) in [
+            ("Origins", self.num_origins),
+            ("Destinations", self.num_destinations),
+            ("Requests", self.num_requests),
+            ("Requests (succeeded)", self.num_succeeded_requests),
+            ("Requests (failed)", self.num_failed_requests),
+            ("Edges with a count", self.num_edges_with_count),
+        ] {
+            println!("- {label}: {}", HumanCount(count as u64));
+        }
+    }
 }
