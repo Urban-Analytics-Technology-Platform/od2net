@@ -12,6 +12,7 @@ mod requests;
 mod timer;
 
 use std::process::Command;
+use std::time::Instant;
 
 use anyhow::Result;
 use clap::Parser;
@@ -72,6 +73,7 @@ fn main() -> Result<()> {
     fs_err::create_dir_all(format!("{directory}/output"))?;
 
     let mut timer = timer::Timer::new();
+    let pipeline_start = Instant::now();
 
     timer.start("Load network");
     let network = {
@@ -122,6 +124,7 @@ fn main() -> Result<()> {
     }
 
     timer.start("Routing");
+    let routing_start = Instant::now();
     let counts = match config.routing {
         config::Routing::FastPaths { cost } => custom_routing::run(
             &format!("{directory}/intermediate/ch.bin"),
@@ -141,6 +144,7 @@ fn main() -> Result<()> {
         HumanCount(num_requests as u64 - counts.errors),
         HumanCount(counts.errors),
     );
+    let routing_time = Instant::now().duration_since(routing_start);
     timer.stop();
 
     if !args.no_output_csv {
@@ -149,7 +153,7 @@ fn main() -> Result<()> {
         timer.stop();
     }
 
-    let output_metadata = OutputMetadata {
+    let mut output_metadata = OutputMetadata {
         config,
         num_origins: counts.count_per_origin.len(),
         num_destinations: counts.count_per_destination.len(),
@@ -157,6 +161,9 @@ fn main() -> Result<()> {
         num_succeeded_requests: num_requests - (counts.errors as usize),
         num_failed_requests: counts.errors as usize,
         num_edges_with_count: counts.count_per_edge.len(),
+        routing_time_seconds: routing_time.as_secs_f32(),
+        total_time_seconds: None,
+        tippecanoe_time_seconds: None,
     };
     timer.start("Writing output GJ");
     network.write_geojson(
@@ -170,6 +177,7 @@ fn main() -> Result<()> {
 
     if !args.no_output_pmtiles {
         timer.start("Converting to pmtiles for rendering");
+        let tippecanoe_start = Instant::now();
         let mut cmd = Command::new("tippecanoe");
         cmd.arg(format!("{directory}/output/output.geojson"))
             .arg("-o")
@@ -187,9 +195,16 @@ fn main() -> Result<()> {
         if !cmd.status()?.success() {
             bail!("tippecanoe failed");
         }
+        output_metadata.tippecanoe_time_seconds = Some(
+            Instant::now()
+                .duration_since(tippecanoe_start)
+                .as_secs_f32(),
+        );
         timer.stop();
     }
 
+    output_metadata.total_time_seconds =
+        Some(Instant::now().duration_since(pipeline_start).as_secs_f32());
     drop(timer);
     println!("");
     output_metadata.describe();
@@ -212,6 +227,11 @@ pub struct OutputMetadata {
     num_succeeded_requests: usize,
     num_failed_requests: usize,
     num_edges_with_count: usize,
+    routing_time_seconds: f32,
+    // These two aren't recorded in the GeoJSON or PMTiles output, because we'd have to go back and
+    // update the files!
+    total_time_seconds: Option<f32>,
+    tippecanoe_time_seconds: Option<f32>,
 }
 
 impl OutputMetadata {
