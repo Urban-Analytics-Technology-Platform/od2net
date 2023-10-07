@@ -9,6 +9,7 @@ The main mode of the tool outputs a GeoJSON FeatureCollection, with each LineStr
 - `node1` and `node2` are the OSM node IDs bounding this road segment. Intermediate nodes of a curvy way (of degree 2, with no other connecting roads) are not used.
 - `count` represents the sum of trips along the segment. This is equal to the number of trips crossing the segment when the uptake model is "Identity", and something weighted for other uptake models.
 - `lts` is the Level of Traffic Stress for the segment, based on the chosen configuration. `0` means not allowed, `1` is suitable for children, and `4` is high stress.
+- `nearby_amenities` is the number of shops and amenities that're closest to this segment.
 
 TODO: counts.csv
 

@@ -33,6 +33,10 @@ impl Edge {
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
         properties.insert("count".to_string(), JsonValue::from(count));
         properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
+        properties.insert(
+            "nearby_amenities".to_string(),
+            serde_json::to_value(self.nearby_amenities).unwrap(),
+        );
         Feature {
             bbox: None,
             geometry: Some(geometry),
@@ -68,6 +72,10 @@ impl Edge {
         properties.insert("node2".to_string(), JsonValue::from(node2));
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
         properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
+        properties.insert(
+            "nearby_amenities".to_string(),
+            serde_json::to_value(self.nearby_amenities).unwrap(),
+        );
         Feature {
             bbox: None,
             geometry: Some(geometry),

@@ -7,6 +7,8 @@ use geo::prelude::HaversineLength;
 use geo::LineString;
 use indicatif::{HumanCount, ProgressBar, ProgressStyle};
 use osmpbf::{Element, ElementReader};
+use rstar::primitives::{GeomWithData, Line};
+use rstar::RTree;
 
 use super::amenities::is_amenity;
 use super::{Edge, Network, Position};
@@ -40,6 +42,18 @@ impl Network {
             "  Split into {} edges",
             HumanCount(network.edges.len() as u64),
         );
+
+        // TODO Might be more useful to double-count and just see how many things are within a 50m
+        // buffer
+        let closest_edge = build_closest_edge(&network, timer);
+        timer.start("Match amenities to closest edge");
+        // TODO Indeed refactor a progress bar!
+        for amenity in amenity_positions {
+            if let Some(edge) = closest_edge.nearest_neighbor(&amenity.to_degrees_array()) {
+                network.edges.get_mut(&edge.data).unwrap().nearby_amenities += 1;
+            }
+        }
+        timer.stop();
 
         timer.start("Calculate LTS for all edges");
         // TODO Refactor helper?
@@ -225,4 +239,24 @@ fn calculate_lts_batch(lts: &LtsMapping, tags_batch: Vec<&Tags>) -> Vec<LTS> {
             plugins::custom_lts::external_command(command, tags_batch).unwrap()
         }
     }
+}
+
+// Split every Edge into individual line segments, and identify by the OSM node ID pair.
+// TODO WGS84 caveat, and no linestring primitive?
+type EdgeLocation = GeomWithData<Line<[f64; 2]>, (i64, i64)>;
+
+fn build_closest_edge(network: &Network, timer: &mut Timer) -> RTree<EdgeLocation> {
+    timer.start("Building RTree for matching amenities to edges");
+    let mut lines = Vec::new();
+    for (id, edge) in &network.edges {
+        for pair in edge.geometry.windows(2) {
+            lines.push(EdgeLocation::new(
+                Line::new(pair[0].to_degrees_array(), pair[1].to_degrees_array()),
+                *id,
+            ));
+        }
+    }
+    let rtree = RTree::bulk_load(lines);
+    timer.stop();
+    rtree
 }

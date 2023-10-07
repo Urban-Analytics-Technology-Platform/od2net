@@ -19,6 +19,7 @@
 
 <div><b>Count: {properties.count.toFixed(2)}</b></div>
 <div><b>LTS: {properties.lts}</b></div>
+<div><b>Nearby amenities: {properties.nearby_amenities}</b></div>
 <ul>
   {#each ltsMessages as msg}
     <li>{msg}</li>
