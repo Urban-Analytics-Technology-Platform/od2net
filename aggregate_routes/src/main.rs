@@ -2,13 +2,13 @@
 extern crate anyhow;
 
 mod config;
-mod custom_routing;
 mod detailed_route_output;
+mod network;
 mod node_map;
 mod od;
-mod osm2network;
 mod plugins;
 mod requests;
+mod router;
 mod timer;
 
 use std::process::Command;
@@ -81,16 +81,11 @@ fn main() -> Result<()> {
         let osm_pbf_path = format!("{directory}/input/input.osm.pbf");
         println!("Trying to load network from {bin_path}");
         // TODO timer around something fallible is annoying
-        match osm2network::Network::load_from_bin(&bin_path) {
+        match network::Network::load_from_bin(&bin_path) {
             Ok(network) => network,
             Err(err) => {
                 println!("That failed ({err}), so generating it from {osm_pbf_path}");
-                osm2network::Network::make_from_pbf(
-                    &osm_pbf_path,
-                    &bin_path,
-                    &config.lts,
-                    &mut timer,
-                )?
+                network::Network::make_from_pbf(&osm_pbf_path, &bin_path, &config.lts, &mut timer)?
             }
         }
     };
@@ -126,7 +121,7 @@ fn main() -> Result<()> {
     timer.start("Routing");
     let routing_start = Instant::now();
     let counts = match config.routing {
-        config::Routing::FastPaths { cost } => custom_routing::run(
+        config::Routing::FastPaths { cost } => router::run(
             &format!("{directory}/intermediate/ch.bin"),
             &network,
             requests,
@@ -217,7 +212,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-// TODO Move, maybe an output.rs with big chunks of osm2network too
+// TODO Move, maybe an output.rs with big chunks of network too
 #[derive(Serialize)]
 pub struct OutputMetadata {
     config: config::InputConfig,

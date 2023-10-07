@@ -10,8 +10,8 @@ use rstar::RTree;
 use serde::{Deserialize, Serialize};
 
 use super::config::{CostFunction, Uptake};
+use super::network::{Counts, Network, Position};
 use super::node_map::{deserialize_nodemap, NodeMap};
-use super::osm2network::{Counts, Network, Position};
 use super::plugins::route_cost;
 use super::plugins::uptake;
 use super::requests::Request;

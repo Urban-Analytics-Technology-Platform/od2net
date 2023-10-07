@@ -5,10 +5,10 @@ use fs_err::File;
 use geojson::JsonObject;
 
 use super::config::{CostFunction, Uptake};
-use super::custom_routing::{build_ch, build_closest_intersection, PreparedCH};
-use super::osm2network::Network;
+use super::network::Network;
 use super::plugins;
 use super::requests::Request;
+use super::router::{build_ch, build_closest_intersection, PreparedCH};
 use super::timer::Timer;
 
 pub fn run(

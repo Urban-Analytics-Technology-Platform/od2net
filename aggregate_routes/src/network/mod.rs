@@ -1,0 +1,124 @@
+mod create_from_osm;
+mod output;
+
+use std::collections::HashMap;
+use std::io::BufReader;
+
+use anyhow::Result;
+use fs_err::File;
+use serde::{Deserialize, Serialize};
+
+use lts::{Tags, LTS};
+
+#[derive(Serialize, Deserialize)]
+pub struct Network {
+    // Keyed by a pair of node IDs
+    // TODO Doesn't handle multiple edges between the same node pair
+    pub edges: HashMap<(i64, i64), Edge>,
+    // Node IDs that're above
+    pub intersections: HashMap<i64, Position>,
+}
+
+// TODO Rename this. We don't represent counts, but instead summed uptake. If every single route we
+// considered would actually happen, then this would be equivalent to counts.
+pub struct Counts {
+    // TODO Don't use f64 -- we'll end up rounding somewhere anyway, so pick a precision upfront.
+    pub count_per_edge: HashMap<(i64, i64), f64>,
+    pub errors: u64,
+
+    // Count how many times a point is used successfully as an origin or destination
+    pub count_per_origin: HashMap<Position, f64>,
+    pub count_per_destination: HashMap<Position, f64>,
+}
+
+impl Counts {
+    pub fn new() -> Self {
+        Self {
+            count_per_edge: HashMap::new(),
+            errors: 0,
+
+            count_per_origin: HashMap::new(),
+            count_per_destination: HashMap::new(),
+        }
+    }
+
+    /// Adds other to this one
+    pub fn combine(&mut self, other: Counts) {
+        self.errors += other.errors;
+        for (key, count) in other.count_per_edge {
+            *self.count_per_edge.entry(key).or_insert(0.0) += count;
+        }
+        for (key, count) in other.count_per_origin {
+            *self.count_per_origin.entry(key).or_insert(0.0) += count;
+        }
+        for (key, count) in other.count_per_destination {
+            *self.count_per_destination.entry(key).or_insert(0.0) += count;
+        }
+    }
+}
+
+impl Network {
+    pub fn load_from_bin(path: &str) -> Result<Network> {
+        let network = bincode::deserialize_from(BufReader::new(File::open(path)?))?;
+        Ok(network)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Position {
+    // in decimicrodegrees (10⁻⁷)
+    lon: i32,
+    lat: i32,
+}
+
+impl Position {
+    pub fn from_degrees(lon: f64, lat: f64) -> Self {
+        // TODO Rounding? Unit test bidirectionality
+        Self {
+            lon: (lon * 1e7) as i32,
+            lat: (lat * 1e7) as i32,
+        }
+    }
+
+    // TODO Degrees?
+    pub fn to_degrees(self) -> (f64, f64) {
+        (1e-7 * self.lon as f64, 1e-7 * self.lat as f64)
+    }
+
+    fn to_degrees_vec(self) -> Vec<f64> {
+        // Round here, since this one is used for GJ output
+        vec![
+            trim_f64(1e-7 * self.lon as f64),
+            trim_f64(1e-7 * self.lat as f64),
+        ]
+    }
+
+    pub fn to_degrees_array(self) -> [f64; 2] {
+        [1e-7 * self.lon as f64, 1e-7 * self.lat as f64]
+    }
+}
+
+fn trim_f64(x: f64) -> f64 {
+    (x * 10e6).round() / 10e6
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Edge {
+    pub way_id: i64,
+    // TODO Why not store Tags? Could even serialize as this
+    tags: Vec<(String, String)>,
+    geometry: Vec<Position>,
+    // Storing the derived field is negligible for file size
+    pub length_meters: f64,
+    lts: LTS,
+}
+
+impl Edge {
+    pub fn cleaned_tags(&self) -> Tags {
+        let mut tags = Tags::new();
+        for (k, v) in &self.tags {
+            tags.insert(k, v);
+        }
+        tags
+    }
+}

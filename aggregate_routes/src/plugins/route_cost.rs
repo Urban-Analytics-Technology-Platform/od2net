@@ -1,5 +1,5 @@
 use crate::config::CostFunction;
-use crate::osm2network::Edge;
+use crate::network::Edge;
 
 pub fn edge_cost(edge: &Edge, cost: CostFunction) -> Option<usize> {
     let tags = edge.cleaned_tags();
