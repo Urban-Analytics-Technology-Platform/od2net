@@ -8,6 +8,7 @@ use geo::LineString;
 use indicatif::{HumanCount, ProgressBar, ProgressStyle};
 use osmpbf::{Element, ElementReader};
 
+use super::amenities::is_amenity;
 use super::{Edge, Network, Position};
 use crate::config::LtsMapping;
 use crate::plugins;
@@ -23,12 +24,13 @@ impl Network {
     ) -> Result<Network> {
         timer.start("Make Network from pbf");
         timer.start("Scrape OSM data");
-        let (nodes, ways) = scrape_elements(osm_pbf_path)?;
+        let (nodes, ways, amenity_positions) = scrape_elements(osm_pbf_path)?;
         timer.stop();
         println!(
-            "  Got {} nodes and {} ways",
+            "  Got {} nodes, {} ways, and {} amenities",
             HumanCount(nodes.len() as u64),
-            HumanCount(ways.len() as u64)
+            HumanCount(ways.len() as u64),
+            HumanCount(amenity_positions.len() as u64)
         );
 
         timer.start("Split into edges");
@@ -46,10 +48,8 @@ impl Network {
         // LTS calculations can have high overhead in one case, so calculate them in batches
         let all_keys: Vec<(i64, i64)> = network.edges.keys().cloned().collect();
         for key_batch in all_keys.chunks(1000) {
-            let tags_batch: Vec<Tags> = key_batch
-                .iter()
-                .map(|e| network.edges[&e].cleaned_tags())
-                .collect();
+            let tags_batch: Vec<&Tags> =
+                key_batch.iter().map(|e| &network.edges[&e].tags).collect();
             let lts_batch = calculate_lts_batch(lts, tags_batch);
             for (key, lts) in key_batch.into_iter().zip(lts_batch) {
                 progress.inc(1);
@@ -69,15 +69,18 @@ impl Network {
 }
 
 struct Way {
-    tags: Vec<(String, String)>,
+    tags: Tags,
     nodes: Vec<i64>,
 }
 
-fn scrape_elements(path: &str) -> Result<(HashMap<i64, Position>, HashMap<i64, Way>)> {
+fn scrape_elements(
+    path: &str,
+) -> Result<(HashMap<i64, Position>, HashMap<i64, Way>, Vec<Position>)> {
     // Scrape every node ID -> position
     let mut nodes = HashMap::new();
     // Scrape every routable road. Just tags and node lists to start.
     let mut ways = HashMap::new();
+    let mut amenity_positions = Vec::new();
 
     let reader = ElementReader::from_path(path)?;
     // TODO par_map_reduce would be fine if we can merge the hashmaps; there should be no repeated
@@ -85,43 +88,68 @@ fn scrape_elements(path: &str) -> Result<(HashMap<i64, Position>, HashMap<i64, W
     reader.for_each(|element| {
         match element {
             Element::Node(node) => {
-                nodes.insert(
-                    node.id(),
-                    Position {
-                        lon: node.decimicro_lon(),
-                        lat: node.decimicro_lat(),
-                    },
-                );
+                let pos = Position {
+                    lon: node.decimicro_lon(),
+                    lat: node.decimicro_lat(),
+                };
+                // TODO Handle TagIter and DenseTagIter instead of this
+                let mut tags = Tags::new();
+                for (k, v) in node.tags() {
+                    tags.insert(k, v);
+                }
+
+                nodes.insert(node.id(), pos);
+                if is_amenity(&tags) {
+                    amenity_positions.push(pos);
+                }
             }
             Element::DenseNode(node) => {
-                nodes.insert(
-                    node.id(),
-                    Position {
-                        lon: node.decimicro_lon(),
-                        lat: node.decimicro_lat(),
-                    },
-                );
+                let pos = Position {
+                    lon: node.decimicro_lon(),
+                    lat: node.decimicro_lat(),
+                };
+                let mut tags = Tags::new();
+                for (k, v) in node.tags() {
+                    tags.insert(k, v);
+                }
+
+                nodes.insert(node.id(), pos);
+                if is_amenity(&tags) {
+                    amenity_positions.push(pos);
+                }
             }
             Element::Way(way) => {
+                let mut tags = Tags::new();
+                for (k, v) in way.tags() {
+                    tags.insert(k, v);
+                }
+
+                if is_amenity(&tags) {
+                    // TODO Calculate a centroid instead
+                    let pos = nodes[&way.refs().next().unwrap()];
+                    amenity_positions.push(pos);
+                }
+
                 // TODO Improve filtering
-                if way.tags().any(|(key, _)| key == "highway") {
+                if tags.has("highway") {
                     ways.insert(
                         way.id(),
                         Way {
-                            tags: way
-                                .tags()
-                                .map(|(k, v)| (k.to_string(), v.to_string()))
-                                .collect(),
+                            tags,
                             nodes: way.refs().collect(),
                         },
                     );
                 }
             }
-            Element::Relation(_) => {}
+            Element::Relation(_) => {
+                // TODO Handle for amenities. What about when they're large, or might be
+                // double-tagged?
+                // https://www.openstreetmap.org/relation/14875126
+            }
         }
     })?;
 
-    Ok((nodes, ways))
+    Ok((nodes, ways, amenity_positions))
 }
 
 fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Network {
@@ -160,6 +188,7 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
                         length_meters,
                         // Temporary
                         lts: LTS::NotAllowed,
+                        nearby_amenities: 0,
                     },
                 );
 
@@ -182,7 +211,7 @@ fn calculate_length_meters(pts: &[Position]) -> f64 {
     line_string.haversine_length()
 }
 
-fn calculate_lts_batch(lts: &LtsMapping, tags_batch: Vec<Tags>) -> Vec<LTS> {
+fn calculate_lts_batch(lts: &LtsMapping, tags_batch: Vec<&Tags>) -> Vec<LTS> {
     match lts {
         LtsMapping::SpeedLimitOnly => tags_batch
             .into_iter()

@@ -1,3 +1,4 @@
+mod amenities;
 mod create_from_osm;
 mod output;
 
@@ -105,20 +106,10 @@ fn trim_f64(x: f64) -> f64 {
 #[derive(Serialize, Deserialize)]
 pub struct Edge {
     pub way_id: i64,
-    // TODO Why not store Tags? Could even serialize as this
-    tags: Vec<(String, String)>,
+    pub tags: Tags,
     geometry: Vec<Position>,
     // Storing the derived field is negligible for file size
     pub length_meters: f64,
     lts: LTS,
-}
-
-impl Edge {
-    pub fn cleaned_tags(&self) -> Tags {
-        let mut tags = Tags::new();
-        for (k, v) in &self.tags {
-            tags.insert(k, v);
-        }
-        tags
-    }
+    nearby_amenities: usize,
 }

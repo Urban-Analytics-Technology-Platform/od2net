@@ -23,7 +23,7 @@ impl Edge {
         let mut properties = JsonObject::new();
         if output_osm_tags {
             let mut tags = JsonObject::new();
-            for (key, value) in &self.tags {
+            for (key, value) in self.tags.inner() {
                 tags.insert(key.to_string(), JsonValue::from(value.to_string()));
             }
             properties.insert("osm_tags".to_string(), tags.into());
@@ -60,7 +60,7 @@ impl Edge {
 
         let mut properties = JsonObject::new();
         let mut tags = JsonObject::new();
-        for (key, value) in &self.tags {
+        for (key, value) in self.tags.inner() {
             tags.insert(key.to_string(), JsonValue::from(value.to_string()));
         }
         properties.insert("osm_tags".to_string(), tags.into());

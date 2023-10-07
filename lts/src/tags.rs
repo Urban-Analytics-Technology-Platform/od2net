@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
+use serde::{Serialize, Deserialize};
+
 /// Convenience functions around a string->string map
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Tags(HashMap<String, String>);
 
 impl Tags {

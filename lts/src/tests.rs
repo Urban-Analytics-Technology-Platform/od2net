@@ -13,7 +13,7 @@ fn test_bike_ottawa() {
             let parts = kv.split("=").collect::<Vec<_>>();
             tags.insert(parts[0], parts[1]);
         }
-        let (actual_lts, _) = bike_ottawa(tags);
+        let (actual_lts, _) = bike_ottawa(&tags);
         if actual_lts != expected_lts {
             panic!(
                 "For http://openstreetmap.org/way/{way_id}, got {:?} but expected {:?}",

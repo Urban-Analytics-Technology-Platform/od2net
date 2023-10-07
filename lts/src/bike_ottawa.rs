@@ -4,7 +4,7 @@ use crate::{parse, Tags, LTS};
 // TODO Ask about differences: maxspeed parsing, highway=construction
 
 // A flow chart would explain this nicely
-pub fn bike_ottawa(tags: Tags) -> (LTS, Vec<String>) {
+pub fn bike_ottawa(tags: &Tags) -> (LTS, Vec<String>) {
     let mut msgs = Vec::new();
 
     if !is_biking_permitted(&tags, &mut msgs) {

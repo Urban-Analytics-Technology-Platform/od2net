@@ -26,9 +26,9 @@ pub fn calculate(input: JsValue) -> Result<JsValue, JsValue> {
     }
 
     let (lts, messages) = if input.method == "speed_limit_only" {
-        speed_limit_only::speed_limit_only(tags)
+        speed_limit_only::speed_limit_only(&tags)
     } else if input.method == "bike_ottawa" {
-        bike_ottawa::bike_ottawa(tags)
+        bike_ottawa::bike_ottawa(&tags)
     } else {
         (
             LTS::NotAllowed,

@@ -1,6 +1,6 @@
 use crate::{Tags, LTS};
 
-pub fn speed_limit_only(tags: Tags) -> (LTS, Vec<String>) {
+pub fn speed_limit_only(tags: &Tags) -> (LTS, Vec<String>) {
     let msgs = vec!["Only looking at maxspeed".into()];
     // TODO Handle bicycle=no, on things like highway=footway
 

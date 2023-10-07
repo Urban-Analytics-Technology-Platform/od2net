@@ -6,7 +6,7 @@ use anyhow::Result;
 
 use lts::{Tags, LTS};
 
-pub fn external_command(command: &str, tags_batch: Vec<Tags>) -> Result<Vec<LTS>> {
+pub fn external_command(command: &str, tags_batch: Vec<&Tags>) -> Result<Vec<LTS>> {
     let args: Vec<&str> = command.split(" ").collect();
 
     let mut cmd = Command::new(args[0])
