@@ -1,4 +1,4 @@
-# Latent demand (name TBD)
+# od2net
 
 WARNING: This repo is not ready for general use. The API and input/output formats will keep changing. There are big limitations not yet documented.
 

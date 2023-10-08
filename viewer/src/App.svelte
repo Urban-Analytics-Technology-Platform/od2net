@@ -149,7 +149,7 @@
 
 <Layout>
   <div slot="left">
-    <h1>Latent demand</h1>
+    <h1>od2net</h1>
     <label>
       {#if loadedFileCount == 0}
         Open a <i>.pmtiles</i> file produced by the tool. Note this file stays in
