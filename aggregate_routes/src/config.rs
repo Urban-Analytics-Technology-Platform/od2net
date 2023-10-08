@@ -54,12 +54,17 @@ pub enum ODPattern {
     LineStrings(String),
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum CostFunction {
     /// Just find the shortest distance path
     Distance,
     /// Heavily penalize main roads
     AvoidMainRoads,
+    /// Run this command to calculate edge cost. STDIN will contain a JSON array of objects, each
+    /// with OSM tags representing one segment and extra properties (length_meters,
+    /// nearby_amenities, lts). The output must be an equally sized JSON array of integers,
+    /// representing the cost for that edge.
+    ExternalCommand(String),
 }
 
 #[derive(Serialize, Deserialize)]

@@ -112,10 +112,10 @@ pub struct Edge {
     pub length_meters: f64,
     // LTS is often incorporated in cost, but is also used for visualization. It's useful to
     // conceptually separate these.
-    lts: LTS,
+    pub lts: LTS,
     // TODO Option is weird -- we should upfront filter this out.
     pub cost: Option<usize>,
     // TODO Maybe generalize as a cost and a bunch of properties per edge -- like proximity
     // modifiers for greenspace, lighting, commercial areas
-    nearby_amenities: usize,
+    pub nearby_amenities: usize,
 }
