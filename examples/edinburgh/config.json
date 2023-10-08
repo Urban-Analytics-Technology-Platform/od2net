@@ -10,11 +10,7 @@
     "origins_path": "buildings.geojson",
     "destinations_path": "buildings.geojson"
   },
-  "routing": {
-    "FastPaths": {
-      "cost": "Distance"
-    }
-  },
+  "cost": "Distance",
   "uptake": "GoDutchPCT",
   "lts": "BikeOttawa"
 }

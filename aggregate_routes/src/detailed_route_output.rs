@@ -4,7 +4,7 @@ use anyhow::Result;
 use fs_err::File;
 use geojson::JsonObject;
 
-use super::config::{CostFunction, Uptake};
+use super::config::Uptake;
 use super::network::Network;
 use super::plugins;
 use super::requests::Request;
@@ -16,12 +16,11 @@ pub fn run(
     ch_path: &str,
     network: &Network,
     requests: Vec<Request>,
-    cost: CostFunction,
     uptake: &Uptake,
     output_directory: String,
     timer: &mut Timer,
 ) -> Result<()> {
-    let prepared_ch = build_ch(ch_path, network, cost, timer)?;
+    let prepared_ch = build_ch(ch_path, network, timer)?;
     let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map, timer);
 
     let mut path_calc = fast_paths::create_calculator(&prepared_ch.ch);

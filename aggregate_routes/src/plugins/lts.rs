@@ -4,9 +4,24 @@ use std::process::{Command, Stdio};
 
 use anyhow::Result;
 
+use crate::config::LtsMapping;
 use lts::{Tags, LTS};
 
-pub fn external_command(command: &str, tags_batch: Vec<&Tags>) -> Result<Vec<LTS>> {
+pub fn calculate_lts_batch(lts: &LtsMapping, tags_batch: Vec<&Tags>) -> Vec<LTS> {
+    match lts {
+        LtsMapping::SpeedLimitOnly => tags_batch
+            .into_iter()
+            .map(|tags| lts::speed_limit_only(tags).0)
+            .collect(),
+        LtsMapping::BikeOttawa => tags_batch
+            .into_iter()
+            .map(|tags| lts::bike_ottawa(tags).0)
+            .collect(),
+        LtsMapping::ExternalCommand(command) => external_command(command, tags_batch).unwrap(),
+    }
+}
+
+fn external_command(command: &str, tags_batch: Vec<&Tags>) -> Result<Vec<LTS>> {
     let args: Vec<&str> = command.split(" ").collect();
 
     let mut cmd = Command::new(args[0])

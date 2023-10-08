@@ -12,7 +12,7 @@ use rstar::RTree;
 
 use super::amenities::is_amenity;
 use super::{Edge, Network, Position};
-use crate::config::LtsMapping;
+use crate::config::{CostFunction, LtsMapping};
 use crate::timer::Timer;
 use crate::{plugins, utils};
 use lts::{Tags, LTS};
@@ -22,6 +22,7 @@ impl Network {
         osm_pbf_path: &str,
         bin_path: &str,
         lts: &LtsMapping,
+        cost: &CostFunction,
         timer: &mut Timer,
     ) -> Result<Network> {
         timer.start("Make Network from pbf");
@@ -63,10 +64,24 @@ impl Network {
         for key_batch in all_keys.chunks(1000) {
             let tags_batch: Vec<&Tags> =
                 key_batch.iter().map(|e| &network.edges[&e].tags).collect();
-            let lts_batch = calculate_lts_batch(lts, tags_batch);
+            let lts_batch = plugins::lts::calculate_lts_batch(lts, tags_batch);
             for (key, lts) in key_batch.into_iter().zip(lts_batch) {
                 progress.inc(1);
                 network.edges.get_mut(&key).unwrap().lts = lts;
+            }
+        }
+        timer.stop();
+
+        // TODO Refactor?
+        timer.start("Calculate cost for all edges");
+        let progress = utils::progress_bar_for_count(network.edges.len());
+        let all_keys: Vec<(i64, i64)> = network.edges.keys().cloned().collect();
+        for key_batch in all_keys.chunks(1000) {
+            let input_batch: Vec<&Edge> = key_batch.iter().map(|e| &network.edges[&e]).collect();
+            let output_batch = plugins::cost::calculate_batch(cost, input_batch);
+            for (key, cost) in key_batch.into_iter().zip(output_batch) {
+                progress.inc(1);
+                network.edges.get_mut(&key).unwrap().cost = cost;
             }
         }
         timer.stop();
@@ -200,6 +215,7 @@ fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Networ
                         geometry: std::mem::take(&mut pts),
                         length_meters,
                         // Temporary
+                        cost: None,
                         lts: LTS::NotAllowed,
                         nearby_amenities: 0,
                     },
@@ -222,22 +238,6 @@ fn calculate_length_meters(pts: &[Position]) -> f64 {
     let line_string =
         LineString::<f64>::from(pts.iter().map(|pt| pt.to_degrees()).collect::<Vec<_>>());
     line_string.haversine_length()
-}
-
-fn calculate_lts_batch(lts: &LtsMapping, tags_batch: Vec<&Tags>) -> Vec<LTS> {
-    match lts {
-        LtsMapping::SpeedLimitOnly => tags_batch
-            .into_iter()
-            .map(|tags| lts::speed_limit_only(tags).0)
-            .collect(),
-        LtsMapping::BikeOttawa => tags_batch
-            .into_iter()
-            .map(|tags| lts::bike_ottawa(tags).0)
-            .collect(),
-        LtsMapping::ExternalCommand(command) => {
-            plugins::custom_lts::external_command(command, tags_batch).unwrap()
-        }
-    }
 }
 
 // Split every Edge into individual line segments, and identify by the OSM node ID pair.

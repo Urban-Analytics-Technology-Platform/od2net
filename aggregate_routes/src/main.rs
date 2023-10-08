@@ -86,7 +86,13 @@ fn main() -> Result<()> {
             Ok(network) => network,
             Err(err) => {
                 println!("That failed ({err}), so generating it from {osm_pbf_path}");
-                network::Network::make_from_pbf(&osm_pbf_path, &bin_path, &config.lts, &mut timer)?
+                network::Network::make_from_pbf(
+                    &osm_pbf_path,
+                    &bin_path,
+                    &config.lts,
+                    &config.cost,
+                    &mut timer,
+                )?
             }
         }
     };
@@ -104,33 +110,26 @@ fn main() -> Result<()> {
     timer.stop();
 
     if let Some(num_routes) = args.detailed_routes {
-        match config.routing {
-            config::Routing::FastPaths { cost } => detailed_route_output::run(
-                num_routes,
-                &format!("{directory}/intermediate/ch.bin"),
-                &network,
-                requests,
-                cost,
-                &config.uptake,
-                format!("{directory}/output/"),
-                &mut timer,
-            )?,
-        }
-        return Ok(());
+        return detailed_route_output::run(
+            num_routes,
+            &format!("{directory}/intermediate/ch.bin"),
+            &network,
+            requests,
+            &config.uptake,
+            format!("{directory}/output/"),
+            &mut timer,
+        );
     }
 
     timer.start("Routing");
     let routing_start = Instant::now();
-    let counts = match config.routing {
-        config::Routing::FastPaths { cost } => router::run(
-            &format!("{directory}/intermediate/ch.bin"),
-            &network,
-            requests,
-            cost,
-            &config.uptake,
-            &mut timer,
-        )?,
-    };
+    let counts = router::run(
+        &format!("{directory}/intermediate/ch.bin"),
+        &network,
+        requests,
+        &config.uptake,
+        &mut timer,
+    )?;
     println!(
         "Got counts for {} edges",
         HumanCount(counts.count_per_edge.len() as u64),

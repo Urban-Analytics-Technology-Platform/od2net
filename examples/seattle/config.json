@@ -7,11 +7,7 @@
     "origins_path": "",
     "destinations_path": ""
   },
-  "routing": {
-    "FastPaths": {
-      "cost": "AvoidMainRoads"
-    }
-  },
+  "cost": "AvoidMainRoads",
   "uptake": "Identity",
   "lts": "BikeOttawa"
 }

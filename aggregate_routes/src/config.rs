@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct InputConfig {
     pub requests: Requests,
 
-    pub routing: Routing,
+    pub cost: CostFunction,
 
     pub uptake: Uptake,
 
@@ -52,11 +52,6 @@ pub enum ODPattern {
     },
     /// Just read GeoJSON LineStrings from this path
     LineStrings(String),
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum Routing {
-    FastPaths { cost: CostFunction },
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]

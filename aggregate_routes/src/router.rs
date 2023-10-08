@@ -9,10 +9,9 @@ use rstar::primitives::GeomWithData;
 use rstar::RTree;
 use serde::{Deserialize, Serialize};
 
-use super::config::{CostFunction, Uptake};
+use super::config::Uptake;
 use super::network::{Counts, Network, Position};
 use super::node_map::{deserialize_nodemap, NodeMap};
-use super::plugins::route_cost;
 use super::plugins::uptake;
 use super::requests::Request;
 use super::timer::Timer;
@@ -23,11 +22,10 @@ pub fn run(
     ch_path: &str,
     network: &Network,
     requests: Vec<Request>,
-    cost: CostFunction,
     uptake: &Uptake,
     timer: &mut Timer,
 ) -> Result<Counts> {
-    let prepared_ch = build_ch(ch_path, network, cost, timer)?;
+    let prepared_ch = build_ch(ch_path, network, timer)?;
     let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map, timer);
 
     let progress = utils::progress_bar_for_count(requests.len());
@@ -162,12 +160,7 @@ pub struct PreparedCH {
     pub node_map: NodeMap<i64>,
 }
 
-pub fn build_ch(
-    path: &str,
-    network: &Network,
-    cost: CostFunction,
-    timer: &mut Timer,
-) -> Result<PreparedCH> {
+pub fn build_ch(path: &str, network: &Network, timer: &mut Timer) -> Result<PreparedCH> {
     println!("Trying to load CH from {path}");
     match File::open(path)
         .map_err(|err| err.into())
@@ -189,7 +182,7 @@ pub fn build_ch(
         let node1 = node_map.get_or_insert(*node1);
         let node2 = node_map.get_or_insert(*node2);
 
-        if let Some(cost) = route_cost::edge_cost(edge, cost) {
+        if let Some(cost) = edge.cost {
             // Everything bidirectional for now!
             input_graph.add_edge(node1, node2, cost);
             input_graph.add_edge(node2, node1, cost);

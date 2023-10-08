@@ -5,11 +5,7 @@
     "origins_path": "buildings.geojson",
     "destinations_path": "schools.geojson"
   },
-  "routing": {
-    "FastPaths": {
-      "cost": "Distance"
-    }
-  },
+  "cost": "Distance",
   "uptake": "Identity",
   "lts": "BikeOttawa"
 }

@@ -12,11 +12,7 @@
     "origins_path": "buildings.geojson",
     "destinations_path": "destinations.geojson"
   },
-  "routing": {
-    "FastPaths": {
-      "cost": "Distance"
-    }
-  },
+  "cost": "Distance",
   "uptake": "Identity",
   "lts": {
     "ExternalCommand": "python3 lts.py"

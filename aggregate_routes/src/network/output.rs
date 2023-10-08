@@ -32,6 +32,9 @@ impl Edge {
         properties.insert("node2".to_string(), JsonValue::from(node2));
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
         properties.insert("count".to_string(), JsonValue::from(count));
+        if let Some(cost) = self.cost {
+            properties.insert("cost".to_string(), serde_json::to_value(cost).unwrap());
+        }
         properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
         properties.insert(
             "nearby_amenities".to_string(),
@@ -71,6 +74,9 @@ impl Edge {
         properties.insert("node1".to_string(), JsonValue::from(node1));
         properties.insert("node2".to_string(), JsonValue::from(node2));
         properties.insert("way".to_string(), JsonValue::from(self.way_id));
+        if let Some(cost) = self.cost {
+            properties.insert("cost".to_string(), serde_json::to_value(cost).unwrap());
+        }
         properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
         properties.insert(
             "nearby_amenities".to_string(),

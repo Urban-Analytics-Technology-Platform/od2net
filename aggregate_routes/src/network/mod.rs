@@ -110,6 +110,12 @@ pub struct Edge {
     geometry: Vec<Position>,
     // Storing the derived field is negligible for file size
     pub length_meters: f64,
+    // LTS is often incorporated in cost, but is also used for visualization. It's useful to
+    // conceptually separate these.
     lts: LTS,
+    // TODO Option is weird -- we should upfront filter this out.
+    pub cost: Option<usize>,
+    // TODO Maybe generalize as a cost and a bunch of properties per edge -- like proximity
+    // modifiers for greenspace, lighting, commercial areas
     nearby_amenities: usize,
 }
