@@ -49,12 +49,12 @@ def makeOD():
     writeFixedOutputFile(
         "input/od.csv",
         """from,to,count
-    south,poppleton,500
-    center,poppleton,100
-    north,poppleton,200
-    south,corndogs,800
-    center,corndogs,300
-    north,corndogs,600""",
+south,poppleton,500
+center,poppleton,100
+north,poppleton,200
+south,corndogs,800
+center,corndogs,300
+north,corndogs,600""",
     )
 
 

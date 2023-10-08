@@ -27,6 +27,7 @@ def makeDestinations():
     )
 
 
+# Also returns valid oa_ids
 def makeZones():
     # This is a prebuilt version of 2011 output areas, converted to WGS84. You could also manually download the Geopackage from https://geoportal.statistics.gov.uk/datasets/ons::output-areas-dec-2011-boundaries-ew-bgc/explore and convert the CRS.
     download(
@@ -56,23 +57,25 @@ def makeZones():
     with open("input/clipped_oas.geojson") as f1:
         gj = json.load(f1)
         for f in gj["features"]:
-            props = {"name": f["properties"]["OA11CD"]}
+            props = {"name": f["properties"]["geo_code"]}
             f["properties"] = props
             oa_ids.add(props["name"])
 
         with open("input/zones.geojson", "w") as f2:
             f2.write(json.dumps(gj))
+    return oa_ids
 
 
-def makeOD():
+def makeOD(oa_ids):
     # To figure out the WPZ containing Alder Hey Hospital, go to https://geoportal.statistics.gov.uk/datasets/ons::workplace-zones-december-2011-full-clipped-boundaries-in-england-and-wales-1/explore, find the hospital by zooming in or using search, then copy the wz11cd property.
     target_wpz = "E33003019"
 
     # This is a cached version of WF01AEW_oa from https://wicid.ukdataservice.ac.uk/flowdata/cider/wicid/downloads.php
     download(
-        url="http://od2net.s3-website.eu-west-2.amazonaws.com/input/wf01aew_oa_v1.csv",
-        outputFilename="input/wf01aew_oa_v1.csv",
+        url="http://od2net.s3-website.eu-west-2.amazonaws.com/input/wf01aew_oa_v1.csv.gz",
+        outputFilename="input/wf01aew_oa_v1.csv.gz",
     )
+    run(["gunzip", "input/wf01aew_oa_v1.csv.gz"])
 
     # TODO Or in-place
     with open("input/wf01aew_oa_v1.csv") as f1:
@@ -107,5 +110,5 @@ if __name__ == "__main__":
     makeOSM()
     makeOrigins()
     makeDestinations()
-    makeZones()
-    makeOD()
+    oa_ids = makeZones()
+    makeOD(oa_ids)

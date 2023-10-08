@@ -14,6 +14,9 @@ function run_example {
 	cargo run --release -- config.json --output-metadata
 	# TODO or with docker
 
+	# Host example output
+	#aws s3 cp output/rnet.pmtiles s3://od2net/output/$1.pmtiles
+
 	cd ..
 }
 
@@ -38,7 +41,7 @@ set -x
 
 # Small ones
 run_example york
-run_example liverpool
+#run_example liverpool	# TODO something's broken with setup
 
 # Moderate
 run_example edinburgh
