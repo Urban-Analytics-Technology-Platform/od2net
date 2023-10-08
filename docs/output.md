@@ -1,5 +1,9 @@
 # Output format
 
+- counts.csv
+- output.geojson
+- rnet.pmtiles
+
 ## Main output
 
 The main mode of the tool outputs a GeoJSON FeatureCollection, with each LineString representing a road segment between two intersections. These LineStrings cover every segment in the imported network, and the order of points matches the direction of the original OpenStreetMap way. Each Feature has the following properties:
