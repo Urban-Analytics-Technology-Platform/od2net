@@ -4,7 +4,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import wasmPack from "vite-plugin-wasm-pack";
 
 export default defineConfig({
-  base: "/routing-engines/",
+  base: "/od2net/",
   build: {
     rollupOptions: {
       input: {
