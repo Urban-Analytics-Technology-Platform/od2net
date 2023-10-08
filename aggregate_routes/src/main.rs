@@ -10,6 +10,7 @@ mod plugins;
 mod requests;
 mod router;
 mod timer;
+mod utils;
 
 use std::process::Command;
 use std::time::Instant;

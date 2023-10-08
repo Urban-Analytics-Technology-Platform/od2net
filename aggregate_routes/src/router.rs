@@ -3,7 +3,7 @@ use std::io::{BufReader, BufWriter};
 use anyhow::Result;
 use fast_paths::{FastGraph, InputGraph, PathCalculator};
 use fs_err::File;
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
+use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use rstar::primitives::GeomWithData;
 use rstar::RTree;
@@ -16,6 +16,7 @@ use super::plugins::route_cost;
 use super::plugins::uptake;
 use super::requests::Request;
 use super::timer::Timer;
+use super::utils;
 
 // TODO Vary ch_path with CostFunction
 pub fn run(
@@ -29,8 +30,7 @@ pub fn run(
     let prepared_ch = build_ch(ch_path, network, cost, timer)?;
     let closest_intersection = build_closest_intersection(network, &prepared_ch.node_map, timer);
 
-    let progress = ProgressBar::new(requests.len() as u64).with_style(ProgressStyle::with_template(
-            "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
+    let progress = utils::progress_bar_for_count(requests.len());
     let num_requests = requests.len();
 
     let counts = requests

@@ -5,7 +5,7 @@ use anyhow::Result;
 use fs_err::File;
 use geo::prelude::HaversineLength;
 use geo::LineString;
-use indicatif::{HumanCount, ProgressBar, ProgressStyle};
+use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use rstar::primitives::{GeomWithData, Line};
 use rstar::RTree;
@@ -13,8 +13,8 @@ use rstar::RTree;
 use super::amenities::is_amenity;
 use super::{Edge, Network, Position};
 use crate::config::LtsMapping;
-use crate::plugins;
 use crate::timer::Timer;
+use crate::{plugins, utils};
 use lts::{Tags, LTS};
 
 impl Network {
@@ -47,8 +47,9 @@ impl Network {
         // buffer
         let closest_edge = build_closest_edge(&network, timer);
         timer.start("Match amenities to closest edge");
-        // TODO Indeed refactor a progress bar!
+        let progress = utils::progress_bar_for_count(amenity_positions.len());
         for amenity in amenity_positions {
+            progress.inc(1);
             if let Some(edge) = closest_edge.nearest_neighbor(&amenity.to_degrees_array()) {
                 network.edges.get_mut(&edge.data).unwrap().nearby_amenities += 1;
             }
@@ -56,9 +57,7 @@ impl Network {
         timer.stop();
 
         timer.start("Calculate LTS for all edges");
-        // TODO Refactor helper?
-        let progress = ProgressBar::new(network.edges.len() as u64).with_style(ProgressStyle::with_template(
-                "[{elapsed_precise}] [{wide_bar:.cyan/blue}] {human_pos}/{human_len} ({per_sec}, {eta})").unwrap());
+        let progress = utils::progress_bar_for_count(network.edges.len());
         // LTS calculations can have high overhead in one case, so calculate them in batches
         let all_keys: Vec<(i64, i64)> = network.edges.keys().cloned().collect();
         for key_batch in all_keys.chunks(1000) {
