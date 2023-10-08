@@ -28,21 +28,14 @@ def makeDestinations():
 
 
 def makeZones():
-    # You have to manually download the Geopackage from https://geoportal.statistics.gov.uk/datasets/ons::output-areas-dec-2011-boundaries-ew-bgc/explore and put Output_Areas_Dec_2011_Boundaries_EW_BGC_2022_7971430631129549274.gpkg in input/
-
-    # First convert the CRS
-    run(
-        [
-            "ogr2ogr",
-            "-f",
-            "GeoJSON",
-            "input/all_oas.geojson",
-            "input/Output_Areas_Dec_2011_Boundaries_EW_BGC_2022_7971430631129549274.gpkg",
-            "-t_srs",
-            "EPSG:4326",
-        ]
+    # This is a prebuilt version of 2011 output areas, converted to WGS84. You could also manually download the Geopackage from https://geoportal.statistics.gov.uk/datasets/ons::output-areas-dec-2011-boundaries-ew-bgc/explore and convert the CRS.
+    download(
+        url="http://play.abstreet.org/dev/data/input/shared/zones_core.geojson.gz",
+        outputFilename="input/all_oas.geojson.gz",
     )
-    # Then clip (thanks to bboxfinder.com)
+    run(["gunzip", "input/all_oas.geojson.gz"])
+
+    # Clip to Edinburgh (thanks to bboxfinder.com)
     run(
         [
             "ogr2ogr",
@@ -75,7 +68,12 @@ def makeOD():
     # To figure out the WPZ containing Alder Hey Hospital, go to https://geoportal.statistics.gov.uk/datasets/ons::workplace-zones-december-2011-full-clipped-boundaries-in-england-and-wales-1/explore, find the hospital by zooming in or using search, then copy the wz11cd property.
     target_wpz = "E33003019"
 
-    # You have to manually download WF01AEW_oa from https://wicid.ukdataservice.ac.uk/flowdata/cider/wicid/downloads.php, unzip, and put wf01aew_oa_v1.csv in input/
+    # This is a cached version of WF01AEW_oa from https://wicid.ukdataservice.ac.uk/flowdata/cider/wicid/downloads.php
+    download(
+        url="http://od2net.s3-website.eu-west-2.amazonaws.com/input/wf01aew_oa_v1.csv",
+        outputFilename="input/wf01aew_oa_v1.csv",
+    )
+
     # TODO Or in-place
     with open("input/wf01aew_oa_v1.csv") as f1:
         with open("input/od.csv", "w") as f2:

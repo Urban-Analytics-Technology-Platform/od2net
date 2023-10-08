@@ -38,7 +38,7 @@ set -x
 
 # Small ones
 run_example york
-#run_example liverpool	# TODO has some manual steps
+run_example liverpool
 
 # Moderate
 run_example edinburgh
