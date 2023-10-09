@@ -4,7 +4,7 @@
   import type { Map as MapType } from "maplibre-gl";
   import { FileAPISource, PMTiles, Protocol } from "pmtiles";
   import { onMount } from "svelte";
-  import { MapLibre } from "svelte-maplibre";
+  import { MapLibre, VectorTileSource } from "svelte-maplibre";
   import { colors } from "./common";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
@@ -67,6 +67,7 @@
       outputMetadata = JSON.parse(metadata.description);
 
       loadedFileCount++;
+      example = "";
     } catch (err) {
       window.alert(
         `Problem loading this PMTiles file. Don't open the GeoJSON file; make sure to select .pmtiles. Error: ${err}`
@@ -78,11 +79,17 @@
 
   // TODO Use a counter to recreate layers after cleaning up a source. Hack.
   let loadedFileCount = 0;
+  let example = "";
   let outputMetadata: any | undefined;
 
   let maxCount = 1000;
   let originRadius = 3;
   let destinationRadius = 3;
+
+  $: if (example == "") {
+    // TODO Hack...
+    loadedFileCount = 0;
+  }
 
   $: if (map) {
     map.on("moveend", () => {
@@ -112,6 +119,17 @@
       {/if}
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
+    <div>
+      <label>
+        Or load an example:
+        <select bind:value={example}>
+          <option value="">Custom file loaded</option>
+          <option value="edinburgh">Edinburgh</option>
+          <option value="london">London</option>
+          <option value="york">York</option>
+        </select>
+      </label>
+    </div>
     {#if outputMetadata}
       <p>{outputMetadata.config.requests.description}</p>
       <div>
@@ -183,6 +201,14 @@
         {#key loadedFileCount}
           <Layers {maxCount} {originRadius} {destinationRadius} />
         {/key}
+      {/if}
+      {#if example != ""}
+        <VectorTileSource
+          id="pmtilesSource"
+          url={`pmtiles://http://od2net.s3-website.eu-west-2.amazonaws.com/output/${example}.pmtiles`}
+        >
+          <Layers {maxCount} {originRadius} {destinationRadius} />
+        </VectorTileSource>
       {/if}
     </MapLibre>
   </div>
