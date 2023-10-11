@@ -41,7 +41,7 @@ set -x
 
 # Small ones
 run_example york
-#run_example liverpool	# TODO something's broken with setup
+run_example liverpool
 
 # Moderate
 run_example edinburgh

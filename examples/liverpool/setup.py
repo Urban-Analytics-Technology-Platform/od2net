@@ -31,10 +31,10 @@ def makeDestinations():
 def makeZones():
     # This is a prebuilt version of 2011 output areas, converted to WGS84. You could also manually download the Geopackage from https://geoportal.statistics.gov.uk/datasets/ons::output-areas-dec-2011-boundaries-ew-bgc/explore and convert the CRS.
     download(
-        url="http://play.abstreet.org/dev/data/input/shared/zones_core.geojson.gz",
-        outputFilename="input/all_oas.geojson.gz",
+        url="http://od2net.s3-website.eu-west-2.amazonaws.com/input/2011_oas.geojson.gz",
+        outputFilename="input/2011_oas.geojson.gz",
     )
-    run(["gunzip", "input/all_oas.geojson.gz"])
+    run(["gunzip", "input/2011_oas.geojson.gz"])
 
     # Clip to Edinburgh (thanks to bboxfinder.com)
     run(
@@ -48,7 +48,7 @@ def makeZones():
             "53.291900",
             "-2.532349",
             "53.512960",
-            "input/all_oas.geojson",
+            "input/2011_oas.geojson",
         ]
     )
 
@@ -57,7 +57,7 @@ def makeZones():
     with open("input/clipped_oas.geojson") as f1:
         gj = json.load(f1)
         for f in gj["features"]:
-            props = {"name": f["properties"]["geo_code"]}
+            props = {"name": f["properties"]["OA11CD"]}
             f["properties"] = props
             oa_ids.add(props["name"])
 
