@@ -5,17 +5,17 @@ function run_example {
 	cd $1
 
 	# Clean up everything from previous runs
-	rm -rf input/ intermediate/ output/
+	#rm -rf input/ intermediate/ output/
 
 	# Create input data
-	python3 setup.py
+	#python3 setup.py
 
 	# Run the pipeline
-	cargo run --release -- config.json --output-metadata
+	#cargo run --release -- config.json --output-metadata
 	# TODO or with docker
 
 	# Host example output
-	#aws s3 cp output/rnet.pmtiles s3://od2net/output/$1.pmtiles
+	aws s3 cp output/rnet.pmtiles s3://od2net/output/$1.pmtiles
 
 	cd ..
 }
@@ -48,7 +48,7 @@ run_example edinburgh
 run_example london
 
 # Huge
-#run_example england_2011_home_to_work
-#run_example seattle
+run_example england_2011_home_to_work
+run_example seattle
 
 python3 summarize_results.py */output/metadata.json

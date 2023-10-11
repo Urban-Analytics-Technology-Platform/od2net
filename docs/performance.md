@@ -1,10 +1,13 @@
 # Performance
 
-| Example |Number of routes|Number of edges|Total pipeline time (s)|Routing time (s)|Tippecanoe time (s)|
-|---------|----------------|---------------|-----------------------|----------------|-------------------|
-|edinburgh|      8015      |     57735     |         23.64         |       0.2      |       22.17       |
-|  london |     901511     |     434202    |         172.23        |      4.56      |       162.45      |
-|   york  |      2500      |      6384     |          1.28         |      0.05      |        1.06       |
+|         Example         |Number of routes|Number of edges|Total pipeline time (s)|Routing time (s)|Tippecanoe time (s)|
+|-------------------------|----------------|---------------|-----------------------|----------------|-------------------|
+|        edinburgh        |      8015      |     57809     |       27.709133       |    2.5519104   |     22.329937     |
+|england_2011_home_to_work|    13273135    |    13072377   |        5560.071       |    1493.697    |     3807.7705     |
+|        liverpool        |      3193      |     22080     |       12.501142       |    3.9719722   |     5.5658965     |
+|          london         |     904381     |     435167    |       218.40765       |    32.758068   |      172.6721     |
+|         seattle         |    14485627    |    1620648    |       1040.1782       |    496.74146   |     473.09357     |
+|           york          |      2500      |      5534     |       3.5064592       |   0.54841477   |     1.0680782     |
 
 - Measurements taken on a...
   - Cores matter (You can tune how many threads the built-in routing uses by setting the `RAYON_NUM_THREADS` environment variable)
