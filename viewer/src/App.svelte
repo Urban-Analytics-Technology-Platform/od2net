@@ -1,78 +1,22 @@
 <script lang="ts">
   import init from "lts";
-  import maplibregl from "maplibre-gl";
   import type { Map as MapType } from "maplibre-gl";
-  import { FileAPISource, PMTiles, Protocol } from "pmtiles";
+  import { FileAPISource, PMTiles } from "pmtiles";
   import { onMount } from "svelte";
-  import { MapLibre, VectorTileSource } from "svelte-maplibre";
+  import { MapLibre } from "svelte-maplibre";
   import { colors } from "./common";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
-  import { pmtilesInfo } from "./loader";
+  import Loader from "./Loader.svelte";
   import ToggleLayer from "./ToggleLayer.svelte";
 
   onMount(async () => {
     await init();
   });
 
-  function cleanupSource(id: string) {
-    if (map.getSource(id)) {
-      // First remove all layers using this source
-      let layers = [];
-      for (let layer of map.getStyle().layers) {
-        if ("source" in layer && layer.source == id) {
-          layers.push(layer.id);
-        }
-      }
-      for (let layer of layers) {
-        map.removeLayer(layer);
-      }
-
-      map.removeSource(id);
-    }
-  }
-
-  let fileInput: HTMLInputElement;
-  async function fileLoaded(e: Event) {
-    try {
-      let files = fileInput.files!;
-      let pmtilesFile = new PMTiles(new FileAPISource(files[0]));
-
-      let info = await pmtilesInfo(pmtilesFile);
-      outputMetadata = info.outputMetadata;
-
-      let protocol = new Protocol();
-      maplibregl.addProtocol("pmtiles", protocol.tile);
-      protocol.add(pmtilesFile);
-
-      let source = "pmtilesSource";
-      // Teardown previous file if needed
-      // TODO Do we need to removeProtocol? Any memory leak?
-      cleanupSource(source);
-
-      map.addSource(source, {
-        type: "vector",
-        tiles: ["pmtiles://" + pmtilesFile.source.getKey() + "/{z}/{x}/{y}"],
-        minzoom: info.minZoom,
-        maxzoom: info.maxZoom,
-        bounds: info.bounds,
-      });
-      map.fitBounds(info.bounds, { padding: 100, duration: 500 });
-
-      loadedFileCount++;
-      example = "";
-    } catch (err) {
-      window.alert(
-        `Problem loading this PMTiles file. Don't open the GeoJSON file; make sure to select .pmtiles. Error: ${err}`
-      );
-    }
-  }
-
   let map: MapType;
-
-  // TODO Use a counter to recreate layers after cleaning up a source. Hack.
-  let loadedFileCount = 0;
+  let pmtiles: PMTiles | null;
   let example = "";
   let outputMetadata: any | undefined;
 
@@ -80,9 +24,23 @@
   let originRadius = 3;
   let destinationRadius = 3;
 
-  $: if (example == "") {
-    // TODO Hack...
-    loadedFileCount = 0;
+  let fileInput: HTMLInputElement;
+  function fileLoaded(e: Event) {
+    try {
+      example = "";
+      let files = fileInput.files!;
+      pmtiles = new PMTiles(new FileAPISource(files[0]));
+    } catch (err) {
+      window.alert(
+        `Problem loading this PMTiles file. Don't open the GeoJSON file; make sure to select .pmtiles. Error: ${err}`
+      );
+    }
+  }
+
+  $: if (example != "") {
+    pmtiles = new PMTiles(
+      `http://od2net.s3-website.eu-west-2.amazonaws.com/output/${example}.pmtiles`
+    );
   }
 
   $: if (map) {
@@ -107,7 +65,7 @@
   <div slot="left">
     <h1>od2net</h1>
     <label>
-      {#if loadedFileCount == 0}
+      {#if pmtiles == null}
         Open a <i>.pmtiles</i> file produced by the tool. Note this file stays in
         your browser; it doesn't get uploaded anywhere.
       {/if}
@@ -139,7 +97,7 @@
         >
       </div>
     {/if}
-    {#if loadedFileCount > 0}
+    {#if outputMetadata}
       <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
       <div>
         <label>
@@ -196,19 +154,14 @@
       hash
       bind:map
     >
-      {#if loadedFileCount > 0}
-        {#key loadedFileCount}
+      {#if outputMetadata}
+        {#key outputMetadata}
           <Layers {maxCount} {originRadius} {destinationRadius} />
         {/key}
       {/if}
-      {#if example != ""}
-        <VectorTileSource
-          id="pmtilesSource"
-          url={`pmtiles://http://od2net.s3-website.eu-west-2.amazonaws.com/output/${example}.pmtiles`}
-        >
-          <Layers {maxCount} {originRadius} {destinationRadius} />
-        </VectorTileSource>
-      {/if}
     </MapLibre>
+    {#if map}
+      <Loader {map} {pmtiles} bind:outputMetadata />
+    {/if}
   </div>
 </Layout>
