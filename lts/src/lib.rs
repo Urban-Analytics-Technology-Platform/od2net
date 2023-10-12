@@ -7,7 +7,7 @@ mod tests;
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 
-use serde_repr::{Serialize_repr, Deserialize_repr};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 pub use bike_ottawa::bike_ottawa;
 pub use speed_limit_only::speed_limit_only;

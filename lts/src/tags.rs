@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Convenience functions around a string->string map
 #[derive(Clone, Serialize, Deserialize)]

@@ -35,9 +35,6 @@ pub fn calculate(input: JsValue) -> Result<JsValue, JsValue> {
             vec![format!("Unknown method {}", input.method)],
         )
     };
-    let result = serde_wasm_bindgen::to_value(&Output {
-        lts,
-        messages,
-    })?;
+    let result = serde_wasm_bindgen::to_value(&Output { lts, messages })?;
     Ok(result)
 }

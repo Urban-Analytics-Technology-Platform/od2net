@@ -20,11 +20,9 @@ pub fn bike_ottawa(tags: &Tags) -> (LTS, Vec<String>) {
         return (lts, msgs);
     }
 
-    // TODO
-    /*const imt = isMixedTraffic(way);
-    if (imt.isMixedTraffic) {
-      return imt.result;
-    }*/
+    if let Some(lts) = is_mixed_traffic(&tags, &mut msgs) {
+        return (lts, msgs);
+    }
 
     msgs.push("No categories matched".into());
     (LTS::NotAllowed, msgs)
@@ -126,10 +124,9 @@ fn bike_lane_case(tags: &Tags, msgs: &mut Vec<String>) -> Option<LTS> {
     }
 
     if has_parking_lane(tags, msgs) {
-        None
-        //bike_lane_with_parking(tags, msgs)
+        Some(bike_lane_with_parking(tags, msgs))
     } else {
-        bike_lane_no_parking(tags, msgs)
+        Some(bike_lane_no_parking(tags, msgs))
     }
 }
 
@@ -151,7 +148,56 @@ fn has_parking_lane(tags: &Tags, msgs: &mut Vec<String>) -> bool {
     false
 }
 
-fn bike_lane_no_parking(tags: &Tags, msgs: &mut Vec<String>) -> Option<LTS> {
+fn bike_lane_with_parking(tags: &Tags, msgs: &mut Vec<String>) -> LTS {
+    let is_residential = tags.is("highway", "residential");
+    let num_lanes = parse::get_num_lanes(tags, msgs);
+    let speed_mph = parse::get_maxspeed_mph(tags, msgs);
+
+    // TODO The logic is very mutable. Can we simplify it?
+    let mut lts = LTS::LTS1;
+
+    if num_lanes >= 3 {
+        msgs.push("3+ lanes and parking, so increasing LTS to 3".into());
+        lts = LTS::LTS3;
+    }
+
+    // Width unknown, so some logic simplified
+
+    if speed_mph < 25 || is_residential && lts < LTS::LTS2 {
+        msgs.push("Based on speed and parking, increasing LTS to 2".into());
+        lts = LTS::LTS2;
+    }
+
+    if speed_mph >= 25 {
+        if speed_mph <= 30 {
+            if lts < LTS::LTS2 {
+                msgs.push("Based on speed and parking, increasing LTS to 2".into());
+                lts = LTS::LTS2;
+            }
+        }
+    } else if speed_mph < 40 {
+        if lts < LTS::LTS3 {
+            msgs.push("Based on speed and parking, increasing LTS to 3".into());
+            lts = LTS::LTS3;
+        }
+    } else if lts < LTS::LTS4 {
+        msgs.push("Based on speed and parking, increasing LTS to 4".into());
+        lts = LTS::LTS4;
+    }
+
+    if !is_residential && lts < LTS::LTS3 {
+        msgs.push("Increasing LTS to 3 because highway isn't residential".into());
+        lts = LTS::LTS3;
+    }
+
+    if lts == LTS::LTS1 {
+        msgs.push("LTS 1 because there's parking, the speed is low, there aren't many lanes, and it's a residential street".into());
+    }
+
+    lts
+}
+
+fn bike_lane_no_parking(tags: &Tags, msgs: &mut Vec<String>) -> LTS {
     let is_residential = tags.is("highway", "residential");
     let num_lanes = parse::get_num_lanes(tags, msgs);
     let speed_mph = parse::get_maxspeed_mph(tags, msgs);
@@ -198,5 +244,94 @@ fn bike_lane_no_parking(tags: &Tags, msgs: &mut Vec<String>) -> Option<LTS> {
         ));
     }
 
-    Some(lts)
+    lts
+}
+
+fn is_mixed_traffic(tags: &Tags, msgs: &mut Vec<String>) -> Option<LTS> {
+    msgs.push("No bike lane or separated path; treating as mixed traffic".into());
+
+    let is_residential = tags.is("highway", "residential");
+    let num_lanes = parse::get_num_lanes(tags, msgs);
+    let speed_mph = parse::get_maxspeed_mph(tags, msgs);
+
+    if tags.is("motor_vehicle", "no") {
+        msgs.push("motor_vehicle=no, so LTS 1".into());
+        return Some(LTS::LTS1);
+    }
+    if tags.is_any("highway", vec!["steps", "pedestrian"]) {
+        msgs.push(format!(
+            "LTS 1 since highway={}",
+            tags.get("highway").unwrap()
+        ));
+        return Some(LTS::LTS1);
+    }
+    if tags.is("highway", "footway") && tags.is("footway", "crossing") {
+        msgs.push("LTS 2 because highway=footway and footway=crossing".into());
+        return Some(LTS::LTS2);
+    }
+    if tags.is("highway", "service") && tags.is("service", "alley") {
+        msgs.push("LTS 2 because highway=service and service=alley".into());
+        return Some(LTS::LTS2);
+    }
+    if tags.is("highway", "track") {
+        msgs.push("LTS 2 because highway=track".into());
+        return Some(LTS::LTS2);
+    }
+
+    if speed_mph > 30 {
+        msgs.push("LTS 4 because speed is over 30mph".into());
+        return Some(LTS::LTS4);
+    }
+
+    if tags.is("highway", "service") {
+        if tags.is_any("service", vec!["parking_aisle", "driveway"]) {
+            msgs.push(format!(
+                "LTS 2 since speed is under 30mph and service={}",
+                tags.get("service").unwrap()
+            ));
+            return Some(LTS::LTS2);
+        }
+        if speed_mph <= 20 {
+            msgs.push("LTS 2 because speed is under 20mph and highway=service".into());
+            return Some(LTS::LTS2);
+        }
+    }
+
+    if speed_mph <= 25 {
+        if num_lanes <= 3 && is_residential {
+            msgs.push(
+                "LTS 2 since speed is under 25 mph, 3 or fewer lanes, and a residential street"
+                    .into(),
+            );
+            return Some(LTS::LTS2);
+        } else if num_lanes <= 3 {
+            msgs.push(
+                "LTS 3 since speed is under 25 mph, 3 or fewer lanes, on a non-residential street"
+                    .into(),
+            );
+            return Some(LTS::LTS3);
+        } else if num_lanes <= 5 {
+            msgs.push("LTS 3 since speed is under 25 mph and 4 or 5 lanes".into());
+            return Some(LTS::LTS3);
+        } else {
+            msgs.push("LTS 4 since speed is under 25 mph and there's more than 5 lanes".into());
+            return Some(LTS::LTS4);
+        }
+    }
+
+    if num_lanes < 3 && is_residential {
+        msgs.push(
+            "LTS 2 because speed is 25-30mph, 2 or less lanes, and a residential street.".into(),
+        );
+        return Some(LTS::LTS2);
+    } else if num_lanes <= 3 {
+        msgs.push(
+            "LTS 3 because speed is 25-30mph, 3 or less lanes, and a non-residential street."
+                .into(),
+        );
+        return Some(LTS::LTS3);
+    } else {
+        msgs.push("LTS 4 because there are more than 3 lanes.".into());
+        return Some(LTS::LTS4);
+    }
 }
