@@ -9,6 +9,7 @@
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
+  import { pmtilesInfo } from "./loader";
   import ToggleLayer from "./ToggleLayer.svelte";
 
   onMount(async () => {
@@ -37,17 +38,13 @@
     try {
       let files = fileInput.files!;
       let pmtilesFile = new PMTiles(new FileAPISource(files[0]));
+
+      let info = await pmtilesInfo(pmtilesFile);
+      outputMetadata = info.outputMetadata;
+
       let protocol = new Protocol();
       maplibregl.addProtocol("pmtiles", protocol.tile);
       protocol.add(pmtilesFile);
-
-      let header = await pmtilesFile.getHeader();
-      let bounds: [number, number, number, number] = [
-        header.minLon,
-        header.minLat,
-        header.maxLon,
-        header.maxLat,
-      ];
 
       let source = "pmtilesSource";
       // Teardown previous file if needed
@@ -57,14 +54,11 @@
       map.addSource(source, {
         type: "vector",
         tiles: ["pmtiles://" + pmtilesFile.source.getKey() + "/{z}/{x}/{y}"],
-        minzoom: header.minZoom,
-        maxzoom: header.maxZoom,
-        bounds,
+        minzoom: info.minZoom,
+        maxzoom: info.maxZoom,
+        bounds: info.bounds,
       });
-      map.fitBounds(bounds, { padding: 100, duration: 500 });
-
-      let metadata = await pmtilesFile.getMetadata();
-      outputMetadata = JSON.parse(metadata.description);
+      map.fitBounds(info.bounds, { padding: 100, duration: 500 });
 
       loadedFileCount++;
       example = "";
@@ -125,7 +119,9 @@
         <select bind:value={example}>
           <option value="">Custom file loaded</option>
           <option value="edinburgh">Edinburgh</option>
-          <option value="england_2011_home_to_work">England (2011 home-to-work)</option>
+          <option value="england_2011_home_to_work"
+            >England (2011 home-to-work)</option
+          >
           <option value="liverpool">Liverpool</option>
           <option value="london">London</option>
           <option value="seattle">Seattle</option>
