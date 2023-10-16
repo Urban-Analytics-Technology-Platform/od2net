@@ -12,6 +12,7 @@
   export let maxCount: number;
   export let originRadius: number;
   export let destinationRadius: number;
+  export let enableControls: boolean;
 
   $: lineWidth = getLineWidth(maxCount);
   function getLineWidth(
@@ -36,6 +37,9 @@
   }
 
   function openOSM(feature) {
+    if (!enableControls) {
+      return;
+    }
     let id = feature.properties.way;
     window.open(`http://openstreetmap.org/way/${id}`, "_blank");
   }
@@ -47,7 +51,7 @@
   sourceLayer="rnet"
   filter={["==", ["geometry-type"], "LineString"]}
   manageHoverState
-  hoverCursor="pointer"
+  hoverCursor={enableControls ? "pointer" : undefined}
   paint={{
     "line-width": lineWidth,
     "line-color": [
@@ -69,9 +73,11 @@
   beforeId="Road labels"
   on:click={(e) => openOSM(e.detail.features[0])}
 >
-  <Popup openOn="hover" let:features>
-    <PropertiesTable properties={features[0].properties} />
-  </Popup>
+  {#if enableControls}
+    <Popup openOn="hover" let:features>
+      <PropertiesTable properties={features[0].properties} />
+    </Popup>
+  {/if}
 </LineLayer>
 
 <CircleLayer

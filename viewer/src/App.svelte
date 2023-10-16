@@ -9,6 +9,7 @@
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
   import Loader from "./Loader.svelte";
+  import StreetView from "./StreetView.svelte";
   import ToggleLayer from "./ToggleLayer.svelte";
 
   onMount(async () => {
@@ -20,6 +21,7 @@
   let example = "";
   let outputMetadata: any | undefined;
 
+  let streetviewOn = false;
   let maxCount = 1000;
   let originRadius = 3;
   let destinationRadius = 3;
@@ -145,6 +147,8 @@
           target="_blank">BikeOttawa</a
         >
       </p>
+      <hr />
+      <StreetView {map} bind:enabled={streetviewOn} />
     {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
@@ -156,7 +160,12 @@
     >
       {#if outputMetadata}
         {#key outputMetadata}
-          <Layers {maxCount} {originRadius} {destinationRadius} />
+          <Layers
+            {maxCount}
+            {originRadius}
+            {destinationRadius}
+            enableControls={!streetviewOn}
+          />
         {/key}
       {/if}
     </MapLibre>
