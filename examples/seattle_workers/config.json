@@ -1,0 +1,18 @@
+{
+  "requests": {
+    "description": "Every working age person around Seattle going to Harborview",
+    "pattern": {
+      "ZoneToPoint": {
+        "zones_path": "zones.geojson",
+        "destinations_path": "destinations.geojson",
+        "csv_path": "od.csv",
+        "origin_zone_centroid_fallback": true
+      }
+    },
+    "origins_path": "buildings.geojson",
+    "destinations_path": "buildings.geojson"
+  },
+  "cost": "AvoidMainRoads",
+  "uptake": "Identity",
+  "lts": "BikeOttawa"
+}
