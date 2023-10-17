@@ -61,6 +61,11 @@
       console.log({ min, max, count });
     });
   }
+
+  function total(meters: number): string {
+    let km = meters / 1000.0;
+    return `${km.toFixed(1)} km total`;
+  }
 </script>
 
 <Layout>
@@ -135,10 +140,24 @@
       <hr />
       <Legend
         rows={[
-          ["LTS 1 - suitable for children", colors.lts1],
-          ["LTS 2 - low stress", colors.lts2],
-          ["LTS 3 - medium stress", colors.lts3],
-          ["LTS 4 - high stress", colors.lts4],
+          [
+            `LTS 1 - suitable for children: ${total(
+              outputMetadata.total_meters_lts1
+            )}`,
+            colors.lts1,
+          ],
+          [
+            `LTS 2 - low stress: ${total(outputMetadata.total_meters_lts2)}`,
+            colors.lts2,
+          ],
+          [
+            `LTS 3 - medium stress: ${total(outputMetadata.total_meters_lts3)}`,
+            colors.lts3,
+          ],
+          [
+            `LTS 4 - high stress: ${total(outputMetadata.total_meters_lts4)}`,
+            colors.lts4,
+          ],
         ]}
       />
       <p>

@@ -124,6 +124,8 @@ fn handle_request(
                 .or_else(|| network.edges.get(&(i2, i1)))
                 .unwrap();
             total_distance += edge.length_meters;
+
+            counts.total_distance_by_lts[edge.lts as u8 as usize] += edge.length_meters;
         }
 
         let count = uptake::calculate_uptake(uptake, total_distance);

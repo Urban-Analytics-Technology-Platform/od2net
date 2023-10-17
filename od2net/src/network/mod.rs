@@ -30,6 +30,9 @@ pub struct Counts {
     // Count how many times a point is used successfully as an origin or destination
     pub count_per_origin: HashMap<Position, f64>,
     pub count_per_destination: HashMap<Position, f64>,
+
+    // In meters. Indexed by LTS as u8
+    pub total_distance_by_lts: [f64; 5],
 }
 
 impl Counts {
@@ -40,6 +43,8 @@ impl Counts {
 
             count_per_origin: HashMap::new(),
             count_per_destination: HashMap::new(),
+
+            total_distance_by_lts: [0.0; 5],
         }
     }
 
@@ -54,6 +59,9 @@ impl Counts {
         }
         for (key, count) in other.count_per_destination {
             *self.count_per_destination.entry(key).or_insert(0.0) += count;
+        }
+        for i in 0..5 {
+            self.total_distance_by_lts[i] += other.total_distance_by_lts[i];
         }
     }
 }

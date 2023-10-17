@@ -103,7 +103,7 @@ impl Network {
     ) -> Result<()> {
         // Write one feature at a time to avoid memory problems
         let mut writer = FeatureWriter::from_writer(BufWriter::new(File::create(path)?));
-        writer.write_foreign_member("config", output_metadata)?;
+        writer.write_foreign_member("metadata", output_metadata)?;
 
         let mut skipped = 0;
         let mut id_counter = 0;

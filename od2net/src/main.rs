@@ -20,6 +20,8 @@ use clap::Parser;
 use indicatif::HumanCount;
 use serde::Serialize;
 
+use lts::LTS;
+
 #[derive(Parser)]
 #[clap(about, version, author)]
 struct Args {
@@ -159,6 +161,11 @@ fn main() -> Result<()> {
         routing_time_seconds: routing_time.as_secs_f32(),
         total_time_seconds: None,
         tippecanoe_time_seconds: None,
+        total_meters_not_allowed: counts.total_distance_by_lts[LTS::NotAllowed as u8 as usize],
+        total_meters_lts1: counts.total_distance_by_lts[LTS::LTS1 as u8 as usize],
+        total_meters_lts2: counts.total_distance_by_lts[LTS::LTS2 as u8 as usize],
+        total_meters_lts3: counts.total_distance_by_lts[LTS::LTS3 as u8 as usize],
+        total_meters_lts4: counts.total_distance_by_lts[LTS::LTS4 as u8 as usize],
     };
     timer.start("Writing output GJ");
     network.write_geojson(
@@ -223,6 +230,11 @@ pub struct OutputMetadata {
     num_failed_requests: usize,
     num_edges_with_count: usize,
     routing_time_seconds: f32,
+    total_meters_not_allowed: f64,
+    total_meters_lts1: f64,
+    total_meters_lts2: f64,
+    total_meters_lts3: f64,
+    total_meters_lts4: f64,
     // These two aren't recorded in the GeoJSON or PMTiles output, because we'd have to go back and
     // update the files!
     total_time_seconds: Option<f32>,
@@ -241,6 +253,17 @@ impl OutputMetadata {
             ("Edges with a count", self.num_edges_with_count),
         ] {
             println!("- {label}: {}", HumanCount(count as u64));
+        }
+        for (label, meters) in [
+            // For bugspotting
+            ("not allowed roads", self.total_meters_not_allowed),
+            ("LTS 1 roads", self.total_meters_lts1),
+            ("LTS 2 roads", self.total_meters_lts2),
+            ("LTS 3 roads", self.total_meters_lts3),
+            ("LTS 4 roads", self.total_meters_lts4),
+        ] {
+            let km = meters / 1000.0;
+            println!("- Total distance on {label}: {km:.1} km");
         }
     }
 }
