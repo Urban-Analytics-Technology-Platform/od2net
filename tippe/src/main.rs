@@ -7,8 +7,6 @@ use mvt::{GeomEncoder, GeomType, MapGrid, Tile, TileId};
 use pmtiles2::{util::tile_id, Compression, PMTiles, TileType};
 
 fn main() -> Result<()> {
-    let mut pmtiles = PMTiles::new(TileType::Mvt, Compression::None);
-
     let web_mercator_transform = MapGrid::default();
 
     // Everything
@@ -43,8 +41,24 @@ fn main() -> Result<()> {
         layer = write_feature.into_layer();
     }
     println!("Got {} features", layer.num_features());
-
     tile.add_layer(layer)?;
+
+    let mut pmtiles = PMTiles::new(TileType::Mvt, Compression::None);
+    let metadata = serde_json::json!(
+        {
+            "vector_layers": [
+            {
+                "id": "layer1",
+                "minzoom": 0,
+                "maxzoom": 1,
+                "fields": {
+                    "key": "String"
+                }
+            }
+            ]
+        }
+    );
+    pmtiles.meta_data = Some(metadata);
     pmtiles.add_tile(
         tile_id(
             current_tile_id.z() as u8,
