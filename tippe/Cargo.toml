@@ -1,0 +1,13 @@
+[package]
+name = "tippe"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+fs-err = "2.9.0"
+geojson = "0.24.1"
+mvt = "0.8.1"
+pmtiles2 = "0.2.0"
