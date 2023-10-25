@@ -793,6 +793,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "mercator"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "337d162c5cc1b92557c335c30a1568434d6bb4328ec25f31c028dee285450cbf"
+
+[[package]]
 name = "miniz_oxide"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1313,8 +1319,10 @@ dependencies = [
  "anyhow",
  "fs-err",
  "geojson 0.24.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mercator",
  "mvt",
  "pmtiles2",
+ "pointy",
  "serde_json",
 ]
 
