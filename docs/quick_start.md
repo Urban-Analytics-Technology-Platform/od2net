@@ -29,7 +29,7 @@ python3 setup.py
 # Building the Rust binary
 cargo run --release config.json
 # Or use Docker instead
-# docker run -v $(pwd):/app ghcr.io/dabreegster/od2net:main /app/config.json
+# docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json
 ```
 
 Then go to <https://Urban-Analytics-Technology-Platform.github.io/od2net/> and load `examples/london/output/rnet.pmtiles`.
@@ -43,7 +43,7 @@ While developing OD data, a route cost function, an uptake model, etc, it can be
 ```
 cd examples/york
 python3 setup.py
-docker run -v $(pwd):/app ghcr.io/dabreegster/od2net:main /app/config.json --detailed-routes=50
+docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json --detailed-routes=50
 ```
 
 See `output/` for the result.
