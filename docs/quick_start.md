@@ -32,7 +32,7 @@ cargo run --release config.json
 # docker run -v $(pwd):/app ghcr.io/dabreegster/od2net:main /app/config.json
 ```
 
-Then go to <https://dabreegster.github.io/od2net/> and load `examples/london/output/rnet.pmtiles`.
+Then go to <https://Urban-Analytics-Technology-Platform.github.io/od2net/> and load `examples/london/output/rnet.pmtiles`.
 
 Some steps will be slow the first time (compiling Rust, parsing OpenStreetMap data, and building a contraction hierarchy). Subsequent runs will be faster.
 
