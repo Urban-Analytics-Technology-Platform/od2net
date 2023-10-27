@@ -14,7 +14,7 @@ fn main() -> Result<()> {
         panic!("Pass in a .geojson file");
     }
 
-    let zoom_levels: Vec<u8> = (0..10).collect();
+    let zoom_levels: Vec<u32> = (0..5).collect();
 
     let reader = FeatureReader::from_reader(BufReader::new(File::open(&args[1])?));
     let pmtiles = geojson_to_pmtiles(reader, zoom_levels)?;
@@ -25,7 +25,10 @@ fn main() -> Result<()> {
 
 type PMTilesFile = PMTiles<Cursor<&'static [u8]>>;
 
-fn geojson_to_pmtiles(reader: FeatureReader<BufReader<File>>, zoom_levels: Vec<u8>) -> Result<PMTilesFile> {
+fn geojson_to_pmtiles(
+    reader: FeatureReader<BufReader<File>>,
+    zoom_levels: Vec<u32>,
+) -> Result<PMTilesFile> {
     // TODO Put these in an rtree or similar. For now, just read all at once.
     let mut features = Vec::new();
     for f in reader.features() {
@@ -35,11 +38,6 @@ fn geojson_to_pmtiles(reader: FeatureReader<BufReader<File>>, zoom_levels: Vec<u
     let bbox = calculate_bbox(&features);
     println!("bbox of {} features: {:?}", features.len(), bbox);
 
-    for zoom in zoom_levels {
-        let (x_min, y_min, x_max, y_max) = bbox_to_tiles(bbox, zoom);
-        println!("for zoom {zoom}, we need tiles from x={x_min} to {x_max} and y={y_min} to {y_max}");
-    }
-
     let mut pmtiles = PMTiles::new(TileType::Mvt, Compression::None);
     pmtiles.meta_data = Some(serde_json::json!(
         {
@@ -48,7 +46,7 @@ fn geojson_to_pmtiles(reader: FeatureReader<BufReader<File>>, zoom_levels: Vec<u
             {
                 "id": "layer1",
                 "minzoom": 0,
-                "maxzoom": 1,
+                "maxzoom": 5,
                 "fields": {
                     "key": "String"
                 }
@@ -60,9 +58,22 @@ fn geojson_to_pmtiles(reader: FeatureReader<BufReader<File>>, zoom_levels: Vec<u
     pmtiles.min_longitude = -180.0;
     pmtiles.max_latitude = 90.0;
     pmtiles.max_longitude = 180.0;
+    pmtiles.min_zoom = 0;
+    pmtiles.max_zoom = 5;
     pmtiles.center_zoom = 0;
 
-    make_tile(TileId::new(0, 0, 0)?, &mut pmtiles, &features)?;
+    for zoom in zoom_levels {
+        let (x_min, y_min, x_max, y_max) = bbox_to_tiles(bbox, zoom);
+        // TODO Inclusive or not?
+        for x in x_min..=x_max {
+            for y in y_min..=y_max {
+                // TODO Filter features that belong in this tile
+                // TODO And figure out clipping
+                make_tile(TileId::new(x, y, zoom)?, &mut pmtiles, &features)?;
+            }
+        }
+        //println!("for zoom {zoom}, we need tiles from x={x_min} to {x_max} and y={y_min} to {y_max}");
+    }
 
     Ok(pmtiles)
 }
@@ -162,15 +173,17 @@ fn calculate_bbox(features: &Vec<Feature>) -> (f64, f64, f64, f64) {
 
 // Via chatgpt, don't trust this yet. https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
 // better reference.
-fn bbox_to_tiles(bbox: (f64, f64, f64, f64), zoom: u8) -> (u32, u32, u32, u32) {
+fn bbox_to_tiles(bbox: (f64, f64, f64, f64), zoom: u32) -> (u32, u32, u32, u32) {
     let (min_lon, min_lat, max_lon, max_lat) = bbox;
 
-    let num_tiles = 2u32.pow(zoom.into());
+    let num_tiles = 2u32.pow(zoom);
 
     let x_min = ((min_lon + 180.0) / 360.0 * num_tiles as f64).floor() as u32;
-    let y_min = ((1.0 - (max_lat.to_radians().tan().sin() + 1.0) / 2.0) * num_tiles as f64).floor() as u32;
+    let y_min =
+        ((1.0 - (max_lat.to_radians().tan().sin() + 1.0) / 2.0) * num_tiles as f64).floor() as u32;
     let x_max = ((max_lon + 180.0) / 360.0 * num_tiles as f64).floor() as u32;
-    let y_max = ((1.0 - (min_lat.to_radians().tan().sin() + 1.0) / 2.0) * num_tiles as f64).floor() as u32;
+    let y_max =
+        ((1.0 - (min_lat.to_radians().tan().sin() + 1.0) / 2.0) * num_tiles as f64).floor() as u32;
 
     (x_min, y_min, x_max, y_max)
 }
