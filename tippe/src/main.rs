@@ -14,8 +14,10 @@ fn main() -> Result<()> {
         panic!("Pass in a .geojson file");
     }
 
+    let zoom_levels: Vec<u8> = (0..10).collect();
+
     let reader = FeatureReader::from_reader(BufReader::new(File::open(&args[1])?));
-    let pmtiles = geojson_to_pmtiles(reader)?;
+    let pmtiles = geojson_to_pmtiles(reader, zoom_levels)?;
     let mut file = File::create("out.pmtiles")?;
     pmtiles.to_writer(&mut file)?;
     Ok(())
@@ -23,11 +25,19 @@ fn main() -> Result<()> {
 
 type PMTilesFile = PMTiles<Cursor<&'static [u8]>>;
 
-fn geojson_to_pmtiles(reader: FeatureReader<BufReader<File>>) -> Result<PMTilesFile> {
+fn geojson_to_pmtiles(reader: FeatureReader<BufReader<File>>, zoom_levels: Vec<u8>) -> Result<PMTilesFile> {
     // TODO Put these in an rtree or similar. For now, just read all at once.
     let mut features = Vec::new();
     for f in reader.features() {
         features.push(f?);
+    }
+
+    let bbox = calculate_bbox(&features);
+    println!("bbox of {} features: {:?}", features.len(), bbox);
+
+    for zoom in zoom_levels {
+        let (x_min, y_min, x_max, y_max) = bbox_to_tiles(bbox, zoom);
+        println!("for zoom {zoom}, we need tiles from x={x_min} to {x_max} and y={y_min} to {y_max}");
     }
 
     let mut pmtiles = PMTiles::new(TileType::Mvt, Compression::None);
@@ -113,16 +123,54 @@ fn make_tile(
     Ok(())
 }
 
-static A: f64 = 6378137.0;
-static MAXEXTENT: f64 = 20037508.342789244;
-static D2R: f64 = f64::consts::PI / 180.0;
-
 // WGS84 to Mercator
 fn forward(c: [f64; 2]) -> [f64; 2] {
+    static A: f64 = 6378137.0;
+    static MAXEXTENT: f64 = 20037508.342789244;
+    static D2R: f64 = f64::consts::PI / 180.0;
+
     [
         (A * c[0] * D2R).max(-MAXEXTENT).min(MAXEXTENT) as f64,
         (A * (((f64::consts::PI * 0.25f64) + (0.5f64 * c[1] * D2R)).tan()).ln())
             .max(-MAXEXTENT)
             .min(MAXEXTENT) as f64,
     ]
+}
+
+fn calculate_bbox(features: &Vec<Feature>) -> (f64, f64, f64, f64) {
+    // TODO Convert to geo and just use something there?
+    let mut min_lon = f64::MAX;
+    let mut max_lon = f64::MIN;
+    let mut min_lat = f64::MAX;
+    let mut max_lat = f64::MIN;
+
+    for f in features {
+        if let Some(ref geometry) = f.geometry {
+            if let Value::LineString(ref line_string) = geometry.value {
+                for pt in line_string {
+                    min_lon = min_lon.min(pt[0]);
+                    min_lat = min_lon.min(pt[1]);
+                    max_lon = max_lon.max(pt[0]);
+                    max_lat = max_lon.max(pt[1]);
+                }
+            }
+        }
+    }
+
+    (min_lon, min_lat, max_lon, max_lat)
+}
+
+// Via chatgpt, don't trust this yet. https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+// better reference.
+fn bbox_to_tiles(bbox: (f64, f64, f64, f64), zoom: u8) -> (u32, u32, u32, u32) {
+    let (min_lon, min_lat, max_lon, max_lat) = bbox;
+
+    let num_tiles = 2u32.pow(zoom.into());
+
+    let x_min = ((min_lon + 180.0) / 360.0 * num_tiles as f64).floor() as u32;
+    let y_min = ((1.0 - (max_lat.to_radians().tan().sin() + 1.0) / 2.0) * num_tiles as f64).floor() as u32;
+    let x_max = ((max_lon + 180.0) / 360.0 * num_tiles as f64).floor() as u32;
+    let y_max = ((1.0 - (min_lat.to_radians().tan().sin() + 1.0) / 2.0) * num_tiles as f64).floor() as u32;
+
+    (x_min, y_min, x_max, y_max)
 }
