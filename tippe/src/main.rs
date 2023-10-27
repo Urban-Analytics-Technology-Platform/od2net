@@ -8,13 +8,15 @@ use mvt::{GeomEncoder, GeomType, MapGrid, Tile, TileId};
 use pmtiles2::{util::tile_id, Compression, PMTiles, TileType};
 use pointy::Transform;
 
+// TODO Final result is weird and squiggly
+
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() != 2 {
         panic!("Pass in a .geojson file");
     }
 
-    let zoom_levels: Vec<u32> = (0..5).collect();
+    let zoom_levels: Vec<u32> = (0..10).collect();
 
     let reader = FeatureReader::from_reader(BufReader::new(File::open(&args[1])?));
     let pmtiles = geojson_to_pmtiles(reader, zoom_levels)?;
@@ -59,14 +61,17 @@ fn geojson_to_pmtiles(
     pmtiles.min_longitude = -180.0;
     pmtiles.max_latitude = 90.0;
     pmtiles.max_longitude = 180.0;
-    pmtiles.min_zoom = 0;
-    pmtiles.max_zoom = 11;
+    pmtiles.min_zoom = zoom_levels[0] as u8;
+    pmtiles.max_zoom = *zoom_levels.last().unwrap() as u8;
     pmtiles.center_zoom = 7;
     pmtiles.center_longitude = -1.1425781;
     pmtiles.center_latitude = 53.904306;
 
-    /*for zoom in zoom_levels {
+    for zoom in zoom_levels {
         let (x_min, y_min, x_max, y_max) = bbox_to_tiles(bbox, zoom);
+        println!(
+            "for zoom {zoom}, we need tiles from x={x_min} to {x_max} and y={y_min} to {y_max}"
+        );
         // TODO Inclusive or not?
         for x in x_min..=x_max {
             for y in y_min..=y_max {
@@ -75,40 +80,11 @@ fn geojson_to_pmtiles(
                 make_tile(TileId::new(x, y, zoom)?, &mut pmtiles, &features)?;
             }
         }
-        //println!("for zoom {zoom}, we need tiles from x={x_min} to {x_max} and y={y_min} to {y_max}");
-    }*/
+    }
 
     // TODO Just try a few fixed tiles that _should_ have stuff in them
-    //
-    // less_tiny (in york) shows up fine
-    // real york, nothing
-    //
-    make_tile(TileId::new(63, 41, 7)?, &mut pmtiles, &features)?;
-    make_tile(TileId::new(1017, 657, 11)?, &mut pmtiles, &features)?;
-
-    /*make_tile(TileId::new(0, 0, 0)?, &mut pmtiles, &features)?;
-
-    make_tile(TileId::new(0, 0, 1)?, &mut pmtiles, &features)?;
-    make_tile(TileId::new(1, 0, 1)?, &mut pmtiles, &features)?;
-
-    make_tile(TileId::new(1, 1, 2)?, &mut pmtiles, &features)?;
-    make_tile(TileId::new(2, 1, 2)?, &mut pmtiles, &features)?;
-
-    make_tile(TileId::new(3, 2, 3)?, &mut pmtiles, &features)?;
-
-    make_tile(TileId::new(7, 5, 4)?, &mut pmtiles, &features)?;
-
-    make_tile(TileId::new(15, 10, 5)?, &mut pmtiles, &features)?;
-
-    make_tile(TileId::new(31, 20, 6)?, &mut pmtiles, &features)?;
-
-    make_tile(TileId::new(63, 41, 7)?, &mut pmtiles, &features)?;
-
-    make_tile(TileId::new(126, 82, 8)?, &mut pmtiles, &features)?;
-    make_tile(TileId::new(127, 82, 8)?, &mut pmtiles, &features)?;
-
-    make_tile(TileId::new(252, 164, 9)?, &mut pmtiles, &features)?;
-    make_tile(TileId::new(254, 164, 9)?, &mut pmtiles, &features)?;*/
+    //make_tile(TileId::new(63, 41, 7)?, &mut pmtiles, &features)?;
+    //make_tile(TileId::new(1017, 657, 11)?, &mut pmtiles, &features)?;
 
     Ok(pmtiles)
 }
@@ -217,19 +193,28 @@ fn calculate_bbox(features: &Vec<Feature>) -> (f64, f64, f64, f64) {
     (min_lon, min_lat, max_lon, max_lat)
 }
 
-// Via chatgpt, don't trust this yet. https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-// better reference.
+// https://gis.stackexchange.com/questions/189445/finding-the-map-tilesz-x-y-tile-data-in-a-given-bounding-box-and-zoom-level
+// https://rdrr.io/cran/slippymath/man/bbox_to_tile_grid.html
 fn bbox_to_tiles(bbox: (f64, f64, f64, f64), zoom: u32) -> (u32, u32, u32, u32) {
     let (min_lon, min_lat, max_lon, max_lat) = bbox;
 
-    let num_tiles = 2u32.pow(zoom);
+    // Order of latitudes is swapped for some reason
+    (
+        lon_to_tile_x(min_lon, zoom),
+        lat_to_tile_y(max_lat, zoom),
+        lon_to_tile_x(max_lon, zoom),
+        lat_to_tile_y(min_lat, zoom),
+    )
+}
 
-    let x_min = ((min_lon + 180.0) / 360.0 * num_tiles as f64).floor() as u32;
-    let y_min =
-        ((1.0 - (max_lat.to_radians().tan().sin() + 1.0) / 2.0) * num_tiles as f64).floor() as u32;
-    let x_max = ((max_lon + 180.0) / 360.0 * num_tiles as f64).floor() as u32;
-    let y_max =
-        ((1.0 - (min_lat.to_radians().tan().sin() + 1.0) / 2.0) * num_tiles as f64).floor() as u32;
-
-    (x_min, y_min, x_max, y_max)
+fn lon_to_tile_x(lon: f64, zoom: u32) -> u32 {
+    ((lon + 180.0) / 360.0 * (2u32.pow(zoom) as f64)).floor() as u32
+}
+// TODO Very low confidence in this
+fn lat_to_tile_y(lat: f64, zoom: u32) -> u32 {
+    let lat_radians = lat.to_radians();
+    let result = (1.0 - (lat_radians.tan() + 1.0 / lat_radians.cos()).log2() / f64::consts::PI)
+        / 2.0
+        * (2u32.pow(zoom) as f64);
+    result.floor() as u32
 }
