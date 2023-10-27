@@ -127,9 +127,11 @@ fn make_tile(
     for feature in features {
         let mut b = GeomEncoder::new(GeomType::Linestring, Transform::default());
 
+        let mut any = false;
         if let Some(ref geometry) = feature.geometry {
             if let Value::LineString(ref line_string) = geometry.value {
                 for pt in line_string {
+                    any = true;
                     // Transform to mercator
                     let mercator_pt = forward([pt[0], pt[1]]);
                     // Transform to 0-1 tile coords (not sure why this doesnt work with passing the
@@ -141,6 +143,14 @@ fn make_tile(
                 }
             }
         }
+
+        if !any {
+            // This wasn't a LineString. Totally skip.
+            // TODO Fix upstream, because b.encode() didn't fail and wound up generating something
+            // that breaks the protobuf parsing in the frontend
+            continue;
+        }
+
         let id = layer.num_features() as u64;
         // The ownership swaps between layer and write_feature due to how feature properties are
         // encoded
