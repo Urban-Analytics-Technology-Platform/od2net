@@ -46,7 +46,7 @@ fn geojson_to_pmtiles(
             {
                 "id": "layer1",
                 "minzoom": 0,
-                "maxzoom": 5,
+                "maxzoom": 11,
                 "fields": {
                     "key": "String"
                 }
@@ -54,15 +54,18 @@ fn geojson_to_pmtiles(
             ]
         }
     ));
+    // TODO Calculate from bbox and other things
     pmtiles.min_latitude = -90.0;
     pmtiles.min_longitude = -180.0;
     pmtiles.max_latitude = 90.0;
     pmtiles.max_longitude = 180.0;
     pmtiles.min_zoom = 0;
-    pmtiles.max_zoom = 5;
-    pmtiles.center_zoom = 0;
+    pmtiles.max_zoom = 11;
+    pmtiles.center_zoom = 7;
+    pmtiles.center_longitude = -1.1425781;
+    pmtiles.center_latitude = 53.904306;
 
-    for zoom in zoom_levels {
+    /*for zoom in zoom_levels {
         let (x_min, y_min, x_max, y_max) = bbox_to_tiles(bbox, zoom);
         // TODO Inclusive or not?
         for x in x_min..=x_max {
@@ -73,7 +76,39 @@ fn geojson_to_pmtiles(
             }
         }
         //println!("for zoom {zoom}, we need tiles from x={x_min} to {x_max} and y={y_min} to {y_max}");
-    }
+    }*/
+
+    // TODO Just try a few fixed tiles that _should_ have stuff in them
+    //
+    // less_tiny (in york) shows up fine
+    // real york, nothing
+    //
+    make_tile(TileId::new(63, 41, 7)?, &mut pmtiles, &features)?;
+    make_tile(TileId::new(1017, 657, 11)?, &mut pmtiles, &features)?;
+
+    /*make_tile(TileId::new(0, 0, 0)?, &mut pmtiles, &features)?;
+
+    make_tile(TileId::new(0, 0, 1)?, &mut pmtiles, &features)?;
+    make_tile(TileId::new(1, 0, 1)?, &mut pmtiles, &features)?;
+
+    make_tile(TileId::new(1, 1, 2)?, &mut pmtiles, &features)?;
+    make_tile(TileId::new(2, 1, 2)?, &mut pmtiles, &features)?;
+
+    make_tile(TileId::new(3, 2, 3)?, &mut pmtiles, &features)?;
+
+    make_tile(TileId::new(7, 5, 4)?, &mut pmtiles, &features)?;
+
+    make_tile(TileId::new(15, 10, 5)?, &mut pmtiles, &features)?;
+
+    make_tile(TileId::new(31, 20, 6)?, &mut pmtiles, &features)?;
+
+    make_tile(TileId::new(63, 41, 7)?, &mut pmtiles, &features)?;
+
+    make_tile(TileId::new(126, 82, 8)?, &mut pmtiles, &features)?;
+    make_tile(TileId::new(127, 82, 8)?, &mut pmtiles, &features)?;
+
+    make_tile(TileId::new(252, 164, 9)?, &mut pmtiles, &features)?;
+    make_tile(TileId::new(254, 164, 9)?, &mut pmtiles, &features)?;*/
 
     Ok(pmtiles)
 }
@@ -100,6 +135,7 @@ fn make_tile(
                     // Transform to 0-1 tile coords (not sure why this doesnt work with passing the
                     // transform through)
                     let transformed_pt = transform * (mercator_pt[0], mercator_pt[1]);
+                    //println!("{:?} becomes {:?} and then {:?}", pt, mercator_pt, transformed_pt);
                     // Same as extent
                     b = b.point(transformed_pt.x * 4096.0, transformed_pt.y * 4096.0)?;
                 }
