@@ -69,9 +69,6 @@ fn geojson_to_pmtiles(
 
     for zoom in zoom_levels {
         let (x_min, y_min, x_max, y_max) = bbox_to_tiles(bbox, zoom);
-        println!(
-            "for zoom {zoom}, we need tiles from x={x_min} to {x_max} and y={y_min} to {y_max}"
-        );
         // TODO Inclusive or not?
         for x in x_min..=x_max {
             for y in y_min..=y_max {
@@ -182,9 +179,9 @@ fn calculate_bbox(features: &Vec<Feature>) -> (f64, f64, f64, f64) {
             if let Value::LineString(ref line_string) = geometry.value {
                 for pt in line_string {
                     min_lon = min_lon.min(pt[0]);
-                    min_lat = min_lon.min(pt[1]);
+                    min_lat = min_lat.min(pt[1]);
                     max_lon = max_lon.max(pt[0]);
-                    max_lat = max_lon.max(pt[1]);
+                    max_lat = max_lat.max(pt[1]);
                 }
             }
         }
