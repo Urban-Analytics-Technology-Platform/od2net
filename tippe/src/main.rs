@@ -1,9 +1,9 @@
 use std::f64;
-use std::io::BufReader;
+use std::io::{BufReader, Cursor};
 
 use anyhow::Result;
 use fs_err::File;
-use geojson::{FeatureReader, Value};
+use geojson::{Feature, FeatureReader, Value};
 use mvt::{GeomEncoder, GeomType, MapGrid, Tile, TileId};
 use pmtiles2::{util::tile_id, Compression, PMTiles, TileType};
 use pointy::Transform;
@@ -14,48 +14,24 @@ fn main() -> Result<()> {
         panic!("Pass in a .geojson file");
     }
 
-    let web_mercator_transform = MapGrid::default();
-
-    // Everything
-    let current_tile_id = TileId::new(0, 0, 0)?;
-    let transform = web_mercator_transform.tile_transform(current_tile_id);
-    let mut tile = Tile::new(4096);
-
-    let mut layer = tile.create_layer("layer1");
-
     let reader = FeatureReader::from_reader(BufReader::new(File::open(&args[1])?));
+    let pmtiles = geojson_to_pmtiles(reader)?;
+    let mut file = File::create("out.pmtiles")?;
+    pmtiles.to_writer(&mut file)?;
+    Ok(())
+}
 
-    for feature in reader.features() {
-        let feature = feature?;
-        let mut b = GeomEncoder::new(GeomType::Linestring, Transform::default());
+type PMTilesFile = PMTiles<Cursor<&'static [u8]>>;
 
-        if let Some(geometry) = feature.geometry {
-            if let Value::LineString(line_string) = geometry.value {
-                for pt in line_string {
-                    //Transform to mercator
-                    let mercator_pt = forward([pt[0], pt[1]]);
-                    // Transform to 0-1 tile coords (not sure why this doesnt work with passing the
-                    // transform through)
-                    let transformed_pt = transform * (mercator_pt[0], mercator_pt[1]);
-                    b = b.point(transformed_pt.x * 4096.0, transformed_pt.y * 4096.0)?;
-                }
-            }
-        }
-        let id = layer.num_features() as u64;
-        let mut write_feature = layer.into_feature(b.encode()?);
-        write_feature.set_id(id);
-        // TODO actual things
-        write_feature.add_tag_string("key", "value");
-
-        // Very weird pattern, but OK
-        layer = write_feature.into_layer();
+fn geojson_to_pmtiles(reader: FeatureReader<BufReader<File>>) -> Result<PMTilesFile> {
+    // TODO Put these in an rtree or similar. For now, just read all at once.
+    let mut features = Vec::new();
+    for f in reader.features() {
+        features.push(f?);
     }
 
-    println!("Got {} features", layer.num_features());
-    tile.add_layer(layer)?;
-
     let mut pmtiles = PMTiles::new(TileType::Mvt, Compression::None);
-    let metadata = serde_json::json!(
+    pmtiles.meta_data = Some(serde_json::json!(
         {
             "antimeridian_adjusted_bounds":"-180,-90,180,90",
             "vector_layers": [
@@ -69,9 +45,61 @@ fn main() -> Result<()> {
             }
             ]
         }
-    );
+    ));
+    pmtiles.min_latitude = -90.0;
+    pmtiles.min_longitude = -180.0;
+    pmtiles.max_latitude = 90.0;
+    pmtiles.max_longitude = 180.0;
+    pmtiles.center_zoom = 0;
 
-    pmtiles.meta_data = Some(metadata);
+    make_tile(TileId::new(0, 0, 0)?, &mut pmtiles, &features)?;
+
+    Ok(pmtiles)
+}
+
+fn make_tile(
+    current_tile_id: TileId,
+    pmtiles: &mut PMTilesFile,
+    features: &Vec<Feature>,
+) -> Result<()> {
+    let web_mercator_transform = MapGrid::default();
+    let transform = web_mercator_transform.tile_transform(current_tile_id);
+    let mut tile = Tile::new(4096);
+
+    let mut layer = tile.create_layer("layer1");
+
+    for feature in features {
+        let mut b = GeomEncoder::new(GeomType::Linestring, Transform::default());
+
+        if let Some(ref geometry) = feature.geometry {
+            if let Value::LineString(ref line_string) = geometry.value {
+                for pt in line_string {
+                    // Transform to mercator
+                    let mercator_pt = forward([pt[0], pt[1]]);
+                    // Transform to 0-1 tile coords (not sure why this doesnt work with passing the
+                    // transform through)
+                    let transformed_pt = transform * (mercator_pt[0], mercator_pt[1]);
+                    // Same as extent
+                    b = b.point(transformed_pt.x * 4096.0, transformed_pt.y * 4096.0)?;
+                }
+            }
+        }
+        let id = layer.num_features() as u64;
+        // The ownership swaps between layer and write_feature due to how feature properties are
+        // encoded
+        let mut write_feature = layer.into_feature(b.encode()?);
+        write_feature.set_id(id);
+        // TODO actual things
+        write_feature.add_tag_string("key", "value");
+        layer = write_feature.into_layer();
+    }
+
+    println!(
+        "Added {} features into {}",
+        layer.num_features(),
+        current_tile_id
+    );
+    tile.add_layer(layer)?;
 
     pmtiles.add_tile(
         tile_id(
@@ -81,14 +109,6 @@ fn main() -> Result<()> {
         ),
         tile.to_bytes()?,
     );
-
-    pmtiles.min_latitude = -90.0;
-    pmtiles.min_longitude = -180.0;
-    pmtiles.max_latitude = 90.0;
-    pmtiles.max_longitude = 180.0;
-    pmtiles.center_zoom = 0;
-    let mut file = File::create("out.pmtiles")?;
-    pmtiles.to_writer(&mut file)?;
 
     Ok(())
 }
