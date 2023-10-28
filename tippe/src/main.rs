@@ -7,6 +7,8 @@ use mvt::{GeomEncoder, GeomType, MapGrid, Tile, TileId};
 use pmtiles2::{util::tile_id, Compression, PMTiles, TileType};
 use pointy::Transform;
 
+use math::BBox;
+
 mod math;
 
 // TODO Final result is weird and squiggly -- maybe that's fixed now?
@@ -38,7 +40,7 @@ fn geojson_to_pmtiles(
         features.push(f?);
     }
 
-    let bbox = math::calculate_bbox(&features);
+    let bbox = BBox::from_geojson(&features);
     println!("bbox of {} features: {:?}", features.len(), bbox);
 
     let mut pmtiles = PMTiles::new(TileType::Mvt, Compression::None);
@@ -69,7 +71,7 @@ fn geojson_to_pmtiles(
     pmtiles.center_latitude = 53.904306;
 
     for zoom in zoom_levels {
-        let (x_min, y_min, x_max, y_max) = math::bbox_to_tiles(bbox, zoom);
+        let (x_min, y_min, x_max, y_max) = bbox.to_tiles(zoom);
         //println!("for {zoom}:    {x_min} to {x_max},   {y_min} to {y_max}");
         // TODO Inclusive or not?
         for x in x_min..=x_max {
@@ -89,6 +91,9 @@ fn make_tile(
     pmtiles: &mut PMTilesFile,
     features: &Vec<Feature>,
 ) -> Result<()> {
+    // TODO We don't even need this! Just do the filtering below
+    //let tile_bbox = BBox::from_tile(current_tile_id.x(), current_tile_id.y(), current_tile_id.z());
+
     let web_mercator_transform = MapGrid::default();
     let transform = web_mercator_transform.tile_transform(current_tile_id);
     let mut tile = Tile::new(4096);
@@ -102,12 +107,22 @@ fn make_tile(
         if let Some(ref geometry) = feature.geometry {
             if let Value::LineString(ref line_string) = geometry.value {
                 for pt in line_string {
-                    any = true;
                     // Transform to mercator
                     let mercator_pt = math::wgs84_to_web_mercator([pt[0], pt[1]]);
                     // Transform to 0-1 tile coords (not sure why this doesnt work with passing the
                     // transform through)
                     let transformed_pt = transform * (mercator_pt[0], mercator_pt[1]);
+
+                    // If any part of the LineString is within this tile, keep the whole thing. No
+                    // clipping yet.
+                    if transformed_pt.x >= 0.0
+                        && transformed_pt.x <= 1.0
+                        && transformed_pt.y >= 0.0
+                        && transformed_pt.y <= 1.0
+                    {
+                        any = true;
+                    }
+
                     //println!("{:?} becomes {:?} and then {:?}", pt, mercator_pt, transformed_pt);
                     // Same as extent
                     b = b.point(transformed_pt.x * 4096.0, transformed_pt.y * 4096.0)?;
@@ -133,6 +148,11 @@ fn make_tile(
     }
 
     let num_features = layer.num_features();
+    if num_features == 0 {
+        // Nothing fit in this tile, just skip it!
+        return Ok(());
+    }
+
     tile.add_layer(layer)?;
     println!(
         "Added {} features into {}, costing {} bytes",

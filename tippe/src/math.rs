@@ -18,34 +18,57 @@ pub fn wgs84_to_web_mercator(c: [f64; 2]) -> [f64; 2] {
     ]
 }
 
-pub fn calculate_bbox(features: &Vec<Feature>) -> (f64, f64, f64, f64) {
-    // TODO Convert to geo and just use something there?
-    let mut min_lon = f64::MAX;
-    let mut max_lon = f64::MIN;
-    let mut min_lat = f64::MAX;
-    let mut max_lat = f64::MIN;
+#[derive(Debug)]
+pub struct BBox {
+    min_lon: f64,
+    min_lat: f64,
+    max_lon: f64,
+    max_lat: f64,
+}
 
-    for f in features {
-        if let Some(ref geometry) = f.geometry {
-            if let Value::LineString(ref line_string) = geometry.value {
-                for pt in line_string {
-                    min_lon = min_lon.min(pt[0]);
-                    min_lat = min_lat.min(pt[1]);
-                    max_lon = max_lon.max(pt[0]);
-                    max_lat = max_lat.max(pt[1]);
+impl BBox {
+    pub fn from_geojson(features: &Vec<Feature>) -> Self {
+        // TODO Convert to geo and just use something there?
+        let mut bbox = BBox {
+            min_lon: f64::MAX,
+            max_lon: f64::MIN,
+            min_lat: f64::MAX,
+            max_lat: f64::MIN,
+        };
+
+        for f in features {
+            if let Some(ref geometry) = f.geometry {
+                if let Value::LineString(ref line_string) = geometry.value {
+                    for pt in line_string {
+                        bbox.min_lon = bbox.min_lon.min(pt[0]);
+                        bbox.min_lat = bbox.min_lat.min(pt[1]);
+                        bbox.max_lon = bbox.max_lon.max(pt[0]);
+                        bbox.max_lat = bbox.max_lat.max(pt[1]);
+                    }
                 }
             }
         }
+
+        bbox
     }
 
-    (min_lon, min_lat, max_lon, max_lat)
-}
+    pub fn from_tile(tile_x: u32, tile_y: u32, zoom: u32) -> Self {
+        let (min_lon, min_lat) = tile_to_lon_lat(tile_x, tile_y, zoom);
+        let (max_lon, max_lat) = tile_to_lon_lat(tile_x + 1, tile_y + 1, zoom);
+        BBox {
+            min_lon,
+            min_lat,
+            max_lon,
+            max_lat,
+        }
+    }
 
-pub fn bbox_to_tiles(bbox: (f64, f64, f64, f64), zoom: u32) -> (u32, u32, u32, u32) {
-    let (x1, y1) = lon_lat_to_tile(bbox.0, bbox.1, zoom);
-    let (x2, y2) = lon_lat_to_tile(bbox.2, bbox.3, zoom);
-    // TODO Not sure why y gets swapped sometimes
-    (x1, y1.min(y2), x2, y2.max(y1))
+    pub fn to_tiles(&self, zoom: u32) -> (u32, u32, u32, u32) {
+        let (x1, y1) = lon_lat_to_tile(self.min_lon, self.min_lat, zoom);
+        let (x2, y2) = lon_lat_to_tile(self.max_lon, self.max_lat, zoom);
+        // TODO Not sure why y gets swapped sometimes
+        (x1, y1.min(y2), x2, y2.max(y1))
+    }
 }
 
 // Thanks to https://github.com/MilesMcBain/slippymath/blob/master/R/slippymath.R
@@ -67,12 +90,6 @@ fn lon_lat_to_tile(lon: f64, lat: f64, zoom: u32) -> (u32, u32) {
         (x * num_tiles).floor() as u32,
         (y * num_tiles).floor() as u32,
     )
-}
-
-pub fn tile_to_bbox(tile_x: u32, tile_y: u32, zoom: u32) -> (f64, f64, f64, f64) {
-    let (x1, y1) = tile_to_lon_lat(tile_x, tile_y, zoom);
-    let (x2, y2) = tile_to_lon_lat(tile_x + 1, tile_y + 1, zoom);
-    (x1, y1, x2, y2)
 }
 
 // From https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
