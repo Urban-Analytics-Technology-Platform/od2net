@@ -1,4 +1,3 @@
-use std::f64;
 use std::io::{BufReader, Cursor};
 
 use anyhow::Result;
@@ -8,7 +7,9 @@ use mvt::{GeomEncoder, GeomType, MapGrid, Tile, TileId};
 use pmtiles2::{util::tile_id, Compression, PMTiles, TileType};
 use pointy::Transform;
 
-// TODO Final result is weird and squiggly
+mod math;
+
+// TODO Final result is weird and squiggly -- maybe that's fixed now?
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
@@ -37,7 +38,7 @@ fn geojson_to_pmtiles(
         features.push(f?);
     }
 
-    let bbox = calculate_bbox(&features);
+    let bbox = math::calculate_bbox(&features);
     println!("bbox of {} features: {:?}", features.len(), bbox);
 
     let mut pmtiles = PMTiles::new(TileType::Mvt, Compression::None);
@@ -68,7 +69,7 @@ fn geojson_to_pmtiles(
     pmtiles.center_latitude = 53.904306;
 
     for zoom in zoom_levels {
-        let (x_min, y_min, x_max, y_max) = bbox_to_tiles(bbox, zoom);
+        let (x_min, y_min, x_max, y_max) = math::bbox_to_tiles(bbox, zoom);
         //println!("for {zoom}:    {x_min} to {x_max},   {y_min} to {y_max}");
         // TODO Inclusive or not?
         for x in x_min..=x_max {
@@ -103,7 +104,7 @@ fn make_tile(
                 for pt in line_string {
                     any = true;
                     // Transform to mercator
-                    let mercator_pt = forward([pt[0], pt[1]]);
+                    let mercator_pt = math::wgs84_to_web_mercator([pt[0], pt[1]]);
                     // Transform to 0-1 tile coords (not sure why this doesnt work with passing the
                     // transform through)
                     let transformed_pt = transform * (mercator_pt[0], mercator_pt[1]);
@@ -131,12 +132,15 @@ fn make_tile(
         layer = write_feature.into_layer();
     }
 
-    println!(
-        "Added {} features into {}",
-        layer.num_features(),
-        current_tile_id
-    );
+    let num_features = layer.num_features();
     tile.add_layer(layer)?;
+    println!(
+        "Added {} features into {}, costing {} bytes",
+        num_features,
+        current_tile_id,
+        // TODO Maybe this is slow and we should use to_bytes() once
+        tile.compute_size(),
+    );
 
     pmtiles.add_tile(
         tile_id(
@@ -148,68 +152,4 @@ fn make_tile(
     );
 
     Ok(())
-}
-
-// WGS84 to Mercator
-fn forward(c: [f64; 2]) -> [f64; 2] {
-    static A: f64 = 6378137.0;
-    static MAXEXTENT: f64 = 20037508.342789244;
-    static D2R: f64 = f64::consts::PI / 180.0;
-
-    [
-        (A * c[0] * D2R).max(-MAXEXTENT).min(MAXEXTENT) as f64,
-        (A * (((f64::consts::PI * 0.25f64) + (0.5f64 * c[1] * D2R)).tan()).ln())
-            .max(-MAXEXTENT)
-            .min(MAXEXTENT) as f64,
-    ]
-}
-
-fn calculate_bbox(features: &Vec<Feature>) -> (f64, f64, f64, f64) {
-    // TODO Convert to geo and just use something there?
-    let mut min_lon = f64::MAX;
-    let mut max_lon = f64::MIN;
-    let mut min_lat = f64::MAX;
-    let mut max_lat = f64::MIN;
-
-    for f in features {
-        if let Some(ref geometry) = f.geometry {
-            if let Value::LineString(ref line_string) = geometry.value {
-                for pt in line_string {
-                    min_lon = min_lon.min(pt[0]);
-                    min_lat = min_lat.min(pt[1]);
-                    max_lon = max_lon.max(pt[0]);
-                    max_lat = max_lat.max(pt[1]);
-                }
-            }
-        }
-    }
-
-    (min_lon, min_lat, max_lon, max_lat)
-}
-
-fn bbox_to_tiles(bbox: (f64, f64, f64, f64), zoom: u32) -> (u32, u32, u32, u32) {
-    let (x1, y1) = lon_lat_to_tile(bbox.0, bbox.1, zoom);
-    let (x2, y2) = lon_lat_to_tile(bbox.2, bbox.3, zoom);
-    // TODO Not sure why y gets swapped sometimes
-    (x1, y1.min(y2), x2, y2.max(y1))
-}
-
-// Thanks to https://github.com/MilesMcBain/slippymath/blob/master/R/slippymath.R
-// Use https://crates.io/crates/tile-grid or something instead?
-fn lon_lat_to_tile(lon: f64, lat: f64, zoom: u32) -> (u32, u32) {
-    let lon_radians = lon.to_radians();
-    let lat_radians = lat.to_radians();
-
-    let x = lon_radians;
-    let y = lat_radians.tan().asinh();
-
-    let x = (1.0 + (x / f64::consts::PI)) / 2.0;
-    let y = (1.0 - (y / f64::consts::PI)) / 2.0;
-
-    let num_tiles = 2u32.pow(zoom) as f64;
-
-    (
-        (x * num_tiles).floor() as u32,
-        (y * num_tiles).floor() as u32,
-    )
 }
