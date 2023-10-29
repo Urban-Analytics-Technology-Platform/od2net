@@ -2,16 +2,51 @@ use std::io::{BufReader, Cursor};
 
 use anyhow::Result;
 use fs_err::File;
-use geojson::{Feature, FeatureReader, Value};
+use geo::algorithm::bounding_rect::BoundingRect;
+use geo::algorithm::map_coords::MapCoordsInPlace;
+use geo_types::Geometry;
+use geojson::FeatureReader;
 use mvt::{GeomEncoder, GeomType, MapGrid, Tile, TileId};
 use pmtiles2::{util::tile_id, Compression, PMTiles, TileType};
 use pointy::Transform;
-
-use math::BBox;
+use rstar::{RTree, RTreeObject, AABB};
 
 mod math;
 
+struct TreeFeature {
+    pub geometry: geo_types::Geometry<f64>,
+    pub properties: Option<geojson::JsonObject>,
+}
+
+impl From<geojson::Feature> for TreeFeature {
+    fn from(feature: geojson::Feature) -> Self {
+        let properties = feature.properties.clone();
+        let mut geometry: geo_types::Geometry<f64> = feature.try_into().unwrap();
+        geometry.map_coords_in_place(|p| math::wgs84_to_web_mercator([p.x, p.y]).into());
+        return Self {
+            properties,
+            geometry,
+        };
+    }
+}
+
+impl RTreeObject for TreeFeature {
+    type Envelope = AABB<[f64; 2]>;
+
+    fn envelope(&self) -> Self::Envelope {
+        let bbox = self.geometry.bounding_rect().unwrap();
+        AABB::from_corners([bbox.min().x, bbox.min().y], [bbox.max().x, bbox.max().y])
+    }
+}
+
 // TODO Final result is weird and squiggly -- maybe that's fixed now?
+
+fn load_features(reader: FeatureReader<BufReader<File>>) -> Result<(RTree<TreeFeature>, usize)> {
+    let tree_features: Vec<TreeFeature> = reader.features().map(|f| f.unwrap().into()).collect();
+    let no_features = tree_features.len();
+    let tree = RTree::<TreeFeature>::bulk_load(tree_features);
+    Ok((tree, no_features))
+}
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
@@ -19,7 +54,7 @@ fn main() -> Result<()> {
         panic!("Pass in a .geojson file");
     }
 
-    let zoom_levels: Vec<u32> = (0..15).collect();
+    let zoom_levels: Vec<u32> = (0..13).collect();
 
     let reader = FeatureReader::from_reader(BufReader::new(File::open(&args[1])?));
     let pmtiles = geojson_to_pmtiles(reader, zoom_levels)?;
@@ -35,13 +70,19 @@ fn geojson_to_pmtiles(
     zoom_levels: Vec<u32>,
 ) -> Result<PMTilesFile> {
     // TODO Put these in an rtree or similar. For now, just read all at once.
-    let mut features = Vec::new();
-    for f in reader.features() {
-        features.push(f?);
-    }
 
-    let bbox = BBox::from_geojson(&features);
-    println!("bbox of {} features: {:?}", features.len(), bbox);
+    let (r_tree, feature_count) = load_features(reader)?;
+
+    let root_envelope = r_tree.root().envelope();
+
+    let bbox = math::BBox::new(
+        root_envelope.lower()[0],
+        root_envelope.lower()[1],
+        root_envelope.upper()[0],
+        root_envelope.upper()[1],
+    );
+
+    println!("bbox of {} features: {:?}", feature_count, bbox);
 
     let mut pmtiles = PMTiles::new(TileType::Mvt, Compression::None);
     pmtiles.meta_data = Some(serde_json::json!(
@@ -70,15 +111,21 @@ fn geojson_to_pmtiles(
     pmtiles.center_longitude = -1.1425781;
     pmtiles.center_latitude = 53.904306;
 
-    for zoom in zoom_levels {
-        let (x_min, y_min, x_max, y_max) = bbox.to_tiles(zoom);
-        //println!("for {zoom}:    {x_min} to {x_max},   {y_min} to {y_max}");
-        // TODO Inclusive or not?
-        for x in x_min..=x_max {
-            for y in y_min..=y_max {
+    let map_grid = MapGrid::default();
+
+    for z in zoom_levels {
+        for x in 0..2u32.pow(z) {
+            for y in 0..2u32.pow(z) {
+                let tile_id = TileId::new(x, y, z)?;
+                let tbounds = map_grid.tile_bbox(tile_id);
+                let features = r_tree.locate_in_envelope_intersecting(&AABB::from_corners(
+                    [tbounds.x_min(), tbounds.y_min()],
+                    [tbounds.x_max(), tbounds.y_max()],
+                ));
+
                 // TODO Filter features that belong in this tile
                 // TODO And figure out clipping
-                make_tile(TileId::new(x, y, zoom)?, &mut pmtiles, &features)?;
+                make_tile(tile_id, &mut pmtiles, features.collect())?;
             }
         }
     }
@@ -89,7 +136,7 @@ fn geojson_to_pmtiles(
 fn make_tile(
     current_tile_id: TileId,
     pmtiles: &mut PMTilesFile,
-    features: &Vec<Feature>,
+    features: Vec<&TreeFeature>,
 ) -> Result<()> {
     // TODO We don't even need this! Just do the filtering below
     //let tile_bbox = BBox::from_tile(current_tile_id.x(), current_tile_id.y(), current_tile_id.z());
@@ -104,29 +151,27 @@ fn make_tile(
         let mut b = GeomEncoder::new(GeomType::Linestring, Transform::default());
 
         let mut any = false;
-        if let Some(ref geometry) = feature.geometry {
-            if let Value::LineString(ref line_string) = geometry.value {
-                for pt in line_string {
-                    // Transform to mercator
-                    let mercator_pt = math::wgs84_to_web_mercator([pt[0], pt[1]]);
-                    // Transform to 0-1 tile coords (not sure why this doesnt work with passing the
-                    // transform through)
-                    let transformed_pt = transform * (mercator_pt[0], mercator_pt[1]);
+        if let Geometry::LineString(ref line_string) = feature.geometry {
+            for pt in line_string {
+                // Transform to mercator
+                // let mercator_pt = math::wgs84_to_web_mercator([pt[0], pt[1]]);
+                // Transform to 0-1 tile coords (not sure why this doesnt work with passing the
+                // transform through)
+                let transformed_pt = transform * (pt.x, pt.y);
 
-                    // If any part of the LineString is within this tile, keep the whole thing. No
-                    // clipping yet.
-                    if transformed_pt.x >= 0.0
-                        && transformed_pt.x <= 1.0
-                        && transformed_pt.y >= 0.0
-                        && transformed_pt.y <= 1.0
-                    {
-                        any = true;
-                    }
-
-                    //println!("{:?} becomes {:?} and then {:?}", pt, mercator_pt, transformed_pt);
-                    // Same as extent
-                    b = b.point(transformed_pt.x * 4096.0, transformed_pt.y * 4096.0)?;
+                // If any part of the LineString is within this tile, keep the whole thing. No
+                // clipping yet.
+                if transformed_pt.x >= 0.0
+                    && transformed_pt.x <= 1.0
+                    && transformed_pt.y >= 0.0
+                    && transformed_pt.y <= 1.0
+                {
+                    any = true;
                 }
+
+                //println!("{:?} becomes {:?} and then {:?}", pt, mercator_pt, transformed_pt);
+                // Same as extent
+                b = b.point(transformed_pt.x * 4096.0, transformed_pt.y * 4096.0)?;
             }
         }
 
