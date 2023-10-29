@@ -27,6 +27,14 @@ pub struct BBox {
 }
 
 impl BBox {
+    pub fn new(min_lon: f64, min_lat: f64, max_lon: f64, max_lat: f64) -> Self {
+        Self {
+            min_lon,
+            min_lat,
+            max_lon,
+            max_lat,
+        }
+    }
     pub fn from_geojson(features: &Vec<Feature>) -> Self {
         // TODO Convert to geo and just use something there?
         let mut bbox = BBox {
