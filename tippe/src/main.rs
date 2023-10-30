@@ -20,8 +20,9 @@ struct TreeFeature {
 
 impl From<geojson::Feature> for TreeFeature {
     fn from(feature: geojson::Feature) -> Self {
-        let properties = feature.properties.clone();
-        let mut geometry: geo_types::Geometry<f64> = feature.try_into().unwrap();
+        let properties = feature.properties;
+        // Geometry must exist
+        let mut geometry: geo_types::Geometry<f64> = feature.geometry.unwrap().try_into().unwrap();
         geometry.map_coords_in_place(|p| math::wgs84_to_web_mercator([p.x, p.y]).into());
         return Self {
             properties,
