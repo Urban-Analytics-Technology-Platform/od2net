@@ -9,7 +9,7 @@ use geojson::FeatureReader;
 use mvt::{GeomEncoder, GeomType, MapGrid, Tile, TileId};
 use pmtiles2::{util::tile_id, Compression, PMTiles, TileType};
 use pointy::Transform;
-use rstar::{RTree, RTreeObject, AABB};
+use rstar::{primitives::CachedEnvelope, RTree, RTreeObject, AABB};
 
 mod math;
 
@@ -40,12 +40,15 @@ impl RTreeObject for TreeFeature {
     }
 }
 
-// TODO Final result is weird and squiggly -- maybe that's fixed now?
-
-fn load_features(reader: FeatureReader<BufReader<File>>) -> Result<(RTree<TreeFeature>, usize)> {
-    let tree_features: Vec<TreeFeature> = reader.features().map(|f| f.unwrap().into()).collect();
+fn load_features(
+    reader: FeatureReader<BufReader<File>>,
+) -> Result<(RTree<CachedEnvelope<TreeFeature>>, usize)> {
+    let tree_features: Vec<CachedEnvelope<TreeFeature>> = reader
+        .features()
+        .map(|f| CachedEnvelope::new(f.unwrap().into()))
+        .collect();
     let no_features = tree_features.len();
-    let tree = RTree::<TreeFeature>::bulk_load(tree_features);
+    let tree = RTree::bulk_load(tree_features);
     Ok((tree, no_features))
 }
 
@@ -137,7 +140,7 @@ fn geojson_to_pmtiles(
 fn make_tile(
     current_tile_id: TileId,
     pmtiles: &mut PMTilesFile,
-    features: Vec<&TreeFeature>,
+    features: Vec<&CachedEnvelope<TreeFeature>>,
 ) -> Result<()> {
     // TODO We don't even need this! Just do the filtering below
     //let tile_bbox = BBox::from_tile(current_tile_id.x(), current_tile_id.y(), current_tile_id.z());
