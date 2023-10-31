@@ -8,7 +8,7 @@ use rstar::RTree;
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
-use od2net::config::InputConfig;
+use od2net::config::{CostFunction, InputConfig};
 use od2net::network::{Counts, Network};
 use od2net::requests::Request;
 use od2net::router::{IntersectionLocation, PreparedCH};
@@ -22,6 +22,9 @@ pub struct JsNetwork {
     prepared_ch: PreparedCH,
     // TODO Maybe bundle this in PreparedCH and rethink what we serialize
     closest_intersection: RTree<IntersectionLocation>,
+
+    // TODO Network should store this, since it's baked in
+    last_cost: CostFunction,
 }
 
 #[derive(Deserialize)]
@@ -29,6 +32,7 @@ struct Input {
     lng: f64,
     lat: f64,
     max_requests: usize,
+    cost: CostFunction,
 }
 
 #[wasm_bindgen]
@@ -46,7 +50,6 @@ impl JsNetwork {
 
         let network: Network = bincode::deserialize(input_bytes).map_err(err_to_js)?;
 
-        // TODO Recalculate this sometimes, but also, will have to modify the Network in-place
         let mut timer = Timer::new();
         let prepared_ch = od2net::router::just_build_ch(&network, &mut timer);
         let closest_intersection =
@@ -56,12 +59,27 @@ impl JsNetwork {
             network,
             prepared_ch,
             closest_intersection,
+
+            last_cost: CostFunction::Distance,
         })
     }
 
     #[wasm_bindgen()]
-    pub fn recalculate(&self, input: JsValue) -> Result<String, JsValue> {
+    pub fn recalculate(&mut self, input: JsValue) -> Result<String, JsValue> {
         let input: Input = serde_wasm_bindgen::from_value(input)?;
+
+        if input.cost != self.last_cost {
+            self.last_cost = input.cost;
+            let mut timer = Timer::new();
+            info!("Recalculating cost");
+            self.network.recalculate_cost(&self.last_cost);
+            self.prepared_ch = od2net::router::just_build_ch(&self.network, &mut timer);
+            self.closest_intersection = od2net::router::build_closest_intersection(
+                &self.network,
+                &self.prepared_ch.node_map,
+                &mut timer,
+            );
+        }
 
         // TODO All of this should be configurable
         let requests = self.make_requests(input.lng, input.lat, input.max_requests);
@@ -75,7 +93,7 @@ impl JsNetwork {
                 origins_path: "".to_string(),
                 destinations_path: "".to_string(),
             },
-            cost: od2net::config::CostFunction::Distance,
+            cost: self.last_cost.clone(),
             uptake: od2net::config::Uptake::Identity,
             lts: od2net::config::LtsMapping::BikeOttawa,
         };

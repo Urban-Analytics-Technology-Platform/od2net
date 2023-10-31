@@ -23,6 +23,8 @@
   };
 
   let maxRequests = 1000;
+  // TODO When we load a network.bin, overwrite this
+  let cost = "Distance";
   let controls = {
     maxCount: 1000,
     originRadius: 3,
@@ -58,6 +60,7 @@
         lng: markerPosition.lng,
         lat: markerPosition.lat,
         max_requests: maxRequests,
+        cost,
       })
     );
     window.gj = gj;
@@ -78,6 +81,14 @@
         <label>
           Max requests (limit for faster updates):<br />
           <input type="number" bind:value={maxRequests} min={1} />
+        </label>
+      </div>
+      <div>
+        <label>
+          <input type="radio" bind:group={cost} value="Distance" />Distance
+        </label>
+        <label>
+          <input type="radio" bind:group={cost} value="AvoidMainRoads" />Avoid main roads
         </label>
       </div>
     {/if}

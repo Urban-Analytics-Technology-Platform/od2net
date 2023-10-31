@@ -54,7 +54,7 @@ pub enum ODPattern {
     LineStrings(String),
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum CostFunction {
     /// Just find the shortest distance path
     Distance,

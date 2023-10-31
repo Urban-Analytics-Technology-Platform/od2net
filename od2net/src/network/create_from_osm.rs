@@ -72,18 +72,8 @@ impl Network {
         }
         timer.stop();
 
-        // TODO Refactor?
         timer.start("Calculate cost for all edges");
-        let progress = utils::progress_bar_for_count(network.edges.len());
-        let all_keys: Vec<(i64, i64)> = network.edges.keys().cloned().collect();
-        for key_batch in all_keys.chunks(1000) {
-            let input_batch: Vec<&Edge> = key_batch.iter().map(|e| &network.edges[&e]).collect();
-            let output_batch = plugins::cost::calculate_batch(cost, input_batch);
-            for (key, cost) in key_batch.into_iter().zip(output_batch) {
-                progress.inc(1);
-                network.edges.get_mut(&key).unwrap().cost = cost;
-            }
-        }
+        network.recalculate_cost(cost);
         timer.stop();
 
         timer.start(format!("Saving to {bin_path}"));
@@ -93,6 +83,19 @@ impl Network {
 
         timer.stop();
         Ok(network)
+    }
+
+    pub fn recalculate_cost(&mut self, cost: &CostFunction) {
+        let progress = utils::progress_bar_for_count(self.edges.len());
+        let all_keys: Vec<(i64, i64)> = self.edges.keys().cloned().collect();
+        for key_batch in all_keys.chunks(1000) {
+            let input_batch: Vec<&Edge> = key_batch.iter().map(|e| &self.edges[&e]).collect();
+            let output_batch = plugins::cost::calculate_batch(cost, input_batch);
+            for (key, cost) in key_batch.into_iter().zip(output_batch) {
+                progress.inc(1);
+                self.edges.get_mut(&key).unwrap().cost = cost;
+            }
+        }
     }
 }
 
