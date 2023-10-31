@@ -12,5 +12,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [svelte(), wasmPack(["../lts"], [])]
+  plugins: [svelte(), wasmPack(["../lts", "../wasm-od2net"], [])]
 })

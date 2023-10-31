@@ -1,24 +1,9 @@
-#[macro_use]
-extern crate anyhow;
-
-mod config;
-mod detailed_route_output;
-mod network;
-mod node_map;
-mod od;
-mod plugins;
-mod requests;
-mod router;
-mod timer;
-mod utils;
-
 use std::process::Command;
 use std::time::Instant;
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 use clap::Parser;
 use indicatif::HumanCount;
-use serde::Serialize;
 
 use lts::LTS;
 
@@ -59,7 +44,7 @@ struct Args {
 fn main() -> Result<()> {
     let args = Args::parse();
     let config_json = fs_err::read_to_string(&args.config_path)?;
-    let config: config::InputConfig = match serde_json::from_str(&config_json) {
+    let config: od2net::config::InputConfig = match serde_json::from_str(&config_json) {
         Ok(config) => config,
         Err(err) => panic!("{} is invalid: {err}", args.config_path),
     };
@@ -75,7 +60,7 @@ fn main() -> Result<()> {
     fs_err::create_dir_all(format!("{directory}/intermediate"))?;
     fs_err::create_dir_all(format!("{directory}/output"))?;
 
-    let mut timer = timer::Timer::new();
+    let mut timer = od2net::timer::Timer::new();
     let pipeline_start = Instant::now();
 
     timer.start("Load network");
@@ -84,11 +69,11 @@ fn main() -> Result<()> {
         let osm_pbf_path = format!("{directory}/input/input.osm.pbf");
         println!("Trying to load network from {bin_path}");
         // TODO timer around something fallible is annoying
-        match network::Network::load_from_bin(&bin_path) {
+        match od2net::network::Network::load_from_bin(&bin_path) {
             Ok(network) => network,
             Err(err) => {
                 println!("That failed ({err}), so generating it from {osm_pbf_path}");
-                network::Network::make_from_pbf(
+                od2net::network::Network::make_from_pbf(
                     &osm_pbf_path,
                     &bin_path,
                     &config.lts,
@@ -101,7 +86,7 @@ fn main() -> Result<()> {
     timer.stop();
 
     timer.start("Loading or generating requests");
-    let requests = od::generate_requests(
+    let requests = od2net::od::generate_requests(
         &config.requests,
         format!("{directory}/input"),
         args.rng_seed,
@@ -112,7 +97,7 @@ fn main() -> Result<()> {
     timer.stop();
 
     if let Some(num_routes) = args.detailed_routes {
-        return detailed_route_output::run(
+        return od2net::detailed_route_output::run(
             num_routes,
             &format!("{directory}/intermediate/ch.bin"),
             &network,
@@ -125,7 +110,7 @@ fn main() -> Result<()> {
 
     timer.start("Routing");
     let routing_start = Instant::now();
-    let counts = router::run(
+    let counts = od2net::router::run(
         &format!("{directory}/intermediate/ch.bin"),
         &network,
         requests,
@@ -150,7 +135,7 @@ fn main() -> Result<()> {
         timer.stop();
     }
 
-    let mut output_metadata = OutputMetadata {
+    let mut output_metadata = od2net::OutputMetadata {
         config,
         num_origins: counts.count_per_origin.len(),
         num_destinations: counts.count_per_destination.len(),
@@ -217,53 +202,4 @@ fn main() -> Result<()> {
     }
 
     Ok(())
-}
-
-// TODO Move, maybe an output.rs with big chunks of network too
-#[derive(Serialize)]
-pub struct OutputMetadata {
-    config: config::InputConfig,
-    num_origins: usize,
-    num_destinations: usize,
-    num_requests: usize,
-    num_succeeded_requests: usize,
-    num_failed_requests: usize,
-    num_edges_with_count: usize,
-    routing_time_seconds: f32,
-    total_meters_not_allowed: f64,
-    total_meters_lts1: f64,
-    total_meters_lts2: f64,
-    total_meters_lts3: f64,
-    total_meters_lts4: f64,
-    // These two aren't recorded in the GeoJSON or PMTiles output, because we'd have to go back and
-    // update the files!
-    total_time_seconds: Option<f32>,
-    tippecanoe_time_seconds: Option<f32>,
-}
-
-impl OutputMetadata {
-    fn describe(&self) {
-        println!("Input: {}", self.config.requests.description);
-        for (label, count) in [
-            ("Origins", self.num_origins),
-            ("Destinations", self.num_destinations),
-            ("Requests", self.num_requests),
-            ("Requests (succeeded)", self.num_succeeded_requests),
-            ("Requests (failed)", self.num_failed_requests),
-            ("Edges with a count", self.num_edges_with_count),
-        ] {
-            println!("- {label}: {}", HumanCount(count as u64));
-        }
-        for (label, meters) in [
-            // For bugspotting
-            ("not allowed roads", self.total_meters_not_allowed),
-            ("LTS 1 roads", self.total_meters_lts1),
-            ("LTS 2 roads", self.total_meters_lts2),
-            ("LTS 3 roads", self.total_meters_lts3),
-            ("LTS 4 roads", self.total_meters_lts4),
-        ] {
-            let km = meters / 1000.0;
-            println!("- Total distance on {label}: {km:.1} km");
-        }
-    }
 }
