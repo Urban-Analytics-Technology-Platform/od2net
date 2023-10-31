@@ -10,12 +10,12 @@
   import PropertiesTable from "./PropertiesTable.svelte";
 
   export let sourceOverride = {};
-  export let maxCount: number;
-  export let originRadius: number;
-  export let destinationRadius: number;
-  export let enableControls: boolean;
+  export let controls;
 
-  $: lineWidth = getLineWidth(maxCount);
+  // TODO The reactivity doesn't seem to see the update to the field
+  $: enableControls = !controls.streetviewOn;
+
+  $: lineWidth = getLineWidth(controls.maxCount);
   function getLineWidth(
     maxCount: number
   ): DataDrivenPropertyValueSpecification<number> {
@@ -87,7 +87,7 @@
   manageHoverState
   paint={{
     "circle-color": colors.origins,
-    "circle-radius": originRadius,
+    "circle-radius": controls.originRadius,
   }}
   layout={{ visibility: "none" }}
 >
@@ -103,7 +103,7 @@
   manageHoverState
   paint={{
     "circle-color": colors.destinations,
-    "circle-radius": destinationRadius,
+    "circle-radius": controls.destinationRadius,
   }}
   layout={{ visibility: "none" }}
 >

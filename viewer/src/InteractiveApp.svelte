@@ -6,6 +6,7 @@
   import init, { JsNetwork } from "wasm-od2net";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
+  import SidebarControls from "./SidebarControls.svelte";
 
   onMount(async () => {
     await init();
@@ -21,6 +22,12 @@
   };
 
   let maxRequests = 1000;
+  let controls = {
+    maxCount: 1000,
+    originRadius: 3,
+    destinationRadius: 3,
+    streetviewOn: false,
+  };
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
@@ -54,14 +61,18 @@
 
     {#if network}
       <button on:click={recalculate}>Recalculate</button>
+      <div>
+        <label>
+          Max requests (limit for faster updates):<br />
+          <input type="number" bind:value={maxRequests} min={1} />
+        </label>
+      </div>
     {/if}
 
-    <div>
-      <label>
-        Max requests (limit for faster updates):<br />
-        <input type="number" bind:value={maxRequests} min={1} />
-      </label>
-    </div>
+    {#if gj.metadata}
+      <hr />
+      <SidebarControls outputMetadata={gj.metadata} {map} {controls} />
+    {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
@@ -74,12 +85,7 @@
         ><p style="background: red">X</p></Marker
       >
       <GeoJSON data={gj}>
-        <Layers
-          maxCount={1000}
-          originRadius={3}
-          destinationRadius={3}
-          enableControls={true}
-        />
+        <Layers {controls} />
       </GeoJSON>
     </MapLibre>
   </div>
