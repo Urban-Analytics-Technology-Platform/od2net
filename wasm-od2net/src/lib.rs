@@ -28,6 +28,7 @@ pub struct JsNetwork {
 struct Input {
     lng: f64,
     lat: f64,
+    max_requests: usize,
 }
 
 #[wasm_bindgen]
@@ -63,7 +64,7 @@ impl JsNetwork {
         let input: Input = serde_wasm_bindgen::from_value(input)?;
 
         // TODO All of this should be configurable
-        let requests = self.make_requests(input.lng, input.lat);
+        let requests = self.make_requests(input.lng, input.lat, input.max_requests);
         let num_requests = requests.len();
         info!("Made up {num_requests} requests");
         // TODO Everything here is placeholder
@@ -115,11 +116,14 @@ impl JsNetwork {
     }
 
     // TODO Start simple. From every node to one destination
-    fn make_requests(&self, x2: f64, y2: f64) -> Vec<Request> {
+    fn make_requests(&self, x2: f64, y2: f64, max_requests: usize) -> Vec<Request> {
         let mut requests = Vec::new();
         for i in self.network.intersections.values() {
             let (x1, y1) = i.to_degrees();
             requests.push(Request { x1, y1, x2, y2 });
+            if requests.len() == max_requests {
+                break;
+            }
         }
         requests
     }

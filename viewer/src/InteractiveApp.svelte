@@ -1,4 +1,5 @@
 <script lang="ts">
+  import initLts from "lts";
   import type { Map as MapType } from "maplibre-gl";
   import { onMount } from "svelte";
   import { GeoJSON, MapLibre, Marker } from "svelte-maplibre";
@@ -8,6 +9,7 @@
 
   onMount(async () => {
     await init();
+    await initLts();
   });
 
   let map: MapType;
@@ -17,6 +19,8 @@
     type: "FeatureCollection",
     features: [],
   };
+
+  let maxRequests = 1000;
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
@@ -33,6 +37,7 @@
       network.recalculate({
         lng: markerPosition.lng,
         lat: markerPosition.lat,
+        max_requests: maxRequests,
       })
     );
     window.gj = gj;
@@ -50,6 +55,13 @@
     {#if network}
       <button on:click={recalculate}>Recalculate</button>
     {/if}
+
+    <div>
+      <label>
+        Max requests (limit for faster updates):<br />
+        <input type="number" bind:value={maxRequests} min={1} />
+      </label>
+    </div>
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
