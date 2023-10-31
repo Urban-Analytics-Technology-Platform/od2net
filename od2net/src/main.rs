@@ -1,7 +1,7 @@
 use std::process::Command;
 use std::time::Instant;
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use clap::Parser;
 use indicatif::HumanCount;
 

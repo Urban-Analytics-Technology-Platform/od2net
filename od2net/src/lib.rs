@@ -13,8 +13,8 @@ pub mod router;
 pub mod timer;
 pub mod utils;
 
-use serde::Serialize;
 use indicatif::HumanCount;
+use serde::Serialize;
 
 // TODO Move, maybe an output.rs with big chunks of network too
 #[derive(Serialize)]

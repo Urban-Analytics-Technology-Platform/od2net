@@ -499,6 +499,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -663,6 +666,7 @@ dependencies = [
  "geo",
  "geojson",
  "indicatif",
+ "instant",
  "itertools 0.11.0",
  "lts",
  "nanorand",
@@ -1110,8 +1114,10 @@ dependencies = [
  "bincode",
  "console_error_panic_hook",
  "console_log",
+ "fast_paths",
  "log",
  "od2net",
+ "rstar",
  "serde",
  "serde-wasm-bindgen 0.6.1",
  "wasm-bindgen",

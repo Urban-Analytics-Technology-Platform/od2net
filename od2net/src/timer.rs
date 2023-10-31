@@ -1,6 +1,5 @@
-use std::time::{Duration, Instant};
-
 use console::style;
+use instant::{Duration, Instant};
 
 // TODO Hierarchy is lost by linearizing
 // TODO Print final summary better

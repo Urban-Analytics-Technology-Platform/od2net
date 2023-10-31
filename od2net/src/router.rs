@@ -77,7 +77,7 @@ impl PerThreadState {
     }
 }
 
-fn handle_request(
+pub fn handle_request(
     req: Request,
     counts: &mut Counts,
     path_calc: &mut fast_paths::PathCalculator,
@@ -176,6 +176,14 @@ pub fn build_ch(path: &str, network: &Network, timer: &mut Timer) -> Result<Prep
         }
     }
 
+    let result = just_build_ch(network, timer);
+    let writer = BufWriter::new(File::create(path)?);
+    bincode::serialize_into(writer, &result)?;
+    Ok(result)
+}
+
+// No IO
+pub fn just_build_ch(network: &Network, timer: &mut Timer) -> PreparedCH {
     timer.start("Building InputGraph");
     let mut input_graph = InputGraph::new();
     let mut node_map = NodeMap::new();
@@ -197,15 +205,12 @@ pub fn build_ch(path: &str, network: &Network, timer: &mut Timer) -> Result<Prep
     let ch = fast_paths::prepare(&input_graph);
     timer.stop();
 
-    let result = PreparedCH { ch, node_map };
-    let writer = BufWriter::new(File::create(path)?);
-    bincode::serialize_into(writer, &result)?;
-    Ok(result)
+    PreparedCH { ch, node_map }
 }
 
 // fast_paths ID representing the OSM node ID as the data
 // TODO We may be able to override the distance function? Does it work with WGS84?
-type IntersectionLocation = GeomWithData<[f64; 2], usize>;
+pub type IntersectionLocation = GeomWithData<[f64; 2], usize>;
 
 pub fn build_closest_intersection(
     network: &Network,
