@@ -46,6 +46,7 @@
       );
       markerPosition.lng = (bbox[0] + bbox[2]) / 2.0;
       markerPosition.lat = (bbox[1] + bbox[3]) / 2.0;
+      recalculate();
     } catch (err) {
       window.alert(`Problem loading network file: ${err}`);
     }
@@ -93,7 +94,9 @@
       hash
       bind:map
     >
-      <Marker bind:lngLat={markerPosition} draggable>{@html markerSvg}</Marker>
+      <Marker bind:lngLat={markerPosition} draggable on:dragend={recalculate}
+        >{@html markerSvg}</Marker
+      >
       <GeoJSON data={gj}>
         <Layers {controls} />
       </GeoJSON>
