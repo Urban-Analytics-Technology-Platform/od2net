@@ -5,8 +5,6 @@ use clap::Parser;
 use indicatif::HumanCount;
 use instant::Instant;
 
-use lts::LTS;
-
 #[derive(Parser)]
 #[clap(about, version, author)]
 struct Args {

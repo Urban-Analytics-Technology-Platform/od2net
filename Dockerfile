@@ -4,6 +4,7 @@ WORKDIR /app
 COPY Cargo.lock Cargo.toml .
 COPY od2net ./od2net
 COPY lts ./lts
+COPY wasm-od2net ./wasm-od2net
 RUN cargo build --release
 
 # Build tippecanoe
