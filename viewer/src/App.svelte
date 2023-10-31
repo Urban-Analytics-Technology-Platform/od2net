@@ -180,6 +180,10 @@
       {#if outputMetadata}
         {#key outputMetadata}
           <Layers
+            sourceOverride={{
+              source: "pmtilesSource",
+              sourceLayer: "rnet",
+            }}
             {maxCount}
             {originRadius}
             {destinationRadius}

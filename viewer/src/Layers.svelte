@@ -9,6 +9,7 @@
   import { colors } from "./common";
   import PropertiesTable from "./PropertiesTable.svelte";
 
+  export let sourceOverride = {};
   export let maxCount: number;
   export let originRadius: number;
   export let destinationRadius: number;
@@ -47,8 +48,7 @@
 
 <LineLayer
   id="input-layer"
-  source="pmtilesSource"
-  sourceLayer="rnet"
+  {...sourceOverride}
   filter={["==", ["geometry-type"], "LineString"]}
   manageHoverState
   hoverCursor={enableControls ? "pointer" : undefined}
@@ -82,8 +82,7 @@
 
 <CircleLayer
   id="origins-layer"
-  source="pmtilesSource"
-  sourceLayer="rnet"
+  {...sourceOverride}
   filter={["has", "origin_count"]}
   manageHoverState
   paint={{
@@ -99,8 +98,7 @@
 
 <CircleLayer
   id="destinations-layer"
-  source="pmtilesSource"
-  sourceLayer="rnet"
+  {...sourceOverride}
   filter={["has", "destination_count"]}
   manageHoverState
   paint={{

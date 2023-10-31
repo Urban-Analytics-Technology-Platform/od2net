@@ -93,16 +93,15 @@ impl Edge {
 }
 
 impl Network {
-    pub fn write_geojson(
+    pub fn write_geojson<W: std::io::Write>(
         &self,
-        path: &str,
+        mut writer: FeatureWriter<W>,
         counts: Counts,
         output_od_points: bool,
         output_osm_tags: bool,
         output_metadata: &OutputMetadata,
     ) -> Result<()> {
         // Write one feature at a time to avoid memory problems
-        let mut writer = FeatureWriter::from_writer(BufWriter::new(File::create(path)?));
         writer.write_foreign_member("metadata", output_metadata)?;
 
         let mut skipped = 0;

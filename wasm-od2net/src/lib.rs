@@ -3,11 +3,12 @@ extern crate log;
 
 use std::sync::Once;
 
+use instant::Instant;
 use rstar::RTree;
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
-use od2net::config::Uptake;
+use od2net::config::InputConfig;
 use od2net::network::{Counts, Network};
 use od2net::requests::Request;
 use od2net::router::{IntersectionLocation, PreparedCH};
@@ -58,17 +59,30 @@ impl JsNetwork {
     }
 
     #[wasm_bindgen()]
-    pub fn recalculate(&self, input: JsValue) -> Result<(), JsValue> {
+    pub fn recalculate(&self, input: JsValue) -> Result<String, JsValue> {
         let input: Input = serde_wasm_bindgen::from_value(input)?;
 
         // TODO All of this should be configurable
         let requests = self.make_requests(input.lng, input.lat);
-        info!("Made up {} requests", requests.len());
-        let uptake = Uptake::Identity;
+        let num_requests = requests.len();
+        info!("Made up {num_requests} requests");
+        // TODO Everything here is placeholder
+        let config = InputConfig {
+            requests: od2net::config::Requests {
+                description: "placeholder".to_string(),
+                pattern: od2net::config::ODPattern::FromEveryOriginToOneDestination,
+                origins_path: "".to_string(),
+                destinations_path: "".to_string(),
+            },
+            cost: od2net::config::CostFunction::Distance,
+            uptake: od2net::config::Uptake::Identity,
+            lts: od2net::config::LtsMapping::BikeOttawa,
+        };
 
         // Calculate single-threaded, until we figure out web workers
         let mut path_calc = fast_paths::create_calculator(&self.prepared_ch.ch);
         let mut counts = Counts::new();
+        let routing_start = Instant::now();
         for request in requests {
             od2net::router::handle_request(
                 request,
@@ -76,14 +90,28 @@ impl JsNetwork {
                 &mut path_calc,
                 &self.closest_intersection,
                 &self.prepared_ch,
-                &uptake,
+                &config.uptake,
                 &self.network,
             );
         }
+        let routing_time = Instant::now().duration_since(routing_start);
 
         info!("Got counts for {} edges", counts.count_per_edge.len());
+        let output_metadata =
+            od2net::OutputMetadata::new(config, &counts, num_requests, routing_time);
+        let mut gj_bytes = Vec::new();
+        self.network
+            .write_geojson(
+                geojson::FeatureWriter::from_writer(std::io::BufWriter::new(&mut gj_bytes)),
+                counts,
+                true,
+                true,
+                &output_metadata,
+            )
+            .map_err(err_to_js)?;
+        let gj_string = String::from_utf8(gj_bytes).map_err(err_to_js)?;
 
-        Ok(())
+        Ok(gj_string)
     }
 
     // TODO Start simple. From every node to one destination

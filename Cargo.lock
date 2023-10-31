@@ -1115,6 +1115,8 @@ dependencies = [
  "console_error_panic_hook",
  "console_log",
  "fast_paths",
+ "geojson",
+ "instant",
  "log",
  "od2net",
  "rstar",

@@ -1,9 +1,9 @@
 use std::process::Command;
-use std::time::Instant;
 
 use anyhow::{bail, Result};
 use clap::Parser;
 use indicatif::HumanCount;
+use instant::Instant;
 
 use lts::LTS;
 
@@ -135,26 +135,13 @@ fn main() -> Result<()> {
         timer.stop();
     }
 
-    let mut output_metadata = od2net::OutputMetadata {
-        config,
-        num_origins: counts.count_per_origin.len(),
-        num_destinations: counts.count_per_destination.len(),
-        num_requests,
-        num_succeeded_requests: num_requests - (counts.errors as usize),
-        num_failed_requests: counts.errors as usize,
-        num_edges_with_count: counts.count_per_edge.len(),
-        routing_time_seconds: routing_time.as_secs_f32(),
-        total_time_seconds: None,
-        tippecanoe_time_seconds: None,
-        total_meters_not_allowed: counts.total_distance_by_lts[LTS::NotAllowed as u8 as usize],
-        total_meters_lts1: counts.total_distance_by_lts[LTS::LTS1 as u8 as usize],
-        total_meters_lts2: counts.total_distance_by_lts[LTS::LTS2 as u8 as usize],
-        total_meters_lts3: counts.total_distance_by_lts[LTS::LTS3 as u8 as usize],
-        total_meters_lts4: counts.total_distance_by_lts[LTS::LTS4 as u8 as usize],
-    };
+    let mut output_metadata =
+        od2net::OutputMetadata::new(config, &counts, num_requests, routing_time);
     timer.start("Writing output GJ");
     network.write_geojson(
-        &format!("{directory}/output/output.geojson"),
+        geojson::FeatureWriter::from_writer(std::io::BufWriter::new(fs_err::File::create(
+            format!("{directory}/output/output.geojson"),
+        )?)),
         counts,
         !args.no_output_od_points,
         !args.no_output_osm_tags,

@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { Map as MapType } from "maplibre-gl";
   import { onMount } from "svelte";
-  import { Marker, MapLibre } from "svelte-maplibre";
+  import { GeoJSON, MapLibre, Marker } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
+  import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
 
   onMount(async () => {
@@ -11,7 +12,11 @@
 
   let map: MapType;
   let network: JsNetwork | undefined;
-  let markerPosition = { lng: -10, lat: -20 };
+  let markerPosition = { lat: 53.937, lng: -1.0159 };
+  let gj = {
+    type: "FeatureCollection",
+    features: [],
+  };
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
@@ -24,10 +29,13 @@
   }
 
   function recalculate() {
-    network.recalculate({
-      lng: markerPosition.lng,
-      lat: markerPosition.lat,
-    });
+    gj = JSON.parse(
+      network.recalculate({
+        lng: markerPosition.lng,
+        lat: markerPosition.lat,
+      })
+    );
+    window.gj = gj;
   }
 </script>
 
@@ -50,7 +58,17 @@
       hash
       bind:map
     >
-       <Marker bind:lngLat={markerPosition} draggable><p style="background: red">X</p></Marker>
+      <Marker bind:lngLat={markerPosition} draggable
+        ><p style="background: red">X</p></Marker
+      >
+      <GeoJSON data={gj}>
+        <Layers
+          maxCount={1000}
+          originRadius={3}
+          destinationRadius={3}
+          enableControls={true}
+        />
+      </GeoJSON>
     </MapLibre>
   </div>
 </Layout>
