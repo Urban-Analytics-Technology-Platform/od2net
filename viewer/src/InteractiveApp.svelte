@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
   import { GeoJSON, MapLibre, Marker } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
+  import markerSvg from "../assets/marker.svg?raw";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
   import SidebarControls from "./SidebarControls.svelte";
@@ -15,7 +16,7 @@
 
   let map: MapType;
   let network: JsNetwork | undefined;
-  let markerPosition = { lat: 53.937, lng: -1.0159 };
+  let markerPosition = { lng: 0.0, lat: 0.0 };
   let gj = {
     type: "FeatureCollection",
     features: [],
@@ -34,6 +35,17 @@
     try {
       let buffer = await fileInput.files![0].arrayBuffer();
       network = new JsNetwork(new Uint8Array(buffer));
+
+      let bbox = network.getBounds();
+      map.fitBounds(
+        [
+          [bbox[0], bbox[1]],
+          [bbox[2], bbox[3]],
+        ],
+        { padding: 20, animate: false }
+      );
+      markerPosition.lng = (bbox[0] + bbox[2]) / 2.0;
+      markerPosition.lat = (bbox[1] + bbox[3]) / 2.0;
     } catch (err) {
       window.alert(`Problem loading network file: ${err}`);
     }
@@ -81,9 +93,7 @@
       hash
       bind:map
     >
-      <Marker bind:lngLat={markerPosition} draggable
-        ><p style="background: red">X</p></Marker
-      >
+      <Marker bind:lngLat={markerPosition} draggable>{@html markerSvg}</Marker>
       <GeoJSON data={gj}>
         <Layers {controls} />
       </GeoJSON>

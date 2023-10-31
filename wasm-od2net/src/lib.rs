@@ -115,6 +115,19 @@ impl JsNetwork {
         Ok(gj_string)
     }
 
+    #[wasm_bindgen(js_name = getBounds)]
+    pub fn get_bounds(&self) -> Vec<f64> {
+        let mut bounds = vec![f64::MAX, f64::MAX, f64::MIN, f64::MIN];
+        for i in self.network.intersections.values() {
+            let (x, y) = i.to_degrees();
+            bounds[0] = bounds[0].min(x);
+            bounds[1] = bounds[1].min(y);
+            bounds[2] = bounds[2].max(x);
+            bounds[3] = bounds[3].max(y);
+        }
+        bounds
+    }
+
     // TODO Start simple. From every node to one destination
     fn make_requests(&self, x2: f64, y2: f64, max_requests: usize) -> Vec<Request> {
         let mut requests = Vec::new();
