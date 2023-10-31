@@ -55,6 +55,9 @@
   }
 
   function recalculate() {
+    if (!network) {
+      return;
+    }
     gj = JSON.parse(
       network.recalculate({
         lng: markerPosition.lng,
@@ -63,8 +66,9 @@
         cost,
       })
     );
-    window.gj = gj;
   }
+
+  $: recalculate(cost, maxRequests);
 </script>
 
 <Layout>
@@ -76,7 +80,6 @@
     </label>
 
     {#if network}
-      <button on:click={recalculate}>Recalculate</button>
       <div>
         <label>
           Max requests (limit for faster updates):<br />
@@ -88,7 +91,8 @@
           <input type="radio" bind:group={cost} value="Distance" />Distance
         </label>
         <label>
-          <input type="radio" bind:group={cost} value="AvoidMainRoads" />Avoid main roads
+          <input type="radio" bind:group={cost} value="AvoidMainRoads" />Avoid
+          main roads
         </label>
       </div>
     {/if}
