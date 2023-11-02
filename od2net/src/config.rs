@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 /// Everything needed to run the pipeline.
@@ -60,6 +62,9 @@ pub enum CostFunction {
     Distance,
     /// Heavily penalize main roads
     AvoidMainRoads,
+    /// Multiply distance by a factor based on the OSM highway tag. If the type isn't present, it
+    /// won't be allowed at all.
+    OsmHighwayType(HashMap<String, f64>),
     /// Run this command to calculate edge cost. STDIN will contain a JSON array of objects, each
     /// with OSM tags representing one segment and extra properties (length_meters,
     /// nearby_amenities, lts). The output must be an equally sized JSON array of integers,

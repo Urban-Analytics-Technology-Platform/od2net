@@ -5,6 +5,7 @@
   import { GeoJSON, MapLibre, Marker } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
   import markerSvg from "../assets/marker.svg?raw";
+  import CostFunction from "./CostFunction.svelte";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
   import SidebarControls from "./SidebarControls.svelte";
@@ -86,15 +87,7 @@
           <input type="number" bind:value={maxRequests} min={1} />
         </label>
       </div>
-      <div>
-        <label>
-          <input type="radio" bind:group={cost} value="Distance" />Distance
-        </label>
-        <label>
-          <input type="radio" bind:group={cost} value="AvoidMainRoads" />Avoid
-          main roads
-        </label>
-      </div>
+      <CostFunction bind:cost />
     {/if}
 
     {#if gj.metadata}

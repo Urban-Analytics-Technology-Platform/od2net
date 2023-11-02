@@ -13,6 +13,10 @@ pub fn calculate_batch(cost: &CostFunction, input_batch: Vec<&Edge>) -> Vec<Opti
     match cost {
         CostFunction::Distance => input_batch.into_iter().map(distance).collect(),
         CostFunction::AvoidMainRoads => input_batch.into_iter().map(avoid_main_roads).collect(),
+        CostFunction::OsmHighwayType(ref weights) => input_batch
+            .into_iter()
+            .map(|e| osm_highway_type(e, weights))
+            .collect(),
         CostFunction::ExternalCommand(command) => external_command(command, input_batch).unwrap(),
     }
 }
@@ -46,6 +50,11 @@ fn avoid_main_roads(edge: &Edge) -> Option<usize> {
     };
 
     Some((penalty * edge.length_meters).round() as usize)
+}
+
+fn osm_highway_type(edge: &Edge, weights: &HashMap<String, f64>) -> Option<usize> {
+    let weight = weights.get(edge.tags.get("highway").unwrap())?;
+    Some((weight * edge.length_meters).round() as usize)
 }
 
 fn external_command(command: &str, input_batch: Vec<&Edge>) -> Result<Vec<Option<usize>>> {
