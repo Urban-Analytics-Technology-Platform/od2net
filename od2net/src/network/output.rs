@@ -17,6 +17,30 @@ impl Edge {
         id: usize,
         output_osm_tags: bool,
     ) -> Feature {
+        let mut feature = self.to_base_geojson(id, node1, node2, output_osm_tags);
+        feature.set_property("count", count);
+        feature
+    }
+
+    pub fn to_geojson_for_detailed_output(
+        &self,
+        node1: i64,
+        node2: i64,
+        geometry_forwards: bool,
+    ) -> Feature {
+        let mut feature = self.to_base_geojson(0, node1, node2, true);
+        feature.id = None;
+        if !geometry_forwards {
+            if let Some(ref mut geometry) = feature.geometry {
+                if let Value::LineString(ref mut pts) = geometry.value {
+                    pts.reverse();
+                }
+            }
+        }
+        feature
+    }
+
+    fn to_base_geojson(&self, id: usize, node1: i64, node2: i64, output_osm_tags: bool) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
         ));
@@ -28,12 +52,15 @@ impl Edge {
             }
             properties.insert("osm_tags".to_string(), tags.into());
         }
+        properties.insert("way".to_string(), JsonValue::from(self.way_id));
         properties.insert("node1".to_string(), JsonValue::from(node1));
         properties.insert("node2".to_string(), JsonValue::from(node2));
-        properties.insert("way".to_string(), JsonValue::from(self.way_id));
-        properties.insert("count".to_string(), JsonValue::from(count));
         if let Some(cost) = self.cost {
             properties.insert("cost".to_string(), serde_json::to_value(cost).unwrap());
+            properties.insert(
+                "length".to_string(),
+                serde_json::to_value(self.length_meters).unwrap(),
+            );
         }
         properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
         properties.insert(
@@ -44,48 +71,6 @@ impl Edge {
             bbox: None,
             geometry: Some(geometry),
             id: Some(Id::Number(id.into())),
-            properties: Some(properties),
-            foreign_members: None,
-        }
-    }
-
-    pub fn to_geojson_for_detailed_output(
-        &self,
-        node1: i64,
-        node2: i64,
-        geometry_forwards: bool,
-    ) -> Feature {
-        let mut pts = self
-            .geometry
-            .iter()
-            .map(|pt| pt.to_degrees_vec())
-            .collect::<Vec<_>>();
-        if !geometry_forwards {
-            pts.reverse();
-        }
-        let geometry = Geometry::new(Value::LineString(pts));
-
-        let mut properties = JsonObject::new();
-        let mut tags = JsonObject::new();
-        for (key, value) in self.tags.inner() {
-            tags.insert(key.to_string(), JsonValue::from(value.to_string()));
-        }
-        properties.insert("osm_tags".to_string(), tags.into());
-        properties.insert("node1".to_string(), JsonValue::from(node1));
-        properties.insert("node2".to_string(), JsonValue::from(node2));
-        properties.insert("way".to_string(), JsonValue::from(self.way_id));
-        if let Some(cost) = self.cost {
-            properties.insert("cost".to_string(), serde_json::to_value(cost).unwrap());
-        }
-        properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
-        properties.insert(
-            "nearby_amenities".to_string(),
-            serde_json::to_value(self.nearby_amenities).unwrap(),
-        );
-        Feature {
-            bbox: None,
-            geometry: Some(geometry),
-            id: None,
             properties: Some(properties),
             foreign_members: None,
         }
@@ -179,5 +164,20 @@ impl Network {
             HumanCount(skipped)
         );
         Ok(())
+    }
+
+    /// Output debug info per edge, without any counts
+    pub fn to_debug_geojson(&self) -> Result<String> {
+        let mut gj_bytes = Vec::new();
+        {
+            let mut writer = FeatureWriter::from_writer(BufWriter::new(&mut gj_bytes));
+            let mut id_counter = 0;
+            for ((node1, node2), edge) in &self.edges {
+                id_counter += 1;
+                writer.write_feature(&edge.to_base_geojson(id_counter, *node1, *node2, true))?;
+            }
+            writer.finish()?;
+        }
+        Ok(String::from_utf8(gj_bytes)?)
     }
 }

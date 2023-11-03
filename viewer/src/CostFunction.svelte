@@ -54,7 +54,9 @@
   <ul>
     {#each osmHighwayWeights.entries() as [key, value] (key)}
       <li>
-        <label>{key}<input type="number" min="1.0" step="0.1" bind:value /></label>
+        <label
+          >{key}<input type="number" min="1.0" step="0.1" bind:value /></label
+        >
       </li>
     {/each}
   </ul>

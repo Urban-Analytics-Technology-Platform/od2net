@@ -64,6 +64,7 @@ impl JsNetwork {
         })
     }
 
+    /// Takes Input, returns GeoJSON
     #[wasm_bindgen()]
     pub fn recalculate(&mut self, input: JsValue) -> Result<String, JsValue> {
         let input: Input = serde_wasm_bindgen::from_value(input)?;
@@ -144,6 +145,12 @@ impl JsNetwork {
             bounds[3] = bounds[3].max(y);
         }
         bounds
+    }
+
+    /// Returns GeoJSON with details per edge that can be used to explore cost functions
+    #[wasm_bindgen(js_name = debugNetwork)]
+    pub fn debug_network(&self) -> Result<String, JsValue> {
+        self.network.to_debug_geojson().map_err(err_to_js)
     }
 
     // TODO Start simple. From every node to one destination

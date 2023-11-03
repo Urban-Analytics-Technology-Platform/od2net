@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         x2: resolve(__dirname, "interactive.html"),
+        x3: resolve(__dirname, "edge_cost.html"),
       },
     },
   },

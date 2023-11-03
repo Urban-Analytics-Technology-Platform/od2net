@@ -17,9 +17,18 @@
   }
 </script>
 
-<div><b>Count: {properties.count.toFixed(2)}</b></div>
-<div><b>LTS: {properties.lts}</b></div>
-<div><b>Nearby amenities: {properties.nearby_amenities}</b></div>
+{#if properties.count}
+  <div>Count: <b>{properties.count.toFixed(2)}</b></div>
+{/if}
+{#if properties.cost}
+  <div>
+    Cost: {properties.cost} (<b
+      >{(properties.cost / properties.length).toFixed(2)}</b
+    >x the length)
+  </div>
+{/if}
+<div>Nearby amenities: <b>{properties.nearby_amenities}</b></div>
+<div>LTS: <b>{properties.lts}</b></div>
 <ul>
   {#each ltsMessages as msg}
     <li>{msg}</li>
