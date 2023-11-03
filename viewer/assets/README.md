@@ -1,1 +1,2 @@
 - Material Icons courtesy <https://fonts.google.com/icons>
+- Logo by [Hadrien Salat](https://github.com/HSalat/)

@@ -4,6 +4,7 @@
   import { FileAPISource, PMTiles } from "pmtiles";
   import { onMount } from "svelte";
   import { MapLibre } from "svelte-maplibre";
+  import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
   import Loader from "./Loader.svelte";
@@ -64,7 +65,7 @@
 
 <Layout>
   <div slot="left">
-    <h1>od2net</h1>
+    <Header app="main" />
     <label>
       {#if pmtiles == null}
         Open a <i>.pmtiles</i> file produced by the tool. Note this file stays in

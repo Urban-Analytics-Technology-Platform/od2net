@@ -11,6 +11,7 @@
   } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
   import { colors } from "./common";
+  import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
 
@@ -54,7 +55,7 @@
 
 <Layout>
   <div slot="left">
-    <h1>od2net edge cost explorer</h1>
+    <Header app="costs" />
     <label>
       Open a <i>.bin</i> network file
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />

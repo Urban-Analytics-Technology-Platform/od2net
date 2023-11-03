@@ -6,6 +6,7 @@
   import init, { JsNetwork } from "wasm-od2net";
   import markerSvg from "../assets/marker.svg?raw";
   import CostFunction from "./CostFunction.svelte";
+  import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
   import SidebarControls from "./SidebarControls.svelte";
@@ -74,7 +75,7 @@
 
 <Layout>
   <div slot="left">
-    <h1>od2net interactive mode</h1>
+    <Header app="interactive" />
     <label>
       Open a <i>.bin</i> network file
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
