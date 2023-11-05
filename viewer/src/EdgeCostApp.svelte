@@ -11,6 +11,7 @@
   } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
   import { colorByLts, colors, colorScale, makeColorRamp } from "./common";
+  import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
@@ -28,7 +29,9 @@
     type: "FeatureCollection",
     features: [],
   };
-  let colorBy: "lts" | "cost" | "nearby_amenities" = "lts";
+  // TODO When we load a network.bin, overwrite this
+  let cost = "Distance";
+  let colorBy: "lts" | "cost" | "nearby_amenities" = "cost";
   // Note the 0th entry is "not allowed"; it won't be filled out at all
   let percentByLength = [0, 0, 0, 0, 0];
 
@@ -46,24 +49,27 @@
         ],
         { padding: 20, animate: false }
       );
-      gj = JSON.parse(network.debugNetwork());
 
-      let allSum = 0;
-      let ltsSum = [0, 0, 0, 0, 0];
-      for (let f of gj.features) {
-        // A "not allowed" edge without a cost or length
-        if (!f.properties.length) {
-          continue;
-        }
-
-        allSum += f.properties.length;
-        ltsSum[f.properties.lts] += f.properties.length;
-      }
-      percentByLength = ltsSum.map((x) => (x / allSum) * 100);
-      console.log({ allSum, ltsSum, percentByLength });
+      updateGj();
     } catch (err) {
       window.alert(`Problem loading network file: ${err}`);
     }
+  }
+
+  function updateGj() {
+    gj = JSON.parse(network.debugNetwork());
+    let allSum = 0;
+    let ltsSum = [0, 0, 0, 0, 0];
+    for (let f of gj.features) {
+      // A "not allowed" edge without a cost or length
+      if (!f.properties.length) {
+        continue;
+      }
+
+      allSum += f.properties.length;
+      ltsSum[f.properties.lts] += f.properties.length;
+    }
+    percentByLength = ltsSum.map((x) => (x / allSum) * 100);
   }
 
   function openOSM(feature) {
@@ -108,6 +114,14 @@
     }
     return result;
   }
+
+  function updateCost(cost) {
+    if (network) {
+      network.updateCostFunction(cost);
+      updateGj();
+    }
+  }
+  $: updateCost(cost);
 </script>
 
 <Layout>
@@ -117,12 +131,16 @@
       Open a <i>.bin</i> network file or an <i>.osm.pbf</i>
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
+    <hr />
     <div>
-      <select bind:value={colorBy}>
-        <option value="lts">LTS</option>
-        <option value="cost">Edge cost (relative to length)</option>
-        <option value="nearby_amenities">Nearby amenities</option>
-      </select>
+      <label>
+        Color edges by:
+        <select bind:value={colorBy}>
+          <option value="lts">LTS</option>
+          <option value="cost">Edge cost (relative to length)</option>
+          <option value="nearby_amenities">Nearby amenities</option>
+        </select>
+      </label>
     </div>
     {#if colorBy == "lts"}
       <Legend
@@ -154,6 +172,8 @@
     {:else}
       <SequentialLegend {colorScale} limits={limitsFor(colorBy)} />
     {/if}
+    <hr />
+    <CostFunction bind:cost />
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre

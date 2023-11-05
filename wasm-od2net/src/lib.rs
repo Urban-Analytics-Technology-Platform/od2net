@@ -147,6 +147,16 @@ impl JsNetwork {
         Ok(gj_string)
     }
 
+    #[wasm_bindgen(js_name = updateCostFunction)]
+    pub fn update_cost_function(&mut self, input: JsValue) -> Result<(), JsValue> {
+        let cost: CostFunction = serde_wasm_bindgen::from_value(input)?;
+        self.last_cost = cost;
+        self.network.recalculate_cost(&self.last_cost);
+        // Doesn't touch the CH, because this is only meant to be used in the edge cost app, which
+        // doesn't use the CH
+        Ok(())
+    }
+
     #[wasm_bindgen(js_name = getBounds)]
     pub fn get_bounds(&self) -> Vec<f64> {
         let mut bounds = vec![f64::MAX, f64::MAX, f64::MIN, f64::MIN];
