@@ -4,13 +4,14 @@ use std::io::BufWriter;
 use anyhow::Result;
 use fs_err::File;
 use geo::prelude::HaversineLength;
-use geo::LineString;
+use geo::{LineString, Polygon};
 use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use rstar::primitives::{GeomWithData, Line};
 use rstar::RTree;
 
 use super::amenities::is_amenity;
+use super::greenspace;
 use super::{Edge, Network, Position};
 use crate::config::{CostFunction, LtsMapping};
 use crate::timer::Timer;
@@ -27,7 +28,7 @@ impl Network {
     ) -> Result<Network> {
         timer.start("Make Network from pbf");
         timer.start("Scrape OSM data");
-        let (nodes, ways, amenity_positions) = scrape_elements(osm_pbf_path)?;
+        let (nodes, ways, amenity_positions, greenspace_polygons) = scrape_elements(osm_pbf_path)?;
         timer.stop();
         println!(
             "  Got {} nodes, {} ways, and {} amenities",
@@ -35,6 +36,15 @@ impl Network {
             HumanCount(ways.len() as u64),
             HumanCount(amenity_positions.len() as u64)
         );
+
+        if false {
+            let mut writer = geojson::FeatureWriter::from_writer(BufWriter::new(File::create(
+                "debug_greenspace.geojson",
+            )?));
+            for polygon in &greenspace_polygons {
+                writer.write_feature(&geojson::Feature::from(geojson::Geometry::from(polygon)))?;
+            }
+        }
 
         timer.start("Split into edges");
         let mut network = split_edges(nodes, ways);
@@ -106,12 +116,18 @@ struct Way {
 
 fn scrape_elements(
     path: &str,
-) -> Result<(HashMap<i64, Position>, HashMap<i64, Way>, Vec<Position>)> {
+) -> Result<(
+    HashMap<i64, Position>,
+    HashMap<i64, Way>,
+    Vec<Position>,
+    Vec<Polygon>,
+)> {
     // Scrape every node ID -> position
     let mut nodes = HashMap::new();
     // Scrape every routable road. Just tags and node lists to start.
     let mut ways = HashMap::new();
     let mut amenity_positions = Vec::new();
+    let mut greenspace_polygons = Vec::new();
 
     let reader = ElementReader::from_path(path)?;
     // TODO par_map_reduce would be fine if we can merge the hashmaps; there should be no repeated
@@ -161,6 +177,10 @@ fn scrape_elements(
                     amenity_positions.push(pos);
                 }
 
+                if let Some(polygon) = greenspace::get_polygon(&tags, &nodes, &way) {
+                    greenspace_polygons.push(polygon);
+                }
+
                 // TODO Improve filtering
                 if tags.has("highway") {
                     ways.insert(
@@ -180,7 +200,7 @@ fn scrape_elements(
         }
     })?;
 
-    Ok((nodes, ways, amenity_positions))
+    Ok((nodes, ways, amenity_positions, greenspace_polygons))
 }
 
 fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Network {
