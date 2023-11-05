@@ -80,7 +80,7 @@
     } else if (colorBy == "cost") {
       return equalBins(1.0, 30.0);
     } else if (colorBy == "nearby_amenities") {
-      return equalBins(0, 50);
+      return equalBins(0, 20);
     }
   }
 
@@ -139,7 +139,15 @@
           paint={{
             "line-width": 5.0,
             "line-color": lineColorBy(colorBy),
-            "line-opacity": hoverStateFilter(1.0, 0.5),
+            "line-opacity":
+              colorBy == "nearby_amenities"
+                ? [
+                    "case",
+                    ["==", 0, ["get", "nearby_amenities"]],
+                    0.0,
+                    hoverStateFilter(1.0, 0.5),
+                  ]
+                : hoverStateFilter(1.0, 0.5),
           }}
           beforeId="Road labels"
           on:click={(e) => openOSM(e.detail.features[0])}
