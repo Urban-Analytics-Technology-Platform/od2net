@@ -5,30 +5,31 @@
   // TODO Maybe not in sync with what's passed in initially
   let costChoice = "Distance";
   // TODO Let people add/remove choices
-  let osmHighwayWeights = new Map(
-    [
-      "cycleway",
-      "footway",
-      "living_street",
-      "motorway",
-      "motorway_link",
-      "path",
-      "pedestrian",
-      "primary",
-      "primary_link",
-      "residential",
-      "secondary",
-      "secondary_link",
-      "service",
-      "steps",
-      "tertiary",
-      "tertiary_link",
-      "track",
-      "trunk",
-      "trunk_link",
-      "unclassified",
-    ].map((k) => [k, 1.0])
-  );
+  let osmHighwayWeights = {};
+  for (let key of [
+    "cycleway",
+    "footway",
+    "living_street",
+    "motorway",
+    "motorway_link",
+    "path",
+    "pedestrian",
+    "primary",
+    "primary_link",
+    "residential",
+    "secondary",
+    "secondary_link",
+    "service",
+    "steps",
+    "tertiary",
+    "tertiary_link",
+    "track",
+    "trunk",
+    "trunk_link",
+    "unclassified",
+  ]) {
+    osmHighwayWeights[key] = 1.0;
+  }
 
   function setCost(costChoice) {
     if (costChoice == "OsmHighwayType") {
@@ -52,10 +53,16 @@
 </div>
 {#if costChoice == "OsmHighwayType"}
   <ul>
-    {#each osmHighwayWeights.entries() as [key, value] (key)}
+    {#each Object.keys(osmHighwayWeights) as key}
       <li>
         <label
-          >{key}<input type="number" min="1.0" step="0.1" bind:value /></label
+          >{key}<input
+            type="number"
+            min="1.0"
+            step="0.1"
+            bind:value={osmHighwayWeights[key]}
+            on:change={() => (cost = cost)}
+          /></label
         >
       </li>
     {/each}
