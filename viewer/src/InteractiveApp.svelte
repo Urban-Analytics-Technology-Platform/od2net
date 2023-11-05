@@ -3,7 +3,7 @@
   import type { Map as MapType } from "maplibre-gl";
   import { onMount } from "svelte";
   import { GeoJSON, MapLibre, Marker } from "svelte-maplibre";
-  import init, { JsNetwork } from "wasm-od2net";
+  import init, { initThreadPool, JsNetwork } from "wasm-od2net";
   import markerSvg from "../assets/marker.svg?raw";
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
@@ -13,6 +13,7 @@
 
   onMount(async () => {
     await init();
+    await initThreadPool(navigator.hardwareConcurrency);
     await initLts();
   });
 
@@ -24,7 +25,7 @@
     features: [],
   };
 
-  let maxRequests = 1000;
+  let maxRequests = 1000000;
   // TODO When we load a network.bin, overwrite this
   let cost = "Distance";
   let controls = {

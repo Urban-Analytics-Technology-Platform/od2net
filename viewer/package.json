@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "wasm": "wasm-pack build --release --target web ../lts && wasm-pack build --release --target web ../wasm-od2net",
+    "wasm": "wasm-pack build --release --target web ../lts && rustup run nightly-2023-10-03 wasm-pack build --release --target web ../wasm-od2net",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "fmt": "npx prettier --write *.html src/**"

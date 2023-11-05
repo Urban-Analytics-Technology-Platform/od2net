@@ -30,6 +30,8 @@ jobs:
         run: |
           cd viewer
           npm ci
+          #rustup toolchain install nightly-2023-10-03-x86_64-unknown-linux-gnu
+          #rustup component add rust-src --toolchain nightly-2023-10-03-x86_64-unknown-linux-gnu
           npm run wasm
           npm run build --if-present
 

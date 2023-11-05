@@ -3,6 +3,7 @@ extern crate log;
 
 use std::sync::Once;
 
+pub use wasm_bindgen_rayon::init_thread_pool;
 use instant::Instant;
 use rstar::RTree;
 use serde::Deserialize;
@@ -129,7 +130,7 @@ impl JsNetwork {
         }
         let routing_time = Instant::now().duration_since(routing_start);
 
-        info!("Got counts for {} edges", counts.count_per_edge.len());
+        info!("Got counts for {} edges in {:?}", counts.count_per_edge.len(), routing_time);
         let output_metadata =
             od2net::OutputMetadata::new(config, &counts, num_requests, routing_time);
         let mut gj_bytes = Vec::new();
