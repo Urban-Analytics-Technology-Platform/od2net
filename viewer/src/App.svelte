@@ -41,7 +41,7 @@
 
   $: if (example != "") {
     pmtiles = new PMTiles(
-      `http://od2net.s3-website.eu-west-2.amazonaws.com/output/${example}.pmtiles`
+      `https://assets.od2net.org/output/${example}.pmtiles`
     );
   }
 

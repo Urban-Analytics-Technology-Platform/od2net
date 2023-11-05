@@ -31,7 +31,7 @@ def makeDestinations():
 def makeZones():
     # This is a prebuilt version of 2011 output areas, converted to WGS84. You could also manually download the Geopackage from https://geoportal.statistics.gov.uk/datasets/ons::output-areas-dec-2011-boundaries-ew-bgc/explore and convert the CRS.
     download(
-        url="http://od2net.s3-website.eu-west-2.amazonaws.com/input/2011_oas.geojson.gz",
+        url="https://assets.od2net.org/input/2011_oas.geojson.gz",
         outputFilename="input/2011_oas.geojson.gz",
     )
     run(["gunzip", "input/2011_oas.geojson.gz"])
@@ -72,7 +72,7 @@ def makeOD(oa_ids):
 
     # This is a cached version of WF01AEW_oa from https://wicid.ukdataservice.ac.uk/flowdata/cider/wicid/downloads.php
     download(
-        url="http://od2net.s3-website.eu-west-2.amazonaws.com/input/wf01aew_oa_v1.csv.gz",
+        url="https://assets.od2net.org/input/wf01aew_oa_v1.csv.gz",
         outputFilename="input/wf01aew_oa_v1.csv.gz",
     )
     run(["gunzip", "input/wf01aew_oa_v1.csv.gz"])
