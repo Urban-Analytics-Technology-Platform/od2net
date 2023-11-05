@@ -77,7 +77,7 @@
   <div slot="left">
     <Header app="interactive" />
     <label>
-      Open a <i>.bin</i> network file
+      Open a <i>.bin</i> network file or an <i>.osm.pbf</i>
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
 

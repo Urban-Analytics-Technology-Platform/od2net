@@ -1,8 +1,6 @@
 use std::collections::HashMap;
-use std::io::BufWriter;
 
 use anyhow::Result;
-use fs_err::File;
 use geo::prelude::HaversineLength;
 use geo::{LineString, Polygon};
 use indicatif::HumanCount;
@@ -20,15 +18,14 @@ use lts::{Tags, LTS};
 
 impl Network {
     pub fn make_from_pbf(
-        osm_pbf_path: &str,
-        bin_path: &str,
+        input_bytes: &[u8],
         lts: &LtsMapping,
         cost: &CostFunction,
         timer: &mut Timer,
     ) -> Result<Network> {
         timer.start("Make Network from pbf");
         timer.start("Scrape OSM data");
-        let (nodes, ways, amenity_positions, greenspace_polygons) = scrape_elements(osm_pbf_path)?;
+        let (nodes, ways, amenity_positions, greenspace_polygons) = scrape_elements(input_bytes)?;
         timer.stop();
         println!(
             "  Got {} nodes, {} ways, and {} amenities",
@@ -38,9 +35,9 @@ impl Network {
         );
 
         if false {
-            let mut writer = geojson::FeatureWriter::from_writer(BufWriter::new(File::create(
-                "debug_greenspace.geojson",
-            )?));
+            let mut writer = geojson::FeatureWriter::from_writer(std::io::BufWriter::new(
+                fs_err::File::create("debug_greenspace.geojson")?,
+            ));
             for polygon in &greenspace_polygons {
                 writer.write_feature(&geojson::Feature::from(geojson::Geometry::from(polygon)))?;
             }
@@ -86,11 +83,6 @@ impl Network {
         network.recalculate_cost(cost);
         timer.stop();
 
-        timer.start(format!("Saving to {bin_path}"));
-        let writer = BufWriter::new(File::create(bin_path)?);
-        bincode::serialize_into(writer, &network)?;
-        timer.stop();
-
         timer.stop();
         Ok(network)
     }
@@ -115,7 +107,7 @@ struct Way {
 }
 
 fn scrape_elements(
-    path: &str,
+    input_bytes: &[u8],
 ) -> Result<(
     HashMap<i64, Position>,
     HashMap<i64, Way>,
@@ -129,7 +121,7 @@ fn scrape_elements(
     let mut amenity_positions = Vec::new();
     let mut greenspace_polygons = Vec::new();
 
-    let reader = ElementReader::from_path(path)?;
+    let reader = ElementReader::new(input_bytes);
     // TODO par_map_reduce would be fine if we can merge the hashmaps; there should be no repeated
     // keys
     reader.for_each(|element| {

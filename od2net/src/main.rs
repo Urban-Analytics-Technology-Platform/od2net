@@ -1,7 +1,9 @@
+use std::io::BufWriter;
 use std::process::Command;
 
 use anyhow::{bail, Result};
 use clap::Parser;
+use fs_err::File;
 use indicatif::HumanCount;
 use instant::Instant;
 
@@ -71,13 +73,19 @@ fn main() -> Result<()> {
             Ok(network) => network,
             Err(err) => {
                 println!("That failed ({err}), so generating it from {osm_pbf_path}");
-                od2net::network::Network::make_from_pbf(
-                    &osm_pbf_path,
-                    &bin_path,
+                let network = od2net::network::Network::make_from_pbf(
+                    &fs_err::read(osm_pbf_path)?,
                     &config.lts,
                     &config.cost,
                     &mut timer,
-                )?
+                )?;
+
+                timer.start(format!("Saving to {bin_path}"));
+                let writer = BufWriter::new(File::create(bin_path)?);
+                bincode::serialize_into(writer, &network)?;
+                timer.stop();
+
+                network
             }
         }
     };
