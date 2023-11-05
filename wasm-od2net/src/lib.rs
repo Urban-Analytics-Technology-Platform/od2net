@@ -19,9 +19,10 @@ static START: Once = Once::new();
 #[wasm_bindgen]
 pub struct JsNetwork {
     network: Network,
-    prepared_ch: PreparedCH,
+
+    prepared_ch: Option<PreparedCH>,
     // TODO Maybe bundle this in PreparedCH and rethink what we serialize
-    closest_intersection: RTree<IntersectionLocation>,
+    closest_intersection: Option<RTree<IntersectionLocation>>,
 
     // TODO Network should store this, since it's baked in
     last_cost: CostFunction,
@@ -50,16 +51,12 @@ impl JsNetwork {
 
         let network: Network = bincode::deserialize(input_bytes).map_err(err_to_js)?;
 
-        let mut timer = Timer::new();
-        let prepared_ch = od2net::router::just_build_ch(&network, &mut timer);
-        let closest_intersection =
-            od2net::router::build_closest_intersection(&network, &prepared_ch.node_map, &mut timer);
-
         Ok(JsNetwork {
             network,
-            prepared_ch,
-            closest_intersection,
+            prepared_ch: None,
+            closest_intersection: None,
 
+            // TODO Part of Network?
             last_cost: CostFunction::Distance,
         })
     }
@@ -69,17 +66,17 @@ impl JsNetwork {
     pub fn recalculate(&mut self, input: JsValue) -> Result<String, JsValue> {
         let input: Input = serde_wasm_bindgen::from_value(input)?;
 
-        if input.cost != self.last_cost {
+        if input.cost != self.last_cost || self.prepared_ch.is_none() {
             self.last_cost = input.cost;
             let mut timer = Timer::new();
             info!("Recalculating cost");
             self.network.recalculate_cost(&self.last_cost);
-            self.prepared_ch = od2net::router::just_build_ch(&self.network, &mut timer);
-            self.closest_intersection = od2net::router::build_closest_intersection(
+            self.prepared_ch = Some(od2net::router::just_build_ch(&self.network, &mut timer));
+            self.closest_intersection = Some(od2net::router::build_closest_intersection(
                 &self.network,
-                &self.prepared_ch.node_map,
+                &self.prepared_ch.as_ref().unwrap().node_map,
                 &mut timer,
-            );
+            ));
         }
 
         // TODO All of this should be configurable
@@ -100,7 +97,7 @@ impl JsNetwork {
         };
 
         // Calculate single-threaded, until we figure out web workers
-        let mut path_calc = fast_paths::create_calculator(&self.prepared_ch.ch);
+        let mut path_calc = fast_paths::create_calculator(&self.prepared_ch.as_ref().unwrap().ch);
         let mut counts = Counts::new();
         let routing_start = Instant::now();
         for request in requests {
@@ -108,8 +105,8 @@ impl JsNetwork {
                 request,
                 &mut counts,
                 &mut path_calc,
-                &self.closest_intersection,
-                &self.prepared_ch,
+                self.closest_intersection.as_ref().unwrap(),
+                self.prepared_ch.as_ref().unwrap(),
                 &config.uptake,
                 &self.network,
             );
