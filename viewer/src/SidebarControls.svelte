@@ -10,7 +10,7 @@
 
   function total(meters: number): string {
     let km = meters / 1000.0;
-    return `${km.toFixed(1)} km total`;
+    return `${km.toFixed(1)} km total for all trips (before uptake)`;
   }
 </script>
 

@@ -29,6 +29,8 @@
     features: [],
   };
   let colorBy: "lts" | "cost" | "nearby_amenities" = "lts";
+  // Note the 0th entry is "not allowed"; it won't be filled out at all
+  let percentByLength = [0, 0, 0, 0, 0];
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
@@ -45,6 +47,20 @@
         { padding: 20, animate: false }
       );
       gj = JSON.parse(network.debugNetwork());
+
+      let allSum = 0;
+      let ltsSum = [0, 0, 0, 0, 0];
+      for (let f of gj.features) {
+        // A "not allowed" edge without a cost or length
+        if (!f.properties.length) {
+          continue;
+        }
+
+        allSum += f.properties.length;
+        ltsSum[f.properties.lts] += f.properties.length;
+      }
+      percentByLength = ltsSum.map((x) => (x / allSum) * 100);
+      console.log({ allSum, ltsSum, percentByLength });
     } catch (err) {
       window.alert(`Problem loading network file: ${err}`);
     }
@@ -101,18 +117,32 @@
       Open a <i>.bin</i> network file or an <i>.osm.pbf</i>
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
-    <select bind:value={colorBy}>
-      <option value="lts">LTS</option>
-      <option value="cost">Edge cost (relative to length)</option>
-      <option value="nearby_amenities">Nearby amenities</option>
-    </select>
+    <div>
+      <select bind:value={colorBy}>
+        <option value="lts">LTS</option>
+        <option value="cost">Edge cost (relative to length)</option>
+        <option value="nearby_amenities">Nearby amenities</option>
+      </select>
+    </div>
     {#if colorBy == "lts"}
       <Legend
         rows={[
-          ["LTS 1 - suitable for children", colors.lts1],
-          ["LTS 2 - low stress", colors.lts2],
-          ["LTS 3 - medium stress", colors.lts3],
-          ["LTS 4 - high stress", colors.lts4],
+          [
+            `LTS 1 - suitable for children: ${percentByLength[1].toFixed(0)}%`,
+            colors.lts1,
+          ],
+          [
+            `LTS 2 - low stress: ${percentByLength[2].toFixed(0)}%`,
+            colors.lts2,
+          ],
+          [
+            `LTS 3 - medium stress: ${percentByLength[3].toFixed(0)}%`,
+            colors.lts3,
+          ],
+          [
+            `LTS 4 - high stress: ${percentByLength[4].toFixed(0)}%`,
+            colors.lts4,
+          ],
         ]}
       />
       <p>
