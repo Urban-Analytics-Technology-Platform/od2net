@@ -6,7 +6,7 @@
     LineLayer,
     Popup,
   } from "svelte-maplibre";
-  import { colors } from "./common";
+  import { colorByLts, colors } from "./common";
   import PropertiesTable from "./PropertiesTable.svelte";
 
   export let sourceOverride = {};
@@ -54,20 +54,7 @@
   hoverCursor={enableControls ? "pointer" : undefined}
   paint={{
     "line-width": lineWidth,
-    "line-color": [
-      // Colors from https://github.com/BikeOttawa/maps.bikeottawa.ca-frontend/blob/master/lts/index.html
-      "match",
-      ["get", "lts"],
-      1,
-      colors.lts1,
-      2,
-      colors.lts2,
-      3,
-      colors.lts3,
-      4,
-      colors.lts4,
-      colors.lts_unknown,
-    ],
+    "line-color": colorByLts,
     "line-opacity": hoverStateFilter(1.0, 0.5),
   }}
   beforeId="Road labels"

@@ -10,10 +10,12 @@
     Popup,
   } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
-  import { colors } from "./common";
+  import { colorByLts, colors, colorScale, makeColorRamp } from "./common";
   import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
+  import Legend from "./Legend.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
+  import SequentialLegend from "./SequentialLegend.svelte";
 
   onMount(async () => {
     await init();
@@ -26,6 +28,7 @@
     type: "FeatureCollection",
     features: [],
   };
+  let colorBy: "lts" | "cost" | "nearby_amenities" = "lts";
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
@@ -51,6 +54,44 @@
     let id = feature.properties.way;
     window.open(`http://openstreetmap.org/way/${id}`, "_blank");
   }
+
+  // TODO Could just be fixed objects, not functions
+  function lineColorBy(colorBy) {
+    if (colorBy == "lts") {
+      return colorByLts;
+    } else if (colorBy == "cost") {
+      return makeColorRamp(
+        ["/", ["get", "cost"], ["get", "length"]],
+        limitsFor(colorBy),
+        colorScale
+      );
+    } else if (colorBy == "nearby_amenities") {
+      return makeColorRamp(
+        ["get", "nearby_amenities"],
+        limitsFor(colorBy),
+        colorScale
+      );
+    }
+  }
+
+  function limitsFor(colorBy) {
+    if (colorBy == "lts") {
+      return null;
+    } else if (colorBy == "cost") {
+      return equalBins(1.0, 30.0);
+    } else if (colorBy == "nearby_amenities") {
+      return equalBins(0, 50);
+    }
+  }
+
+  function equalBins(min, max) {
+    let result = [];
+    let step = (max - min) / 5.0;
+    for (let i = 0; i < 6; i++) {
+      result.push(min + i * step);
+    }
+    return result;
+  }
 </script>
 
 <Layout>
@@ -60,6 +101,29 @@
       Open a <i>.bin</i> network file
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
+    <select bind:value={colorBy}>
+      <option value="lts">LTS</option>
+      <option value="cost">Edge cost (relative to length)</option>
+      <option value="nearby_amenities">Nearby amenities</option>
+    </select>
+    {#if colorBy == "lts"}
+      <Legend
+        rows={[
+          ["LTS 1 - suitable for children", colors.lts1],
+          ["LTS 2 - low stress", colors.lts2],
+          ["LTS 3 - medium stress", colors.lts3],
+          ["LTS 4 - high stress", colors.lts4],
+        ]}
+      />
+      <p>
+        Note: LTS model from <a
+          href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
+          target="_blank">BikeOttawa</a
+        >
+      </p>
+    {:else}
+      <SequentialLegend {colorScale} limits={limitsFor(colorBy)} />
+    {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
@@ -73,22 +137,8 @@
           manageHoverState
           hoverCursor="pointer"
           paint={{
-            "line-width": 3.0,
-            // TODO Bucket whatever thing we're looking at
-            "line-color": [
-              // Colors from https://github.com/BikeOttawa/maps.bikeottawa.ca-frontend/blob/master/lts/index.html
-              "match",
-              ["get", "lts"],
-              1,
-              colors.lts1,
-              2,
-              colors.lts2,
-              3,
-              colors.lts3,
-              4,
-              colors.lts4,
-              colors.lts_unknown,
-            ],
+            "line-width": 5.0,
+            "line-color": lineColorBy(colorBy),
             "line-opacity": hoverStateFilter(1.0, 0.5),
           }}
           beforeId="Road labels"
