@@ -9,12 +9,14 @@ export let colors = {
   lts2: "#56b4e9",
   lts3: "#e69f00",
   lts4: "#d55e00",
-  lts_unknown: "black",
+  lts_not_allowed: "red",
 };
 
 export let colorByLts = [
   "match",
   ["get", "lts"],
+  0,
+  colors.lts_not_allowed,
   1,
   colors.lts1,
   2,
@@ -23,7 +25,8 @@ export let colorByLts = [
   colors.lts3,
   4,
   colors.lts4,
-  colors.lts_unknown,
+  // Shouldn't happen
+  "red",
 ];
 
 // Helper for https://maplibre.org/maplibre-style-spec/expressions/#step.
@@ -52,4 +55,5 @@ export let ltsNames = {
   lts2: "LTS 2 - low stress",
   lts3: "LTS 3 - medium stress",
   lts4: "LTS 4 - high stress",
+  lts_not_allowed: "Cyclists not allowed",
 };

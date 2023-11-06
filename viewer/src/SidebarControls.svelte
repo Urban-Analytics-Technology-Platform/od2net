@@ -72,6 +72,13 @@
       `${ltsNames.lts4}: ${total(outputMetadata.total_meters_lts4)}`,
       colors.lts4,
     ],
+    // Shouldn't happen
+    [
+      `${ltsNames.lts_not_allowed}: ${total(
+        outputMetadata.total_meters_not_allowed
+      )}`,
+      colors.lts_not_allowed,
+    ],
   ]}
 />
 <p>

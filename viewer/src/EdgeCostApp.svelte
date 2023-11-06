@@ -101,11 +101,16 @@
     if (colorBy == "lts") {
       return colorByLts;
     } else if (colorBy == "cost") {
-      return makeColorRamp(
-        ["/", ["get", "cost"], ["get", "length"]],
-        limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
-        colorScale
-      );
+      return [
+        "case",
+        ["==", 0, ["get", "lts"]],
+        colors.lts_not_allowed,
+        makeColorRamp(
+          ["/", ["get", "cost"], ["get", "length"]],
+          limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
+          colorScale
+        ),
+      ];
     } else if (colorBy == "nearby_amenities") {
       return makeColorRamp(
         ["get", "nearby_amenities"],
@@ -183,6 +188,7 @@
               `${ltsNames.lts4}: ${percentByLength[4].toFixed(0)}%`,
               colors.lts4,
             ],
+            [ltsNames.lts_not_allowed, colors.lts_not_allowed],
           ]}
         />
         <p>
@@ -196,6 +202,7 @@
           {colorScale}
           limits={limitsFor(colorBy, maxCostRatio, maxNearbyAmenities)}
         />
+        <Legend rows={[[ltsNames.lts_not_allowed, colors.lts_not_allowed]]} />
       {/if}
       <hr />
       <CostFunction bind:cost />
