@@ -40,6 +40,8 @@
   let colorBy: "lts" | "cost" | "nearby_amenities" = "cost";
   // Note the 0th entry is "not allowed"; it won't be filled out at all
   let percentByLength = [0, 0, 0, 0, 0];
+  let maxCostRatio = 1.0;
+  let maxNearbyAmenities = 1;
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
@@ -66,11 +68,22 @@
     gj = JSON.parse(network.debugNetwork());
     let allSum = 0;
     let ltsSum = [0, 0, 0, 0, 0];
+    maxCostRatio = 0.0;
+    maxNearbyAmenities = 0;
     for (let f of gj.features) {
+      maxNearbyAmenities = Math.max(
+        maxNearbyAmenities,
+        f.properties.nearby_amenities
+      );
+
       // A "not allowed" edge without a cost or length
       if (!f.properties.length) {
         continue;
       }
+      maxCostRatio = Math.max(
+        maxCostRatio,
+        f.properties.cost / f.properties.length
+      );
 
       allSum += f.properties.length;
       ltsSum[f.properties.lts] += f.properties.length;
@@ -84,31 +97,31 @@
   }
 
   // TODO Could just be fixed objects, not functions
-  function lineColorBy(colorBy) {
+  function lineColorBy(colorBy, maxCostRatio, maxNearbyAmenities) {
     if (colorBy == "lts") {
       return colorByLts;
     } else if (colorBy == "cost") {
       return makeColorRamp(
         ["/", ["get", "cost"], ["get", "length"]],
-        limitsFor(colorBy),
+        limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
         colorScale
       );
     } else if (colorBy == "nearby_amenities") {
       return makeColorRamp(
         ["get", "nearby_amenities"],
-        limitsFor(colorBy),
+        limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
         colorScale
       );
     }
   }
 
-  function limitsFor(colorBy) {
+  function limitsFor(colorBy, maxCostRatio, maxNearbyAmenities) {
     if (colorBy == "lts") {
       return null;
     } else if (colorBy == "cost") {
-      return equalBins(1.0, 30.0);
+      return equalBins(0.0, maxCostRatio);
     } else if (colorBy == "nearby_amenities") {
-      return equalBins(0, 20);
+      return equalBins(0, maxNearbyAmenities);
     }
   }
 
@@ -153,7 +166,9 @@
         <Legend
           rows={[
             [
-              `${ltsNames.lts1}: ${percentByLength[1].toFixed(0)}%`,
+              `${ltsNames.lts1}: ${percentByLength[1].toFixed(
+                0
+              )}% of roads by distance`,
               colors.lts1,
             ],
             [
@@ -177,7 +192,10 @@
           >
         </p>
       {:else}
-        <SequentialLegend {colorScale} limits={limitsFor(colorBy)} />
+        <SequentialLegend
+          {colorScale}
+          limits={limitsFor(colorBy, maxCostRatio, maxNearbyAmenities)}
+        />
       {/if}
       <hr />
       <CostFunction bind:cost />
@@ -196,7 +214,11 @@
           hoverCursor="pointer"
           paint={{
             "line-width": 5.0,
-            "line-color": lineColorBy(colorBy),
+            "line-color": lineColorBy(
+              colorBy,
+              maxCostRatio,
+              maxNearbyAmenities
+            ),
             "line-opacity":
               colorBy == "nearby_amenities"
                 ? [

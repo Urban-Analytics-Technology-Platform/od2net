@@ -12,6 +12,6 @@
 </div>
 <div style="display: flex; justify-content: space-between;">
   {#each limits as limit}
-    <span>{limit}</span>
+    <span>{limit.toFixed(1)}</span>
   {/each}
 </div>
