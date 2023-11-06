@@ -10,7 +10,13 @@
     Popup,
   } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
-  import { colorByLts, colors, colorScale, makeColorRamp } from "./common";
+  import {
+    colorByLts,
+    colors,
+    colorScale,
+    ltsNames,
+    makeColorRamp,
+  } from "./common";
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
@@ -131,49 +137,51 @@
       Open a <i>.bin</i> network file or an <i>.osm.pbf</i>
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
-    <hr />
-    <div>
-      <label>
-        Color edges by:
-        <select bind:value={colorBy}>
-          <option value="lts">LTS</option>
-          <option value="cost">Edge cost (relative to length)</option>
-          <option value="nearby_amenities">Nearby amenities</option>
-        </select>
-      </label>
-    </div>
-    {#if colorBy == "lts"}
-      <Legend
-        rows={[
-          [
-            `LTS 1 - suitable for children: ${percentByLength[1].toFixed(0)}%`,
-            colors.lts1,
-          ],
-          [
-            `LTS 2 - low stress: ${percentByLength[2].toFixed(0)}%`,
-            colors.lts2,
-          ],
-          [
-            `LTS 3 - medium stress: ${percentByLength[3].toFixed(0)}%`,
-            colors.lts3,
-          ],
-          [
-            `LTS 4 - high stress: ${percentByLength[4].toFixed(0)}%`,
-            colors.lts4,
-          ],
-        ]}
-      />
-      <p>
-        Note: LTS model from <a
-          href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
-          target="_blank">BikeOttawa</a
-        >
-      </p>
-    {:else}
-      <SequentialLegend {colorScale} limits={limitsFor(colorBy)} />
+    {#if network}
+      <hr />
+      <div>
+        <label>
+          Color edges by:
+          <select bind:value={colorBy}>
+            <option value="lts">LTS</option>
+            <option value="cost">Edge cost (relative to length)</option>
+            <option value="nearby_amenities">Nearby amenities</option>
+          </select>
+        </label>
+      </div>
+      {#if colorBy == "lts"}
+        <Legend
+          rows={[
+            [
+              `${ltsNames.lts1}: ${percentByLength[1].toFixed(0)}%`,
+              colors.lts1,
+            ],
+            [
+              `${ltsNames.lts2}: ${percentByLength[2].toFixed(0)}%`,
+              colors.lts2,
+            ],
+            [
+              `${ltsNames.lts3}: ${percentByLength[3].toFixed(0)}%`,
+              colors.lts3,
+            ],
+            [
+              `${ltsNames.lts4}: ${percentByLength[4].toFixed(0)}%`,
+              colors.lts4,
+            ],
+          ]}
+        />
+        <p>
+          Note: LTS model from <a
+            href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
+            target="_blank">BikeOttawa</a
+          >
+        </p>
+      {:else}
+        <SequentialLegend {colorScale} limits={limitsFor(colorBy)} />
+      {/if}
+      <hr />
+      <CostFunction bind:cost />
     {/if}
-    <hr />
-    <CostFunction bind:cost />
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre

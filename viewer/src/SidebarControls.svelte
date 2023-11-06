@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { colors } from "./common";
+  import { colors, ltsNames } from "./common";
   import Legend from "./Legend.svelte";
   import StreetView from "./StreetView.svelte";
   import ToggleLayer from "./ToggleLayer.svelte";
@@ -57,21 +57,19 @@
 <Legend
   rows={[
     [
-      `LTS 1 - suitable for children: ${total(
-        outputMetadata.total_meters_lts1
-      )}`,
+      `${ltsNames.lts1}: ${total(outputMetadata.total_meters_lts1)}`,
       colors.lts1,
     ],
     [
-      `LTS 2 - low stress: ${total(outputMetadata.total_meters_lts2)}`,
+      `${ltsNames.lts2}: ${total(outputMetadata.total_meters_lts2)}`,
       colors.lts2,
     ],
     [
-      `LTS 3 - medium stress: ${total(outputMetadata.total_meters_lts3)}`,
+      `${ltsNames.lts3}: ${total(outputMetadata.total_meters_lts3)}`,
       colors.lts3,
     ],
     [
-      `LTS 4 - high stress: ${total(outputMetadata.total_meters_lts4)}`,
+      `${ltsNames.lts4}: ${total(outputMetadata.total_meters_lts4)}`,
       colors.lts4,
     ],
   ]}

@@ -150,6 +150,7 @@ impl JsNetwork {
     #[wasm_bindgen(js_name = updateCostFunction)]
     pub fn update_cost_function(&mut self, input: JsValue) -> Result<(), JsValue> {
         let cost: CostFunction = serde_wasm_bindgen::from_value(input)?;
+        info!("Changing cost to {}", serde_json::to_string(&cost).map_err(err_to_js)?);
         self.last_cost = cost;
         self.network.recalculate_cost(&self.last_cost);
         // Doesn't touch the CH, because this is only meant to be used in the edge cost app, which

@@ -173,7 +173,7 @@ fn scrape_elements(
                     greenspace_polygons.push(polygon);
                 }
 
-                // TODO Improve filtering
+                // Include everything here, and let LTS::NotAllowed later filter some out
                 if tags.has("highway") {
                     ways.insert(
                         way.id(),

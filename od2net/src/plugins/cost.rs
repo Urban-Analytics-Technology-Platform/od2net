@@ -17,6 +17,15 @@ pub fn calculate_batch(cost: &CostFunction, input_batch: Vec<&Edge>) -> Vec<Opti
             .into_iter()
             .map(|e| osm_highway_type(e, weights))
             .collect(),
+        CostFunction::ByLTS {
+            lts1,
+            lts2,
+            lts3,
+            lts4,
+        } => input_batch
+            .into_iter()
+            .map(|e| by_lts(e, *lts1, *lts2, *lts3, *lts4))
+            .collect(),
         CostFunction::ExternalCommand(command) => external_command(command, input_batch).unwrap(),
     }
 }
@@ -54,6 +63,19 @@ fn avoid_main_roads(edge: &Edge) -> Option<usize> {
 
 fn osm_highway_type(edge: &Edge, weights: &HashMap<String, f64>) -> Option<usize> {
     let weight = weights.get(edge.tags.get("highway").unwrap())?;
+    Some((weight * edge.length_meters).round() as usize)
+}
+
+fn by_lts(edge: &Edge, lts1: f64, lts2: f64, lts3: f64, lts4: f64) -> Option<usize> {
+    let weight = match edge.lts {
+        LTS::NotAllowed => {
+            return None;
+        }
+        LTS::LTS1 => lts1,
+        LTS::LTS2 => lts2,
+        LTS::LTS3 => lts3,
+        LTS::LTS4 => lts4,
+    };
     Some((weight * edge.length_meters).round() as usize)
 }
 

@@ -46,3 +46,10 @@ export function makeColorRamp(
 
 // Sequential (low-to-high) color ramp from https://www.ons.gov.uk/census/maps/choropleth
 export let colorScale = ["#CDE594", "#80C6A3", "#1F9EB7", "#186290", "#080C54"];
+
+export let ltsNames = {
+  lts1: "LTS 1 - suitable for children",
+  lts2: "LTS 2 - low stress",
+  lts3: "LTS 3 - medium stress",
+  lts4: "LTS 4 - high stress",
+};

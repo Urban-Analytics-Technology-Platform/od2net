@@ -62,6 +62,14 @@ pub enum CostFunction {
     Distance,
     /// Heavily penalize main roads
     AvoidMainRoads,
+    /// Multiply distance by a factor for each LTS classification
+    ByLTS {
+        lts1: f64,
+        lts2: f64,
+        lts3: f64,
+        lts4: f64,
+        // TODO Incorporate nearby_amenities. Maybe a list of ranges and then a multiplier?
+    },
     /// Multiply distance by a factor based on the OSM highway tag. If the type isn't present, it
     /// won't be allowed at all.
     OsmHighwayType(HashMap<String, f64>),
