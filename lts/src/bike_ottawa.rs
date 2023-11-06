@@ -1,4 +1,4 @@
-use crate::{parse, Tags, LTS};
+use crate::{is_cycling_allowed, parse, Tags, LTS};
 
 // The below is adapted from https://raw.githubusercontent.com/BikeOttawa/stressmodel/master/stressmodel.js, MIT licensed
 // TODO Ask about differences: maxspeed parsing, highway=construction
@@ -7,7 +7,7 @@ use crate::{parse, Tags, LTS};
 pub fn bike_ottawa(tags: &Tags) -> (LTS, Vec<String>) {
     let mut msgs = Vec::new();
 
-    if !is_biking_permitted(&tags, &mut msgs) {
+    if !is_cycling_allowed(&tags, &mut msgs) {
         return (LTS::NotAllowed, msgs);
     }
 
@@ -26,48 +26,6 @@ pub fn bike_ottawa(tags: &Tags) -> (LTS, Vec<String>) {
 
     msgs.push("No categories matched".into());
     (LTS::NotAllowed, msgs)
-}
-
-fn is_biking_permitted(tags: &Tags, msgs: &mut Vec<String>) -> bool {
-    if !tags.has("highway") && !tags.has("bicycle") {
-        msgs.push("Way doesn't have a highway or bicycle tag".into());
-        return false;
-    }
-
-    if tags.is("bicycle", "no") {
-        msgs.push("Cycling not permitted due to bicycle=no".into());
-        return false;
-    }
-
-    if tags.is("access", "no") {
-        // TODO There are exceptions for bicycle
-        msgs.push("Cycling not permitted due to access=no".into());
-        return false;
-    }
-
-    if tags.is_any(
-        "highway",
-        vec!["motorway", "motorway_link", "proposed", "construction"],
-    ) {
-        msgs.push(format!(
-            "Cycling not permitted due to highway={}",
-            tags.get("highway").unwrap()
-        ));
-        return false;
-    }
-
-    if tags.is_any("highway", vec!["footway", "path"])
-        && tags.is("footway", "sidewalk")
-        && !tags.is("bicycle", "yes")
-    {
-        msgs.push(format!(
-            "Cycling not permitted on highway={}, when footway=sidewalk and bicycle=yes is missing",
-            tags.get("highway").unwrap()
-        ));
-        return false;
-    }
-
-    true
 }
 
 fn is_separate_path(tags: &Tags, msgs: &mut Vec<String>) -> bool {

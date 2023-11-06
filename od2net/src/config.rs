@@ -58,10 +58,9 @@ pub enum ODPattern {
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum CostFunction {
-    /// Just find the shortest distance path
+    /// Just find the most direct path, minimizing distance. This is equivalent to ByLTS with all
+    /// weights set to 1.
     Distance,
-    /// Heavily penalize main roads
-    AvoidMainRoads,
     /// Multiply distance by a factor for each LTS classification
     ByLTS {
         lts1: f64,

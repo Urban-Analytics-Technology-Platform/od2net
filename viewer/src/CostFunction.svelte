@@ -57,7 +57,6 @@
     Cost function:
     <select bind:value={costChoice}>
       <option value="Distance">Distance</option>
-      <option value="AvoidMainRoads">Avoid main roads</option>
       <option value="ByLTS">Weight per LTS</option>
       <option value="OsmHighwayType">Set a weight per OSM highway type</option>
     </select>

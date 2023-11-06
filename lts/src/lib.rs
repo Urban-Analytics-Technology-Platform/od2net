@@ -1,3 +1,4 @@
+mod allowed;
 mod bike_ottawa;
 mod parse;
 mod speed_limit_only;
@@ -9,6 +10,7 @@ mod wasm;
 
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
+pub use allowed::is_cycling_allowed;
 pub use bike_ottawa::bike_ottawa;
 pub use speed_limit_only::speed_limit_only;
 pub use tags::Tags;
