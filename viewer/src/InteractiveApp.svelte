@@ -5,6 +5,7 @@
   import { GeoJSON, MapLibre, Marker } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
   import markerSvg from "../assets/marker.svg?raw";
+  import ClippedPBFs from "./ClippedPBFs.svelte";
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
@@ -18,6 +19,7 @@
 
   let map: MapType;
   let network: JsNetwork | undefined;
+  let example = "";
   let markerPosition = { lng: 0.0, lat: 0.0 };
   let gj = {
     type: "FeatureCollection",
@@ -36,8 +38,12 @@
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
+    example = "";
+    loadBytes(await fileInput.files![0].arrayBuffer());
+  }
+
+  function loadBytes(buffer) {
     try {
-      let buffer = await fileInput.files![0].arrayBuffer();
       network = new JsNetwork(new Uint8Array(buffer));
 
       let bbox = network.getBounds();
@@ -55,6 +61,17 @@
       window.alert(`Problem loading network file: ${err}`);
     }
   }
+
+  async function loadExample(example) {
+    if (example != "") {
+      let resp = await fetch(
+        `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`
+      );
+      loadBytes(await resp.arrayBuffer());
+    }
+  }
+
+  $: loadExample(example);
 
   function recalculate() {
     if (!network) {
@@ -80,6 +97,7 @@
       Open a <i>.bin</i> network file or an <i>.osm.pbf</i>
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
+    <ClippedPBFs bind:example />
 
     {#if network}
       <div>

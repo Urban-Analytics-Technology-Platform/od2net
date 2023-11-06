@@ -10,6 +10,7 @@
     Popup,
   } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
+  import ClippedPBFs from "./ClippedPBFs.svelte";
   import {
     colorByLts,
     colors,
@@ -31,6 +32,7 @@
 
   let map: MapType;
   let network: JsNetwork | undefined;
+  let example = "";
   let gj = {
     type: "FeatureCollection",
     features: [],
@@ -45,8 +47,12 @@
 
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
+    example = "";
+    loadBytes(await fileInput.files![0].arrayBuffer());
+  }
+
+  function loadBytes(buffer) {
     try {
-      let buffer = await fileInput.files![0].arrayBuffer();
       network = new JsNetwork(new Uint8Array(buffer));
 
       let bbox = network.getBounds();
@@ -57,12 +63,22 @@
         ],
         { padding: 20, animate: false }
       );
-
       updateGj();
     } catch (err) {
       window.alert(`Problem loading network file: ${err}`);
     }
   }
+
+  async function loadExample(example) {
+    if (example != "") {
+      let resp = await fetch(
+        `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`
+      );
+      loadBytes(await resp.arrayBuffer());
+    }
+  }
+
+  $: loadExample(example);
 
   function updateGj() {
     gj = JSON.parse(network.debugNetwork());
@@ -155,6 +171,7 @@
       Open a <i>.bin</i> network file or an <i>.osm.pbf</i>
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
+    <ClippedPBFs bind:example />
     {#if network}
       <hr />
       <div>

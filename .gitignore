@@ -6,3 +6,4 @@ __pycache__
 examples/*/input/*
 examples/*/intermediate/*
 examples/*/output/*
+examples/pbf_clips/*
