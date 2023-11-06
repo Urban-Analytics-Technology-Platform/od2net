@@ -82,7 +82,8 @@
           <option value="england_2011_home_to_work"
             >England (2011 home-to-work)</option
           >
-          <option value="liverpool">Liverpool</option>
+          <option value="liverpool_direct">Liverpool (direct)</option>
+          <option value="liverpool_quiet">Liverpool (quiet)</option>
           <option value="london">London</option>
           <option value="seattle">Seattle</option>
           <option value="york">York</option>

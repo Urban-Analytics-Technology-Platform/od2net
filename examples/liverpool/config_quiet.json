@@ -1,0 +1,25 @@
+{
+  "requests": {
+    "description": "All trips from OA-level 2011 census data from home to one particular workplace zone in Liverpool with a hospital.",
+    "pattern": {
+      "ZoneToPoint": {
+        "zones_path": "zones.geojson",
+        "destinations_path": "destinations.geojson",
+        "csv_path": "od.csv",
+        "origin_zone_centroid_fallback": true
+      }
+    },
+    "origins_path": "buildings.geojson",
+    "destinations_path": "buildings.geojson"
+  },
+  "cost": {
+    "ByLTS": {
+      "lts1": 1.0,
+      "lts2": 1.5,
+      "lts3": 3.0,
+      "lts4": 5.0
+    }
+  },
+  "uptake": "Identity",
+  "lts": "BikeOttawa"
+}
