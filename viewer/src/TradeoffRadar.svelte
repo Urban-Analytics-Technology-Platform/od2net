@@ -5,12 +5,27 @@
   Chart.register(...registerables);
   Chart.register(ChartJSdragDataPlugin);
 
-  export let lts = 50;
-  export let nearbyAmenities = 30;
-  export let greenspace = 20;
+  export let lts: number;
+  export let nearbyAmenities: number;
+  export let greenspace: number;
 
-  $: sum = lts + nearbyAmenities + greenspace;
+  let chart = null;
   let colors = ["red", "blue", "green"];
+
+  normalize();
+
+  function normalize() {
+    let sum = lts + nearbyAmenities + greenspace;
+    lts = (100 * lts) / sum;
+    nearbyAmenities = (100 * nearbyAmenities) / sum;
+    greenspace = (100 * greenspace) / sum;
+
+    // TODO The area is usually small; it's less intuitive
+    if (chart && false) {
+      chart.data.datasets[0].data = [lts, nearbyAmenities, greenspace];
+      chart.update();
+    }
+  }
 
   function makeChart(node) {
     let options = {
@@ -52,6 +67,8 @@
               } else if (index == 2) {
                 greenspace = value;
               }
+
+              normalize();
             },
           },
         },
@@ -71,17 +88,17 @@
         },
       },
     };
-    new Chart(node.getContext("2d"), options);
+    chart = new Chart(node.getContext("2d"), options);
   }
 </script>
 
 <canvas use:makeChart style="width: 100%; height: 400px;" />
 <ul>
-  <li style:color={colors[0]}>LTS: {((100 * lts) / sum).toFixed(0)}%</li>
+  <li style:color={colors[0]}>LTS: {lts.toFixed(0)}%</li>
   <li style:color={colors[1]}>
-    Nearby amenities: {((100 * nearbyAmenities) / sum).toFixed(0)}%
+    Nearby amenities: {nearbyAmenities.toFixed(0)}%
   </li>
   <li style:color={colors[2]}>
-    Greenspace proximity: {((100 * greenspace) / sum).toFixed(0)}%
+    Greenspace proximity: {greenspace.toFixed(0)}%
   </li>
 </ul>
