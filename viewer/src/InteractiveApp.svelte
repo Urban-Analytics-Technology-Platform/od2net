@@ -29,7 +29,6 @@
   let loading = false;
 
   let maxRequests = 1000;
-  // TODO When we load a network.bin, overwrite this
   let cost = "Distance";
   let controls = {
     maxCount: 1000,
@@ -117,7 +116,7 @@
 
     {#if gj.metadata}
       <hr />
-      <SidebarControls outputMetadata={gj.metadata} {map} {controls} />
+      <SidebarControls outputMetadata={gj.metadata} {map} bind:controls />
     {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
