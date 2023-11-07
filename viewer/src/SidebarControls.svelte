@@ -25,7 +25,12 @@
 <div>
   <label>
     Max for line width styling:<br />
-    <input type="number" bind:value={controls.maxCount} min={1} />
+    <input
+      type="number"
+      bind:value={controls.maxCount}
+      min={1}
+      on:change={() => (controls = controls)}
+    />
   </label>
 </div>
 
@@ -37,7 +42,12 @@
 <div>
   <label>
     Change origin point size:<br />
-    <input type="number" bind:value={controls.originRadius} min={1} />
+    <input
+      type="number"
+      bind:value={controls.originRadius}
+      min={1}
+      on:change={() => (controls = controls)}
+    />
   </label>
 </div>
 
@@ -49,7 +59,12 @@
 <div>
   <label>
     Change destination point size:<br />
-    <input type="number" bind:value={controls.destinationRadius} min={1} />
+    <input
+      type="number"
+      bind:value={controls.destinationRadius}
+      min={1}
+      on:change={() => (controls = controls)}
+    />
   </label>
 </div>
 
