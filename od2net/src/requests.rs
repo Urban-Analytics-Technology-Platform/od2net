@@ -3,6 +3,7 @@ use fs_err::File;
 
 use geojson::{FeatureReader, Geometry, Value};
 
+#[derive(Debug)]
 pub struct Request {
     pub x1: f64,
     pub y1: f64,

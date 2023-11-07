@@ -101,7 +101,7 @@ pub fn handle_request(
 
     // A sanity check that snapping works -- manually check these:
     if false {
-        println!(
+        debug!(
             "req from {}, {} -> {}, {} snaps to http://openstreetmap.org/node/{}",
             req.x1,
             req.y1,

@@ -62,7 +62,7 @@
       markerPosition.lat = (bbox[1] + bbox[3]) / 2.0;
       recalculate();
     } catch (err) {
-      window.alert(`Problem loading network file: ${err}`);
+      window.alert(`Problem importing osm.pbf file: ${err}`);
     }
     loading = false;
   }

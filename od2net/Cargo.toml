@@ -15,6 +15,7 @@ geo = "0.26.0"
 geojson = { git = "https://github.com/georust/geojson" }
 indicatif = { version = "0.17.6", features = ["rayon"] }
 itertools = "0.11.0"
+log = "0.4.20"
 lts = { path = "../lts" }
 nanorand = { version = "0.7.0", default-features = false, features = ["wyrand"] }
 num_cpus = "1.16.0"

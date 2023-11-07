@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate anyhow;
+#[macro_use]
+extern crate log;
 
 // TODO Restructure
 pub mod config;

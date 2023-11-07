@@ -668,6 +668,7 @@ dependencies = [
  "indicatif",
  "instant",
  "itertools 0.11.0",
+ "log",
  "lts",
  "nanorand",
  "num_cpus",

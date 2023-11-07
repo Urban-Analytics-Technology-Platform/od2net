@@ -69,7 +69,7 @@
       );
       updateGj();
     } catch (err) {
-      window.alert(`Problem loading network file: ${err}`);
+      window.alert(`Problem importing osm.pbf file: ${err}`);
     }
     loading = false;
   }

@@ -120,7 +120,14 @@ impl JsNetwork {
         }
         let routing_time = Instant::now().duration_since(routing_start);
 
+        if counts.count_per_edge.len() == 0 {
+            // All requests failed?
+            warn!("All requests failed, empty result");
+            return Ok("{\"type\": \"FeatureCollection\", \"features\": []}".to_string());
+        }
+
         info!("Got counts for {} edges", counts.count_per_edge.len());
+
         let output_metadata =
             od2net::OutputMetadata::new(config, &counts, num_requests, routing_time);
         let mut gj_bytes = Vec::new();
