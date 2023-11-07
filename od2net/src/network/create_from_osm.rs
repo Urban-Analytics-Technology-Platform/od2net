@@ -20,7 +20,7 @@ impl Network {
     pub fn make_from_pbf(
         input_bytes: &[u8],
         lts: &LtsMapping,
-        cost: &CostFunction,
+        cost: &mut CostFunction,
         timer: &mut Timer,
     ) -> Result<Network> {
         timer.start("Make Network from pbf");
@@ -80,14 +80,16 @@ impl Network {
         timer.stop();
 
         timer.start("Calculate cost for all edges");
-        network.recalculate_cost(cost);
+        network.recalculate_cost(cost)?;
         timer.stop();
 
         timer.stop();
         Ok(network)
     }
 
-    pub fn recalculate_cost(&mut self, cost: &CostFunction) {
+    pub fn recalculate_cost(&mut self, cost: &mut CostFunction) -> Result<()> {
+        cost.normalize()?;
+
         let progress = utils::progress_bar_for_count(self.edges.len());
         let all_keys: Vec<(i64, i64)> = self.edges.keys().cloned().collect();
         for key_batch in all_keys.chunks(1000) {
@@ -98,6 +100,8 @@ impl Network {
                 self.edges.get_mut(&key).unwrap().cost = cost;
             }
         }
+
+        Ok(())
     }
 }
 

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 /// Everything needed to run the pipeline.
@@ -67,8 +68,8 @@ pub enum CostFunction {
         lts2: f64,
         lts3: f64,
         lts4: f64,
-        // TODO Incorporate nearby_amenities. Maybe a list of ranges and then a multiplier?
     },
+    Generalized(GeneralizedCostFunction),
     /// Multiply distance by a factor based on the OSM highway tag. If the type isn't present, it
     /// won't be allowed at all.
     OsmHighwayType(HashMap<String, f64>),
@@ -77,6 +78,52 @@ pub enum CostFunction {
     /// nearby_amenities, lts). The output must be an equally sized JSON array of integers,
     /// representing the cost for that edge.
     ExternalCommand(String),
+}
+
+impl CostFunction {
+    pub fn normalize(&mut self) -> Result<()> {
+        if let CostFunction::Generalized(ref mut params) = self {
+            params.normalize()?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+pub struct GeneralizedCostFunction {
+    // These 3 control overall tradeoffs. They must sum to 1.0.
+    pub tradeoff_lts: f64,
+    pub tradeoff_amenities: f64,
+    pub tradeoff_greenspace: f64,
+
+    // Weights between 0 (good) and 1 (bad) for each LTS category
+    pub lts1: f64,
+    pub lts2: f64,
+    pub lts3: f64,
+    pub lts4: f64,
+
+    // The weight for nearby amenities will be 1 (bad) if the road has less than this number, or 0
+    // (good) if it has at least this many.
+    pub minimum_amenities: usize,
+}
+
+impl GeneralizedCostFunction {
+    pub fn normalize(&mut self) -> Result<()> {
+        // Normalize the tradeoffs to sum to 1
+        let sum = self.tradeoff_lts + self.tradeoff_amenities + self.tradeoff_greenspace;
+        self.tradeoff_lts /= sum;
+        self.tradeoff_amenities /= sum;
+        self.tradeoff_greenspace /= sum;
+
+        // Check the LTS weights are in the correct range
+        for x in [self.lts1, self.lts2, self.lts3, self.lts4] {
+            if x < 0.0 || x > 1.0 {
+                bail!("A LTS weight is {x}, but it needs to be in [0, 1]");
+            }
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Serialize, Deserialize)]

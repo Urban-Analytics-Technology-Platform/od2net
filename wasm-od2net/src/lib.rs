@@ -53,7 +53,7 @@ impl JsNetwork {
         let network = Network::make_from_pbf(
             input_bytes,
             &od2net::config::LtsMapping::BikeOttawa,
-            &CostFunction::Distance,
+            &mut CostFunction::Distance,
             &mut timer,
         )
         .map_err(err_to_js)?;
@@ -77,7 +77,9 @@ impl JsNetwork {
             self.last_cost = input.cost;
             let mut timer = Timer::new();
             info!("Recalculating cost");
-            self.network.recalculate_cost(&self.last_cost);
+            self.network
+                .recalculate_cost(&mut self.last_cost)
+                .map_err(err_to_js)?;
             self.prepared_ch = Some(od2net::router::just_build_ch(&self.network, &mut timer));
             self.closest_intersection = Some(od2net::router::build_closest_intersection(
                 &self.network,
@@ -153,7 +155,9 @@ impl JsNetwork {
             serde_json::to_string(&cost).map_err(err_to_js)?
         );
         self.last_cost = cost;
-        self.network.recalculate_cost(&self.last_cost);
+        self.network
+            .recalculate_cost(&mut self.last_cost)
+            .map_err(err_to_js)?;
         // Doesn't touch the CH, because this is only meant to be used in the edge cost app, which
         // doesn't use the CH
         Ok(())

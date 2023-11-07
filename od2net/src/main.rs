@@ -44,7 +44,7 @@ struct Args {
 fn main() -> Result<()> {
     let args = Args::parse();
     let config_json = fs_err::read_to_string(&args.config_path)?;
-    let config: od2net::config::InputConfig = match serde_json::from_str(&config_json) {
+    let mut config: od2net::config::InputConfig = match serde_json::from_str(&config_json) {
         Ok(config) => config,
         Err(err) => panic!("{} is invalid: {err}", args.config_path),
     };
@@ -76,7 +76,7 @@ fn main() -> Result<()> {
                 let network = od2net::network::Network::make_from_pbf(
                     &fs_err::read(osm_pbf_path)?,
                     &config.lts,
-                    &config.cost,
+                    &mut config.cost,
                     &mut timer,
                 )?;
 

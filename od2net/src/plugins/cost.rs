@@ -5,7 +5,7 @@ use std::process::{Command, Stdio};
 use anyhow::Result;
 use serde::Serialize;
 
-use crate::config::CostFunction;
+use crate::config::{CostFunction, GeneralizedCostFunction};
 use crate::network::Edge;
 use lts::LTS;
 
@@ -24,6 +24,10 @@ pub fn calculate_batch(cost: &CostFunction, input_batch: Vec<&Edge>) -> Vec<Opti
         } => input_batch
             .into_iter()
             .map(|e| by_lts(e, *lts1, *lts2, *lts3, *lts4))
+            .collect(),
+        CostFunction::Generalized(ref params) => input_batch
+            .into_iter()
+            .map(|e| generalized(e, params))
             .collect(),
         CostFunction::ExternalCommand(command) => external_command(command, input_batch).unwrap(),
     }
@@ -49,6 +53,34 @@ fn by_lts(edge: &Edge, lts1: f64, lts2: f64, lts3: f64, lts4: f64) -> Option<usi
         LTS::LTS4 => lts4,
     };
     Some((weight * edge.length_meters).round() as usize)
+}
+
+fn generalized(edge: &Edge, params: &GeneralizedCostFunction) -> Option<usize> {
+    let lts_weight = match edge.lts {
+        LTS::NotAllowed => {
+            return None;
+        }
+        LTS::LTS1 => params.lts1,
+        LTS::LTS2 => params.lts2,
+        LTS::LTS3 => params.lts3,
+        LTS::LTS4 => params.lts4,
+    };
+
+    let amenities_weight = if edge.nearby_amenities < params.minimum_amenities {
+        1.0
+    } else {
+        0.0
+    };
+
+    // TODO For now, every edge gets the bad weight
+    let greenspace_weight = 1.0;
+
+    // Use the tradeoffs to get a final penalty
+    let penalty = (params.tradeoff_lts * lts_weight)
+        + (params.tradeoff_amenities * amenities_weight)
+        + (params.tradeoff_greenspace * greenspace_weight);
+
+    Some((penalty * edge.length_meters).round() as usize)
 }
 
 fn external_command(command: &str, input_batch: Vec<&Edge>) -> Result<Vec<Option<usize>>> {
