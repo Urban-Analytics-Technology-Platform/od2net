@@ -40,6 +40,7 @@
   // TODO When we load a network.bin, overwrite this
   let cost = "Distance";
   let colorBy: "lts" | "cost" | "nearby_amenities" = "cost";
+  let showNotAllowed = false;
   // Note the 0th entry is "not allowed"; it won't be filled out at all
   let percentByLength = [0, 0, 0, 0, 0];
   let maxCostRatio = 1.0;
@@ -112,7 +113,6 @@
     window.open(`http://openstreetmap.org/way/${id}`, "_blank");
   }
 
-  // TODO Could just be fixed objects, not functions
   function lineColorBy(colorBy, maxCostRatio, maxNearbyAmenities) {
     if (colorBy == "lts") {
       return colorByLts;
@@ -134,6 +134,17 @@
         colorScale
       );
     }
+  }
+
+  function lineOpacity(colorBy, showNotAllowed) {
+    let hover = hoverStateFilter(1.0, 0.5);
+    if (colorBy == "nearby_amenities") {
+      return ["case", ["==", 0, ["get", "nearby_amenities"]], 0.0, hover];
+    }
+    if (showNotAllowed) {
+      return hover;
+    }
+    return ["case", ["==", 0, ["get", "lts"]], 0.0, hover];
   }
 
   function limitsFor(colorBy, maxCostRatio, maxNearbyAmenities) {
@@ -205,7 +216,6 @@
               `${ltsNames.lts4}: ${percentByLength[4].toFixed(0)}%`,
               colors.lts4,
             ],
-            [ltsNames.lts_not_allowed, colors.lts_not_allowed],
           ]}
         />
         <p>
@@ -219,8 +229,13 @@
           {colorScale}
           limits={limitsFor(colorBy, maxCostRatio, maxNearbyAmenities)}
         />
-        <Legend rows={[[ltsNames.lts_not_allowed, colors.lts_not_allowed]]} />
       {/if}
+      <div>
+        <label style:color={colors.lts_not_allowed}>
+          <input type="checkbox" bind:checked={showNotAllowed} />
+          Show cyclists not allowed
+        </label>
+      </div>
       <hr />
       <CostFunction bind:cost />
     {/if}
@@ -243,15 +258,7 @@
               maxCostRatio,
               maxNearbyAmenities
             ),
-            "line-opacity":
-              colorBy == "nearby_amenities"
-                ? [
-                    "case",
-                    ["==", 0, ["get", "nearby_amenities"]],
-                    0.0,
-                    hoverStateFilter(1.0, 0.5),
-                  ]
-                : hoverStateFilter(1.0, 0.5),
+            "line-opacity": lineOpacity(colorBy, showNotAllowed),
           }}
           beforeId="Road labels"
           on:click={(e) => openOSM(e.detail.features[0])}
