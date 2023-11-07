@@ -28,10 +28,10 @@
 </div>
 
 <dialog bind:this={dialog}>
-  <button autofocus on:click={() => dialog.close()}>Close</button>
+  <sp-close-button autofocus on:click={() => dialog.close()}>Close</sp-close-button>
   <p>TODO: Write about. Creidts, part of TP, etc</p>
 </dialog>
-<button on:click={() => dialog.showModal()}>About</button>
+<sp-button on:click={() => dialog.showModal()}>About</sp-button>
 
 <br />
 <br />

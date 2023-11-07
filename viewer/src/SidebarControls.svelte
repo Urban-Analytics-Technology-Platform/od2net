@@ -16,9 +16,9 @@
 
 <p>{outputMetadata.config.requests.description}</p>
 <div>
-  <button
+  <sp-button
     on:click={() => window.alert(JSON.stringify(outputMetadata, null, "  "))}
-    >See all output details</button
+    >See all output details</sp-button
   >
 </div>
 <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>

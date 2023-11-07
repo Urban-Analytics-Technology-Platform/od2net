@@ -25,6 +25,8 @@
     "vite-plugin-wasm-pack": "0.1.11"
   },
   "dependencies": {
+    "@spectrum-web-components/button": "^0.39.4",
+    "@spectrum-web-components/theme": "^0.39.4",
     "pmtiles": "^2.10.0",
     "svelte-maplibre": "^0.6.0"
   }
