@@ -23,7 +23,6 @@
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
   import Loading from "./Loading.svelte";
-  import PreferenceRadar from "./PreferenceRadar.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
   import SequentialLegend from "./SequentialLegend.svelte";
 
@@ -245,7 +244,6 @@
       <hr />
       <CostFunction bind:cost />
     {/if}
-    <PreferenceRadar />
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre

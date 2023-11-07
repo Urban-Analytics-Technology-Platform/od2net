@@ -5,12 +5,12 @@
   Chart.register(...registerables);
   Chart.register(ChartJSdragDataPlugin);
 
-  let lts = 50;
-  let nearbyAmenities = 30;
-  let greenspace = 20;
-  let colors = ["red", "blue", "green"];
+  export let lts = 50;
+  export let nearbyAmenities = 30;
+  export let greenspace = 20;
 
   $: sum = lts + nearbyAmenities + greenspace;
+  let colors = ["red", "blue", "green"];
 
   function makeChart(node) {
     let options = {
