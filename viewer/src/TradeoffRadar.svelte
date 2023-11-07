@@ -9,7 +9,7 @@
   export let nearbyAmenities: number;
   export let greenspace: number;
 
-  let chart = null;
+  let barChart = null;
   let colors = ["red", "blue", "green"];
 
   normalize();
@@ -20,14 +20,13 @@
     nearbyAmenities = (100 * nearbyAmenities) / sum;
     greenspace = (100 * greenspace) / sum;
 
-    // TODO The area is usually small; it's less intuitive
-    if (chart && false) {
-      chart.data.datasets[0].data = [lts, nearbyAmenities, greenspace];
-      chart.update();
+    if (barChart) {
+      barChart.data.datasets[0].data = [lts, nearbyAmenities, greenspace];
+      barChart.update();
     }
   }
 
-  function makeChart(node) {
+  function makeRadarChart(node) {
     let options = {
       type: "radar",
       data: {
@@ -84,21 +83,36 @@
                 size: 15,
               },
             },
+            ticks: {
+              display: false,
+            },
           },
         },
       },
     };
-    chart = new Chart(node.getContext("2d"), options);
+    new Chart(node.getContext("2d"), options);
+  }
+
+  function makeBarChart(node) {
+    let options = {
+      type: "bar",
+      data: {
+        labels: ["LTS", "Amenities", "Greenspace"],
+        datasets: [
+          {
+            label: "Routing preferences",
+            data: [lts, nearbyAmenities, greenspace],
+            backgroundColor: colors,
+          },
+        ],
+      },
+      options: {
+        indexAxis: "y",
+      },
+    };
+    barChart = new Chart(node.getContext("2d"), options);
   }
 </script>
 
-<canvas use:makeChart style="width: 100%; height: 400px;" />
-<ul>
-  <li style:color={colors[0]}>LTS: {lts.toFixed(0)}%</li>
-  <li style:color={colors[1]}>
-    Nearby amenities: {nearbyAmenities.toFixed(0)}%
-  </li>
-  <li style:color={colors[2]}>
-    Greenspace proximity: {greenspace.toFixed(0)}%
-  </li>
-</ul>
+<canvas use:makeRadarChart style="width: 100%; height: 400px;" />
+<canvas use:makeBarChart style="width: 100%; height: 300px;" />
