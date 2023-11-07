@@ -6,9 +6,12 @@
 </div>
 
 <style>
+  :global(body) {
+    margin: 0px;
+  }
+
   div {
     float: left;
-    padding: 8px;
   }
 
   .left {
@@ -17,7 +20,6 @@
     overflow: scroll;
   }
   .main {
-    /* TODO 75% wraps. box */
-    width: 70%;
+    width: 75%;
   }
 </style>
