@@ -6,6 +6,10 @@
 </div>
 
 <style>
+  * {
+    box-sizing: border-box;
+  }
+
   :global(body) {
     margin: 0px;
   }
@@ -18,6 +22,7 @@
     width: 25%;
     height: 100vh;
     overflow: scroll;
+    padding: 8px;
   }
   .main {
     width: 75%;

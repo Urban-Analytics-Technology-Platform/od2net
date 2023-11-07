@@ -10,6 +10,7 @@
   import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
+  import Loading from "./Loading.svelte";
   import SidebarControls from "./SidebarControls.svelte";
 
   onMount(async () => {
@@ -25,6 +26,7 @@
     type: "FeatureCollection",
     features: [],
   };
+  let loading = false;
 
   let maxRequests = 1000;
   // TODO When we load a network.bin, overwrite this
@@ -39,6 +41,7 @@
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
     example = "";
+    loading = true;
     loadBytes(await fileInput.files![0].arrayBuffer());
   }
 
@@ -61,10 +64,12 @@
     } catch (err) {
       window.alert(`Problem loading network file: ${err}`);
     }
+    loading = false;
   }
 
   async function loadExample(example) {
     if (example != "") {
+      loading = true;
       let resp = await fetch(
         `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`
       );
@@ -131,3 +136,4 @@
     </MapLibre>
   </div>
 </Layout>
+<Loading {loading} />

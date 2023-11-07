@@ -22,6 +22,7 @@
   import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
   import Legend from "./Legend.svelte";
+  import Loading from "./Loading.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
   import SequentialLegend from "./SequentialLegend.svelte";
 
@@ -40,6 +41,7 @@
   let cost = "Distance";
   let colorBy: "lts" | "cost" | "nearby_amenities" = "cost";
   let showNotAllowed = false;
+  let loading = false;
   // Note the 0th entry is "not allowed"; it won't be filled out at all
   let percentByLength = [0, 0, 0, 0, 0];
   let maxCostRatio = 1.0;
@@ -48,6 +50,7 @@
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
     example = "";
+    loading = true;
     loadBytes(await fileInput.files![0].arrayBuffer());
   }
 
@@ -68,10 +71,12 @@
     } catch (err) {
       window.alert(`Problem loading network file: ${err}`);
     }
+    loading = false;
   }
 
   async function loadExample(example) {
     if (example != "") {
+      loading = true;
       let resp = await fetch(
         `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`
       );
@@ -271,3 +276,4 @@
     </MapLibre>
   </div>
 </Layout>
+<Loading {loading} />
