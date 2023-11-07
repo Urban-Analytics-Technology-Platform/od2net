@@ -28,7 +28,9 @@
 </div>
 
 <dialog bind:this={dialog}>
-  <sp-close-button autofocus on:click={() => dialog.close()}>Close</sp-close-button>
+  <sp-close-button autofocus on:click={() => dialog.close()}
+    >Close</sp-close-button
+  >
   <p>TODO: Write about. Creidts, part of TP, etc</p>
 </dialog>
 <sp-button on:click={() => dialog.showModal()}>About</sp-button>

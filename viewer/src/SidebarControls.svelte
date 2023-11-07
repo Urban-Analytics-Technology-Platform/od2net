@@ -23,15 +23,12 @@
 </div>
 <ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
 <div>
-  <label>
-    Max for line width styling:<br />
-    <input
-      type="number"
-      bind:value={controls.maxCount}
-      min={1}
-      on:change={() => (controls = controls)}
-    />
-  </label>
+  <sp-field-label for="maxCount">Max for line width styling</sp-field-label>
+  <sp-number-field
+    bind:value={controls.maxCount}
+    min={1}
+    on:change={() => (controls = controls)}
+  />
 </div>
 
 <ToggleLayer layer="origins-layer" {map} show={false}
