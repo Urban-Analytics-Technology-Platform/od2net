@@ -37,7 +37,6 @@
     type: "FeatureCollection",
     features: [],
   };
-  // TODO When we load a network.bin, overwrite this
   let cost = "Distance";
   let colorBy: "lts" | "cost" | "nearby_amenities" = "cost";
   let showNotAllowed = false;
@@ -55,6 +54,7 @@
   function loadBytes(buffer) {
     try {
       network = new JsNetwork(new Uint8Array(buffer));
+      cost = "Distance";
 
       let bbox = network.getBounds();
       map.fitBounds(
@@ -179,7 +179,7 @@
   <div slot="left">
     <Header app="costs" />
     <label>
-      Open a <i>.bin</i> network file or an <i>.osm.pbf</i>
+      Open an <i>.osm.pbf</i> file
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
     <ClippedPBFs bind:example />

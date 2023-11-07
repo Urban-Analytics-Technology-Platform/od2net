@@ -38,7 +38,7 @@ struct Input {
 
 #[wasm_bindgen]
 impl JsNetwork {
-    /// Call with bincoded bytes of a Network or an osm.pbf
+    /// Call with bytes of an osm.pbf
     #[wasm_bindgen(constructor)]
     pub fn new(input_bytes: &[u8]) -> Result<JsNetwork, JsValue> {
         // Panics shouldn't happen, but if they do, console.log them.
@@ -47,25 +47,16 @@ impl JsNetwork {
             console_log::init_with_level(log::Level::Info).unwrap();
         });
 
-        info!(
-            "Got {} bytes, deserializing as a network.bin",
-            input_bytes.len()
-        );
-        let network: Network = match bincode::deserialize(input_bytes) {
-            Ok(network) => network,
-            Err(err) => {
-                warn!("Couldn't deserialize as a network.bin, so trying to parse osm.pbf: {err}");
-                let mut timer = Timer::new();
-                // TODO Default config
-                Network::make_from_pbf(
-                    input_bytes,
-                    &od2net::config::LtsMapping::BikeOttawa,
-                    &CostFunction::Distance,
-                    &mut timer,
-                )
-                .map_err(err_to_js)?
-            }
-        };
+        info!("Got {} bytes, parsing as an osm.pbf", input_bytes.len());
+        let mut timer = Timer::new();
+        // TODO Default config
+        let network = Network::make_from_pbf(
+            input_bytes,
+            &od2net::config::LtsMapping::BikeOttawa,
+            &CostFunction::Distance,
+            &mut timer,
+        )
+        .map_err(err_to_js)?;
 
         Ok(JsNetwork {
             network,

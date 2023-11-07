@@ -45,6 +45,7 @@
   function loadBytes(buffer) {
     try {
       network = new JsNetwork(new Uint8Array(buffer));
+      cost = "Distance";
 
       let bbox = network.getBounds();
       map.fitBounds(
@@ -94,7 +95,7 @@
   <div slot="left">
     <Header app="interactive" />
     <label>
-      Open a <i>.bin</i> network file or an <i>.osm.pbf</i>
+      Open an <i>.osm.pbf</i> file
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
     <ClippedPBFs bind:example />
