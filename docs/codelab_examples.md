@@ -1,8 +1,8 @@
 # Codelab: Running pre-made examples
 
-<od2net.org> includes some example networks. This codelab will teach you how to
-generate these yourself, then modify the cost function. This is a good codelab
-to complete before trying to create your own od2net input.
+<https://od2net.org> includes some example networks. This codelab will teach
+you how to generate these yourself, then modify the cost function. This is a
+good codelab to complete before trying to create your own od2net input.
 
 ## Setup
 
@@ -125,3 +125,7 @@ Some tips for writing your own cost function:
 - You can use any language you want. It just needs to read STDIN and write to STDOUT in the way that was described.
 - The output costs need to be rounded to integers.
 - If you want to debug your script, you can't print to STDOUT, because od2net will try to parse this as the JSON number result. You can instead write to STDERR or to a temporary log file. Keep in mind od2net will call your script multiple times when running (there's some internal batch size set), so if you write to a file, name it something unique.
+
+## Next steps
+
+Now you can [setup od2net in a new place](codelab_new_area.md), with your own origin/destination data!
