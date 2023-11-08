@@ -3,6 +3,7 @@
   import TradeoffRadar from "./TradeoffRadar.svelte";
 
   export let cost;
+  let dialog;
 
   // TODO Maybe not in sync with what's passed in initially
   let costChoice = "Distance";
@@ -79,6 +80,13 @@
     </select>
   </label>
 </div>
+
+<dialog bind:this={dialog}>
+  <button autofocus on:click={() => dialog.close()}>Close</button>
+  <p>Copy this into a <i>config.json</i> file</p>
+  <pre>"cost": {JSON.stringify(cost, null, 2)}</pre>
+</dialog>
+<button on:click={() => dialog.showModal()}>See cost function JSON</button>
 
 {#if costChoice == "OsmHighwayType"}
   <ul>
