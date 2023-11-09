@@ -28,8 +28,62 @@
 </div>
 
 <dialog bind:this={dialog}>
-  <button autofocus on:click={() => dialog.close()}>Close</button>
-  <p>TODO: Write about. Creidts, part of TP, etc</p>
+  <div style="display: flex; justify-content: space-between">
+    <h1>About od2net</h1>
+    <button autofocus on:click={() => dialog.close()}>Close</button>
+  </div>
+  <img src={logoUrl} width="300" alt="od2net logo by Hadrien Salat" />
+
+  <p>
+    od2net is a project by <a href="https://dcarlino.org" target="_blank"
+      >Dustin Carlino</a
+    >, part of the
+    <a
+      href="https://urban-analytics-technology-platform.github.io"
+      target="_blank">Urban Analytics Technology Platform</a
+    >. It wouldn't be possible without:
+  </p>
+  <ul>
+    <li><a href="https://georust.org" target="_blank">GeoRust</a></li>
+    <li>
+      <a href="https://github.com/dimfeld/svelte-maplibre/" target="_blank"
+        >svelte-maplibre</a
+      >
+    </li>
+    <li><a href="https://maplibre.org" target="_blank">MapLibre GL JS</a></li>
+    <li>
+      <a
+        href="https://www.npmjs.com/package/chartjs-plugin-dragdata"
+        target="_blank">ChartJS</a
+      >
+    </li>
+    <li>
+      <a href="https://www.openstreetmap.org/about" target="_blank"
+        >OpenStreetMap</a
+      >
+    </li>
+    <li>
+      <a href="https://github.com/easbar/fast_paths" target="_blank"
+        >fast-paths</a
+      >
+    </li>
+    <li>
+      <a href="https://pct.bike" target="_blank">Propensity to Cycle Tool</a>
+    </li>
+    <li>
+      <a href="https://protomaps.com/" target="_blank">PMTiles</a>
+    </li>
+    <li>
+      Special thanks to
+      <a href="https://github.com/HSalat/" target="_blank">Hadrien Salat</a> for
+      the logo and
+      <a href="https://github.com/stuartlynn/" target="_blank">Stuart Lynn</a>
+      for feedback and help with pmtiles, both from
+      <a href="https://www.turing.ac.uk/" target="_blank"
+        >the Alan Turing Institute</a
+      >
+    </li>
+  </ul>
 </dialog>
 <button on:click={() => dialog.showModal()}>About</button>
 
