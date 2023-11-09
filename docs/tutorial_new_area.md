@@ -1,6 +1,6 @@
-# Codelab: Running in a new area
+# Tutorial: Running in a new area
 
-This codelab will guide you through using od2net in a new area. I'm assuming you've been through the [previous codelab](codelab_examples.md).
+This tutorial will guide you through using od2net in a new area. I'm assuming you've been through the [previous tutorial](tutorial_examples.md).
 
 The overall process is:
 

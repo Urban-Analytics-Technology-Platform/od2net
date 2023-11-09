@@ -1,8 +1,8 @@
-# Codelab: Running pre-made examples
+# Tutorial: Running pre-made examples
 
-<https://od2net.org> includes some example networks. This codelab will teach
+<https://od2net.org> includes some example networks. This tutorial will teach
 you how to generate these yourself, then modify the cost function. This is a
-good codelab to complete before trying to create your own od2net input.
+good tutorial to complete before trying to create your own od2net input.
 
 ## Setup
 
@@ -128,4 +128,4 @@ Some tips for writing your own cost function:
 
 ## Next steps
 
-Now you can [setup od2net in a new place](codelab_new_area.md), with your own origin/destination data!
+Now you can [setup od2net in a new place](tutorial_new_area.md), with your own origin/destination data!

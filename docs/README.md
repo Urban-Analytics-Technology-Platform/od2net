@@ -1,9 +1,9 @@
 # od2net docs
 
-Start with guides on using od2net:
+Start with tutorials on using od2net:
 
-- [Running pre-made examples](codelab_examples.md)
-- [Running in a new area](codelab_new_area.md)
+- [Running pre-made examples](tutorial_examples.md)
+- [Running in a new area](tutorial_new_area.md)
 
 Technical details:
 

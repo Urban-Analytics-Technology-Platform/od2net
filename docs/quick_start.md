@@ -6,7 +6,7 @@ There are 3 ways to use od2net:
 2.  Run an example
 3.  Use od2net in your own project
 
-TODO point to codelabs
+TODO point to tutorials
 
 ### Docker
 
