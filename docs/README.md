@@ -9,3 +9,5 @@ Technical details:
 
 - [Output files specification](output.md)
 - [Performance](performance.md)
+
+[Credits](credits.md)

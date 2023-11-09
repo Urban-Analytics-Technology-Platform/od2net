@@ -44,6 +44,11 @@
     >. It wouldn't be possible without:
   </p>
   <ul>
+    <li>
+      <a href="https://maps.bikeottawa.ca/lts" target="_blank"
+        >BikeOttawa's Level of Traffic Stress definition</a
+      >
+    </li>
     <li><a href="https://georust.org" target="_blank">GeoRust</a></li>
     <li>
       <a href="https://github.com/dimfeld/svelte-maplibre/" target="_blank"

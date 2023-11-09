@@ -1,12 +1,25 @@
 # od2net
 
+![Logo](viewer/assets/logo.png)
+
 WARNING: This repo is not ready for general use. The API and input/output formats will keep changing. There are big limitations not yet documented.
 
-TODO: Write intro
+od2net helps you turn *o*rigin/*d*estination data about where people travel into a cycling *net*work plan. You can use this to decide what streets to prioritize for safety improvements.
 
-- Create origin/destination requests
-- Calculate routes, and count how many trips cross each road segment
-- Filter for most popular segments that lack appropriate cycling infrastructure
+1.  You specify origins and destinations of trips that cyclists take today or of short trips taken by car
+2.  You specify how cyclists would like to choose routes. Are fast/direct routes important, or sticking to quiet streets? Do you want to route near greenspace and shops?)
+3.  od2net calculates routes very quickly, counting how many routes cross every street
+4.  You use the web viewer to look at the most popular streets, filtering for streets that don't have good cycling infrastructure today
+
+## How to use it
+
+...
+
+## Contributing
+
+We'd love contributions of all sorts -- developers, designers, data scientists, and applying it somewhere new! Check out [GitHub Issues](https://github.com/Urban-Analytics-Technology-Platform/od2net/issues), file a new one, or email <dabreegster@gmail.com> to get started.
+
+This project follows the [Rust code of conduct](https://www.rust-lang.org/policies/code-of-conduct) and is Apache 2.0 licensed. See all [credits](docs/credits.md).
 
 ## Customizing
 
@@ -79,12 +92,3 @@ Longer-term:
 	- aka, Ungap the Map v2
 - Make this entire thing easier to run -- generate configs using the web UI?
 - Validate output counts against current numbers (switching to a quiet/balanced profile first!)
-
-## References / inspiration:
-
-- [Propensity to Cycle Tool](https://www.pct.bike) / [NPTScot](https://nptscot.github.io)
-- [Ungap the Map](https://a-b-street.github.io/docs/software/ungap_the_map/tech_details.html#predict-impact)
-- A [talk from March 2022](https://dabreegster.github.io/talks/tds_seminar_synthpop/slides.html)
-- [GrowBike.net](https://growbike.net)
-- [BikeOttawa LTS map](https://maps.bikeottawa.ca/lts/)
-- [nori](https://github.com/b-r-u/nori)
