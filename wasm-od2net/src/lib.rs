@@ -38,9 +38,9 @@ struct Input {
 
 #[wasm_bindgen]
 impl JsNetwork {
-    /// Call with bytes of an osm.pbf
+    /// Call with bytes of an osm.pbf or osm.xml string
     #[wasm_bindgen(constructor)]
-    pub fn new(input_bytes: &[u8]) -> Result<JsNetwork, JsValue> {
+    pub fn new(is_pbf: bool, input_bytes: &[u8]) -> Result<JsNetwork, JsValue> {
         // Panics shouldn't happen, but if they do, console.log them.
         console_error_panic_hook::set_once();
         START.call_once(|| {
@@ -50,7 +50,8 @@ impl JsNetwork {
         info!("Got {} bytes, parsing as an osm.pbf", input_bytes.len());
         let mut timer = Timer::new();
         // TODO Default config
-        let network = Network::make_from_pbf(
+        let network = Network::make_from_osm(
+            is_pbf,
             input_bytes,
             &od2net::config::LtsMapping::BikeOttawa,
             &mut CostFunction::Distance,

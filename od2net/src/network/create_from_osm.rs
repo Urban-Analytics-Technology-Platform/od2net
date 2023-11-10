@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::iter::Peekable;
 
 use anyhow::Result;
 use geo::prelude::HaversineLength;
@@ -7,6 +8,7 @@ use indicatif::HumanCount;
 use osmpbf::{Element, ElementReader};
 use rstar::primitives::{GeomWithData, Line};
 use rstar::RTree;
+use xmlparser::Token;
 
 use super::amenities::is_amenity;
 use super::greenspace;
@@ -17,7 +19,9 @@ use crate::{plugins, utils};
 use lts::{Tags, LTS};
 
 impl Network {
-    pub fn make_from_pbf(
+    pub fn make_from_osm(
+        is_pbf: bool,
+        // pbf or osm.xml depending on is_pbf
         input_bytes: &[u8],
         lts: &LtsMapping,
         cost: &mut CostFunction,
@@ -25,7 +29,11 @@ impl Network {
     ) -> Result<Network> {
         timer.start("Make Network from pbf");
         timer.start("Scrape OSM data");
-        let (nodes, ways, amenity_positions, greenspace_polygons) = scrape_elements(input_bytes)?;
+        let (nodes, ways, amenity_positions, greenspace_polygons) = if is_pbf {
+            scrape_elements_from_pbf(input_bytes)?
+        } else {
+            scrape_elements_from_xml(String::from_utf8(input_bytes.to_vec())?)?
+        };
         timer.stop();
         println!(
             "  Got {} nodes, {} ways, and {} amenities",
@@ -110,7 +118,7 @@ struct Way {
     nodes: Vec<i64>,
 }
 
-fn scrape_elements(
+fn scrape_elements_from_pbf(
     input_bytes: &[u8],
 ) -> Result<(
     HashMap<i64, Position>,
@@ -197,6 +205,196 @@ fn scrape_elements(
     })?;
 
     Ok((nodes, ways, amenity_positions, greenspace_polygons))
+}
+
+// Ripped out from osm2streets
+// TODO Refactor something osmio-like
+fn scrape_elements_from_xml(
+    input_string: String,
+) -> Result<(
+    HashMap<i64, Position>,
+    HashMap<i64, Way>,
+    Vec<Position>,
+    Vec<Polygon>,
+)> {
+    // Scrape every node ID -> position
+    let mut nodes = HashMap::new();
+    // Scrape every routable road. Just tags and node lists to start.
+    let mut ways = HashMap::new();
+    let mut amenity_positions = Vec::new();
+    let mut _greenspace_polygons = Vec::new();
+
+    // We use the lower-level xmlparser instead of roxmltree to reduce peak memory usage in
+    // large files.
+    // TODO Reconsider -- large inputs should be pbf anyway
+    let mut reader = XmlElementReader {
+        tokenizer: xmlparser::Tokenizer::from(input_string.as_str()),
+    }
+    .peekable();
+
+    while let Some(obj) = reader.next() {
+        match obj.name {
+            "node" => {
+                let id = obj.attribute("id").parse::<i64>().unwrap();
+                let pos = Position::from_degrees(
+                    obj.attribute("lon").parse::<f64>().unwrap(),
+                    obj.attribute("lat").parse::<f64>().unwrap(),
+                );
+                let tags = read_tags(&mut reader);
+
+                nodes.insert(id, pos);
+                if is_amenity(&tags) {
+                    amenity_positions.push(pos);
+                }
+            }
+            "way" => {
+                let id = obj.attribute("id").parse::<i64>().unwrap();
+
+                let mut node_refs = Vec::new();
+                while reader.peek().map(|x| x.name == "nd").unwrap_or(false) {
+                    let node_ref = reader.next().unwrap();
+                    node_refs.push(node_ref.attribute("ref").parse::<i64>().unwrap());
+                }
+
+                // We assume <nd>'s come before <tag>'s
+                let tags = read_tags(&mut reader);
+
+                if is_amenity(&tags) {
+                    // TODO Calculate a centroid instead
+                    amenity_positions.push(nodes[&node_refs[0]]);
+                }
+
+                // TODO
+                /*if let Some(polygon) = greenspace::get_polygon(&tags, &nodes, &way) {
+                    greenspace_polygons.push(polygon);
+                }*/
+
+                // Include everything here, and let LTS::NotAllowed later filter some out
+                if tags.has("highway") {
+                    ways.insert(
+                        id,
+                        Way {
+                            tags,
+                            nodes: node_refs,
+                        },
+                    );
+                }
+            }
+            "relation" => {
+                // TODO
+            }
+            _ => {}
+        }
+    }
+
+    Ok((nodes, ways, amenity_positions, _greenspace_polygons))
+}
+
+fn read_tags(reader: &mut Peekable<XmlElementReader>) -> Tags {
+    let mut tags = Tags::new();
+
+    while reader.peek().map(|x| x.name == "tag").unwrap_or(false) {
+        let obj = reader.next().unwrap();
+        let key = obj.attribute("k");
+        let value = obj.attribute("v");
+        tags.insert(key, unescape(value).unwrap());
+    }
+
+    tags
+}
+
+// Reads one element with attributes at a time. Ignores/flattens nested elements.
+struct XmlElementReader<'a> {
+    tokenizer: xmlparser::Tokenizer<'a>,
+}
+
+struct XmlElement<'a> {
+    name: &'a str,
+    attributes: HashMap<&'a str, &'a str>,
+}
+
+impl<'a> XmlElement<'a> {
+    fn attribute(&self, key: &str) -> &str {
+        self.attributes.get(key).unwrap()
+    }
+}
+
+impl<'a> Iterator for XmlElementReader<'a> {
+    type Item = XmlElement<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut name: Option<&'a str> = None;
+        let mut attributes = HashMap::new();
+        loop {
+            match self.tokenizer.next()?.unwrap() {
+                Token::ElementStart { local, .. } => {
+                    assert!(name.is_none());
+                    assert!(attributes.is_empty());
+                    name = Some(local.as_str());
+                }
+                Token::Attribute { local, value, .. } => {
+                    assert!(name.is_some());
+                    attributes.insert(local.as_str(), value.as_str());
+                }
+                Token::ElementEnd { .. } => {
+                    if name.is_none() {
+                        assert!(attributes.is_empty());
+                        continue;
+                    }
+
+                    return Some(XmlElement {
+                        name: name.unwrap(),
+                        attributes,
+                    });
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+// Copied from https://github.com/Florob/RustyXML, Apache licensed. Unescapes all valid XML
+// entities in a string.
+fn unescape(input: &str) -> Result<String> {
+    let mut result = String::with_capacity(input.len());
+
+    let mut it = input.split('&');
+
+    // Push everything before the first '&'
+    if let Some(sub) = it.next() {
+        result.push_str(sub);
+    }
+
+    for sub in it {
+        match sub.find(';') {
+            Some(idx) => {
+                let ent = &sub[..idx];
+                match ent {
+                    "quot" => result.push('"'),
+                    "apos" => result.push('\''),
+                    "gt" => result.push('>'),
+                    "lt" => result.push('<'),
+                    "amp" => result.push('&'),
+                    ent => {
+                        let val = if ent.starts_with("#x") {
+                            u32::from_str_radix(&ent[2..], 16).ok()
+                        } else if ent.starts_with('#') {
+                            u32::from_str_radix(&ent[1..], 10).ok()
+                        } else {
+                            None
+                        };
+                        match val.and_then(char::from_u32) {
+                            Some(c) => result.push(c),
+                            None => bail!("&{};", ent),
+                        }
+                    }
+                }
+                result.push_str(&sub[idx + 1..]);
+            }
+            None => bail!("&".to_owned() + sub),
+        }
+    }
+    Ok(result)
 }
 
 fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Network {

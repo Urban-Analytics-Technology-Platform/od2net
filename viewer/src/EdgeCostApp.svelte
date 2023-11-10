@@ -52,12 +52,12 @@
   async function fileLoaded(e: Event) {
     example = "";
     loading = true;
-    loadBytes(await fileInput.files![0].arrayBuffer());
+    loadBytes(true, await fileInput.files![0].arrayBuffer());
   }
 
-  function loadBytes(buffer) {
+  function loadBytes(isPbf, buffer) {
     try {
-      network = new JsNetwork(new Uint8Array(buffer));
+      network = new JsNetwork(isPbf, new Uint8Array(buffer));
       cost = "Distance";
 
       let bbox = network.getBounds();
@@ -81,7 +81,7 @@
       let resp = await fetch(
         `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`
       );
-      loadBytes(await resp.arrayBuffer());
+      loadBytes(true, await resp.arrayBuffer());
     }
   }
 
@@ -174,8 +174,10 @@
 
   let overpassMessage = "";
   function gotXml(e: CustomEvent<string>) {
-    overpassMessage = "Got XML, see console";
-    console.log(e.detail);
+    overpassMessage = "Parsing XML";
+    // TODO Can we avoid turning into bytes?
+    loadBytes(false, new TextEncoder().encode(e.detail));
+    overpassMessage = "";
   }
 
   function updateCost(cost) {

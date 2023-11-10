@@ -101,7 +101,7 @@
     if (!map) {
       return;
     }
-    if (map.getZoom() < 14) {
+    if (map.getZoom() < 13) {
       dispatch("error", "Zoom in more to import");
       return;
     }
