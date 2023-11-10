@@ -11,6 +11,7 @@
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
   import Loading from "./Loading.svelte";
+  import OverpassSelector from "./OverpassSelector.svelte";
   import SidebarControls from "./SidebarControls.svelte";
 
   onMount(async () => {
@@ -93,6 +94,12 @@
   }
 
   $: recalculate(cost, maxRequests);
+
+  let overpassMessage = "";
+  function gotXml(e: CustomEvent<string>) {
+    overpassMessage = "Got XML, see console";
+    console.log(e.detail);
+  }
 </script>
 
 <Layout>
@@ -103,6 +110,15 @@
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
     <ClippedPBFs bind:example />
+    <OverpassSelector
+      {map}
+      on:gotXml={gotXml}
+      on:loading={(e) => (overpassMessage = e.detail)}
+      on:error={(e) => (overpassMessage = e.detail)}
+    />
+    {#if overpassMessage}
+      <p>{overpassMessage}</p>
+    {/if}
 
     {#if network}
       <div>
