@@ -9,6 +9,7 @@ Details about how to customize od2net:
 
 - [Origin/destination data](config_od.md)
 - [Edge cost functions](config_cost.md)
+- [Uptake model](config_uptake.md)
 
 Technical details:
 
