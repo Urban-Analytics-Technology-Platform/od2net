@@ -19,6 +19,12 @@ need to install a few things:
 - [git](https://git-scm.com/downloads)
 - You should already have standard Unix tools `curl` and `gunzip` on your system
 
+Instead of installing the Rust toolchain and compiling od2net, you can use pre-built Docker images. In commands below, instead of `cargo run --release config.json`, do this:
+
+```shell
+docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json
+```
+
 ## Running the Edinburgh example
 
 Open your terminal and let's get started! First we'll clone the git repo and

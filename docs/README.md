@@ -4,6 +4,7 @@ Start with tutorials on using od2net:
 
 - [Running pre-made examples](tutorial_examples.md)
 - [Running in a new area](tutorial_new_area.md)
+- [Seeing details of routes](tutorial_details.md)
 
 Details about how to customize od2net:
 
