@@ -26,15 +26,31 @@ od2net needs an `osm.pbf` file as input. You can create this however you like --
 
 ## Step 2: Preparing origin/destination input
 
-See [here](config_od.md).
+See [here](config_od.md) to start your `config.json`.
 
 ## Step 3: Configuration
 
-TODO
+Now you need to specify:
 
-https://github.com/Urban-Analytics-Technology-Platform/od2net/blob/main/od2net/src/config.rs
-config.json spec
+- [edge cost function](config_cost.md)
+- [uptake model](config_uptake.md)
+
+See [the Rust definitions](https://github.com/Urban-Analytics-Technology-Platform/od2net/blob/main/od2net/src/config.rs) for all `config.json` options.
 
 ## Step 4: Running od2net
 
+As before, either:
+
+```shell
+cargo run --release config.json
+```
+
+or:
+
+```
+docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json
+```
+
 ## Step 5: Using the output
+
+Go to <https://od2net.org> to load `output/rnet.pmtiles`.
