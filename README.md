@@ -15,45 +15,20 @@ od2net helps you turn *o*rigin/*d*estination data about where people travel into
 
 ...
 
+- set up with your own data, run on your computer (directly or with docker), and compute country-wide network with millions of trips in under an hour
+- the quick setup route: clip a small area from OSM, use dummy OD data, tune cost function, and make route networks ending at a single point. interactive in your browser, no install required, get something in minutes
+
 ## Contributing
 
 We'd love contributions of all sorts -- developers, designers, data scientists, and applying it somewhere new! Check out [GitHub Issues](https://github.com/Urban-Analytics-Technology-Platform/od2net/issues), file a new one, or email <dabreegster@gmail.com> to get started.
 
 This project follows the [Rust code of conduct](https://www.rust-lang.org/policies/code-of-conduct) and is Apache 2.0 licensed. See all [credits](docs/credits.md).
 
-## Customizing
 
-The purpose of this tool is to generate route networks **quickly** for areas up to **national scale**. The different stages of the pipeline are all modular and customizable, and to get meaningful results, we'll need to improve the defaults in all of them.
 
-### Generating requests
 
-The pipeline needs a list of routing requests to run -- just a huge list of start/end coordinates. These should **not** be centroids of a large zone or anything like that.
 
-Built-in options for `"requests"` currently include:
 
-- `{ "Generate": { "pattern": "FromEveryOriginToOneDestination" } }`
-  - One trip for every $AREA/origins.geojson to the first point in $AREA/destinations.geojson
-- `{"Generate" : { "pattern": "FromEveryOriginToNearestDestination" } }`
-  - One trip for every $AREA/origins.geojson to the nearest (as the crow flies) point in $AREA/destinations.geojson
-- `{"Odjitter": { "path": "file.geojson" } }`
-  - Use LineStrings from a GeoJSON file. You can use [odjitter](https://github.com/dabreegster/odjitter) to generate a number of trips between zones, picking specific weighted points from each zone.
-  - Note this option is **not** recommended for performance. For an interesting amount of requests, the overhead of reading/writing this file full of requests and storing it in memory doesn't work.
-
-Problems to solve include:
-
-- OSM is missing buildings in many places
-- Origins and destinations should be weighted, based on how many people live or work/shop/go to school/etc somewhere
-
-### Routing
-
-The pipeline currently has two methods for calculating a route, specified by `"routing"`:
-
-- The built-in `"FastPaths"` option, which currently makes a number of very bad assumptions:
-  - Every edge can be crossed either direction
-  - When `"cost": "Distance", edge cost is just distance -- equivalent to calculating the most direct route, ignoring LTS
-    - `"cost": "AvoidMainRoads"` uses hardcoded multipliers for main roads
-  - No penalty for elevation gain
-  - No handling for turn restrictions, penalties for crossing intersections, etc
 
 ### Scoring route likelihood
 
