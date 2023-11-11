@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Chart, registerables } from "chart.js";
   import ChartJSdragDataPlugin from "chartjs-plugin-dragdata";
+  import { createEventDispatcher } from "svelte";
 
   Chart.register(...registerables);
   Chart.register(ChartJSdragDataPlugin);
@@ -8,6 +9,11 @@
   export let lts: number;
   export let nearbyAmenities: number;
   export let greenspace: number;
+
+  const dispatch = createEventDispatcher<{
+    // TODO void
+    change: string;
+  }>();
 
   let barChart = null;
   let colors = ["red", "blue", "green"];
@@ -68,6 +74,7 @@
               }
 
               normalize();
+              dispatch("change", "");
             },
           },
         },

@@ -125,6 +125,7 @@
     bind:lts={generalized.tradeoff_lts}
     bind:nearbyAmenities={generalized.tradeoff_amenities}
     bind:greenspace={generalized.tradeoff_greenspace}
+    on:change={() => (cost = cost)}
   />
   <ul>
     {#each ["lts1", "lts2", "lts3", "lts4"] as key}
@@ -136,6 +137,7 @@
           max="1.0"
           step="0.1"
           bind:value={generalized[key]}
+          on:change={() => (cost = cost)}
         />
       </li>
     {/each}
@@ -148,9 +150,8 @@
         type="number"
         min="0"
         bind:value={generalized.minimum_amenities}
+        on:change={() => (cost = cost)}
       /></label
     >
   </div>
-
-  <button type="button" on:click={() => (cost = cost)}>Recalculate</button>
 {/if}
