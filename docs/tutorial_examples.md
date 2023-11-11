@@ -61,7 +61,7 @@ app.
 Let's see the results! Open <https://od2net.org> in your browser, "Choose
 file", then load `od2net/examples/edinburgh/output/rnet.pmtiles`.
 
-The thickness of lines shows the number of trips made using that road -- so thicker roads could be used by many cyclists, and need to have safe infrastructure. The four colors indicate that current LTS rating. You can hover on any road to see all the details: how many trips routed over this road, the reason why it has a certain LTS rating, and all of the OSM tags.
+The thickness of lines shows the number of trips made using that road -- so thicker roads could be used by many cyclists, and need to have safe infrastructure. The four colors indicate the current ["Cycling Level of Traffic Stress" (LTS)](https://maps.bikeottawa.ca/lts/) rating. You can hover on any road to see all the details: how many trips routed over this road, the reason why it has a certain LTS rating, and all of the OSM tags.
 
 Do you notice any patterns?
 
