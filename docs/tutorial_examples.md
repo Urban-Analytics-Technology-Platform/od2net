@@ -117,7 +117,7 @@ First let's tell od2net to use a custom command for cost. Edit `config.json` and
 },
 ```
 
-Then create a new file called `cost.py`, copying from a different [example cost.py](https://github.com/Urban-Analytics-Technology-Platform/od2net/blob/main/examples/york/cost.py). The program gets a JSON array of dictionaries in STDIN and needs to print a JSON array of integer numbers as a result. Each dictionary input gives you:
+Then create a new file called `cost.py`, copying from a different [example cost.py](https://github.com/Urban-Analytics-Technology-Platform/od2net/blob/main/examples/edinburgh/example_cost.py). The program gets a JSON array of dictionaries in STDIN and needs to print a JSON array of integer numbers as a result. Each dictionary input gives you:
 
 - `length_meters`
 - `tags`, a JSON dictionary with the raw OSM tags
