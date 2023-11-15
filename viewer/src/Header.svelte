@@ -35,9 +35,12 @@
   <img src={logoUrl} width="300" alt="od2net logo by Hadrien Salat" />
 
   <p>
-    od2net is a project by <a href="https://dcarlino.org" target="_blank"
-      >Dustin Carlino</a
-    >, part of the
+    od2net is an <a
+      href="https://github.com/Urban-Analytics-Technology-Platform/od2net"
+      target="_blank">open-source project</a
+    >
+    by <a href="https://dcarlino.org" target="_blank">Dustin Carlino</a>, part
+    of the
     <a
       href="https://urban-analytics-technology-platform.github.io"
       target="_blank">Urban Analytics Technology Platform</a
