@@ -40,16 +40,33 @@ impl RTreeObject for TreeFeature {
     }
 }
 
+impl TreeFeature {
+    fn get_sort_key(&self, key: &str) -> Option<usize> {
+        let props = self.properties.as_ref()?;
+        let value = props.get(key)?;
+        let num = value.as_f64()?;
+        Some(num.round() as usize)
+    }
+}
+
 fn load_features(
     reader: FeatureReader<BufReader<File>>,
+    options: &Options,
 ) -> Result<(RTree<CachedEnvelope<TreeFeature>>, usize)> {
     let tree_features: Vec<CachedEnvelope<TreeFeature>> = reader
         .features()
         .map(|f| CachedEnvelope::new(f.unwrap().into()))
         .collect();
-    let no_features = tree_features.len();
+    let num_features = tree_features.len();
     let tree = RTree::bulk_load(tree_features);
-    Ok((tree, no_features))
+    Ok((tree, num_features))
+}
+
+struct Options {
+    // Descending
+    sort_by_key: Option<String>,
+    zoom_levels: Vec<u32>,
+    limit_size_bytes: Option<usize>,
 }
 
 fn main() -> Result<()> {
@@ -58,10 +75,15 @@ fn main() -> Result<()> {
         panic!("Pass in a .geojson file");
     }
 
-    let zoom_levels: Vec<u32> = (0..13).collect();
+    let options = Options {
+        sort_by_key: Some("count".to_string()),
+        zoom_levels: (0..13).collect(),
+        // This is so much less than 500KB, but the final tile size is still big
+        limit_size_bytes: Some(200 * 1024),
+    };
 
     let reader = FeatureReader::from_reader(BufReader::new(File::open(&args[1])?));
-    let pmtiles = geojson_to_pmtiles(reader, zoom_levels)?;
+    let pmtiles = geojson_to_pmtiles(reader, options)?;
     let mut file = File::create("out.pmtiles")?;
     pmtiles.to_writer(&mut file)?;
     Ok(())
@@ -71,11 +93,9 @@ type PMTilesFile = PMTiles<Cursor<&'static [u8]>>;
 
 fn geojson_to_pmtiles(
     reader: FeatureReader<BufReader<File>>,
-    zoom_levels: Vec<u32>,
+    options: Options,
 ) -> Result<PMTilesFile> {
-    // TODO Put these in an rtree or similar. For now, just read all at once.
-
-    let (r_tree, feature_count) = load_features(reader)?;
+    let (r_tree, feature_count) = load_features(reader, &options)?;
 
     let root_envelope = r_tree.root().envelope();
 
@@ -109,15 +129,16 @@ fn geojson_to_pmtiles(
     pmtiles.min_longitude = -180.0;
     pmtiles.max_latitude = 90.0;
     pmtiles.max_longitude = 180.0;
-    pmtiles.min_zoom = zoom_levels[0] as u8;
-    pmtiles.max_zoom = *zoom_levels.last().unwrap() as u8;
+    pmtiles.min_zoom = options.zoom_levels[0] as u8;
+    pmtiles.max_zoom = *options.zoom_levels.last().unwrap() as u8;
     pmtiles.center_zoom = 7;
     pmtiles.center_longitude = -1.1425781;
     pmtiles.center_latitude = 53.904306;
 
     let map_grid = MapGrid::default();
 
-    for z in zoom_levels {
+    for z in &options.zoom_levels {
+        let z = *z;
         for x in 0..2u32.pow(z) {
             for y in 0..2u32.pow(z) {
                 let tile_id = TileId::new(x, y, z)?;
@@ -126,10 +147,8 @@ fn geojson_to_pmtiles(
                     [tbounds.x_min(), tbounds.y_min()],
                     [tbounds.x_max(), tbounds.y_max()],
                 ));
-
-                // TODO Filter features that belong in this tile
                 // TODO And figure out clipping
-                make_tile(tile_id, &mut pmtiles, features.collect())?;
+                make_tile(tile_id, &mut pmtiles, features.collect(), &options)?;
             }
         }
     }
@@ -140,10 +159,15 @@ fn geojson_to_pmtiles(
 fn make_tile(
     current_tile_id: TileId,
     pmtiles: &mut PMTilesFile,
-    features: Vec<&CachedEnvelope<TreeFeature>>,
+    mut features: Vec<&CachedEnvelope<TreeFeature>>,
+    options: &Options,
 ) -> Result<()> {
-    // TODO We don't even need this! Just do the filtering below
-    //let tile_bbox = BBox::from_tile(current_tile_id.x(), current_tile_id.y(), current_tile_id.z());
+    // We have to do this to each result from RTree, because order is of course not maintained
+    // between internal buckets
+    if let Some(ref key) = options.sort_by_key {
+        features.sort_by_key(|f| f.get_sort_key(key).unwrap_or(0));
+        features.reverse();
+    }
 
     let web_mercator_transform = MapGrid::default();
     let transform = web_mercator_transform.tile_transform(current_tile_id);
@@ -151,6 +175,8 @@ fn make_tile(
 
     let mut layer = tile.create_layer("layer1");
 
+    let mut bytes_so_far = 0;
+    let mut skipped = false;
     for feature in features {
         let mut b = GeomEncoder::new(GeomType::Linestring, Transform::default());
 
@@ -186,10 +212,22 @@ fn make_tile(
             continue;
         }
 
+        let encoded = b.encode()?;
+        bytes_so_far += encoded.len();
+        // TODO Note we don't use the layer size, because it's expensive to constantly protobuf
+        // encode it. This could overcount (ignoring properties) but also undercount (the encoded
+        // geometry is further compacted by protobuf?)
+        if let Some(limit) = options.limit_size_bytes {
+            if bytes_so_far > limit {
+                skipped = true;
+                break;
+            }
+        }
+
         let id = layer.num_features() as u64;
         // The ownership swaps between layer and write_feature due to how feature properties are
         // encoded
-        let mut write_feature = layer.into_feature(b.encode()?);
+        let mut write_feature = layer.into_feature(encoded);
         write_feature.set_id(id);
         // TODO actual things
         write_feature.add_tag_string("key", "value");
@@ -204,11 +242,16 @@ fn make_tile(
 
     tile.add_layer(layer)?;
     println!(
-        "Added {} features into {}, costing {} bytes",
+        "Added {} features into {}, costing {} bytes{}",
         num_features,
         current_tile_id,
         // TODO Maybe this is slow and we should use to_bytes() once
         tile.compute_size(),
+        if skipped {
+            " (skipping some features after hitting size limit)"
+        } else {
+            ""
+        }
     );
 
     pmtiles.add_tile(
