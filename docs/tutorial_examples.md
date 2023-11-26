@@ -14,7 +14,6 @@ need to install a few things:
 - [Rust](https://www.rust-lang.org/tools/install) (1.73 or newer)
 - Python 3 (only standard library modules needed)
 - ogr2ogr from [GDAL](https://gdal.org/download.html)
-- [tippecanoe](https://github.com/felt/tippecanoe)
 - [osmium](https://osmcode.org/osmium-tool/manual.html#installation)
 - [git](https://git-scm.com/downloads)
 - You should already have standard Unix tools `curl` and `gunzip` on your system

@@ -1,7 +1,6 @@
-use std::io::BufWriter;
-use std::process::Command;
+use std::io::{BufReader, BufWriter};
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::Parser;
 use fs_err::File;
 use indicatif::HumanCount;
@@ -160,27 +159,27 @@ fn main() -> Result<()> {
 
     if !args.no_output_pmtiles {
         timer.start("Converting to pmtiles for rendering");
-        let tippecanoe_start = Instant::now();
-        let mut cmd = Command::new("tippecanoe");
-        cmd.arg(format!("{directory}/output/output.geojson"))
-            .arg("-o")
-            .arg(format!("{directory}/output/rnet.pmtiles"))
-            .arg("--force") // Overwrite existing output
-            .arg("-l")
-            .arg("rnet")
-            .arg("-zg") // Guess the zoom
-            .arg("--drop-fraction-as-needed") // TODO Drop based on low counts
-            .arg("--extend-zooms-if-still-dropping")
+        let pmtiles_start = Instant::now();
+
+        let options = lines2pmtiles::Options {
+            layer_name: "rnet".to_string(),
             // Plumb through the config as a JSON string in the description
-            .arg("--description")
-            .arg(serde_json::to_string(&output_metadata)?);
-        println!("Running: {cmd:?}");
-        if !cmd.status()?.success() {
-            bail!("tippecanoe failed");
-        }
-        output_metadata.tippecanoe_time_seconds = Some(
+            description: Some(serde_json::to_string(&output_metadata)?),
+            sort_by_key: Some("count".to_string()),
+            // TODO Equivalent of -zg?
+            zoom_levels: (0..13).collect(),
+            // TODO This is so much less than 500KB, but the final tile size is still big
+            limit_size_bytes: Some(200 * 1024),
+        };
+        // TODO Keep the features in-memory?
+        let reader = BufReader::new(File::open(format!("{directory}/output/output.geojson"))?);
+        let pmtiles = lines2pmtiles::geojson_to_pmtiles(reader, options)?;
+        let mut file = File::create(format!("{directory}/output/rnet.pmtiles"))?;
+        pmtiles.to_writer(&mut file)?;
+
+        output_metadata.pmtiles_time_seconds = Some(
             Instant::now()
-                .duration_since(tippecanoe_start)
+                .duration_since(pmtiles_start)
                 .as_secs_f32(),
         );
         timer.stop();

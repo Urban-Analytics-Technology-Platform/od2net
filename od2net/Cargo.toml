@@ -13,8 +13,9 @@ fast_paths = { git = "https://github.com/easbar/fast_paths" }
 fs-err = "2.9.0"
 geo = "0.26.0"
 geojson = { git = "https://github.com/georust/geojson" }
-indicatif = { version = "0.17.6", features = ["rayon"] }
+indicatif = { version = "0.17.7", features = ["rayon"] }
 itertools = "0.11.0"
+lines2pmtiles = { git = "https://github.com/Urban-Analytics-Technology-Platform/lines2pmtiles" }
 log = "0.4.20"
 lts = { path = "../lts" }
 nanorand = { version = "0.7.0", default-features = false, features = ["wyrand"] }

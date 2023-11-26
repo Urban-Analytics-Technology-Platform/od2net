@@ -47,7 +47,7 @@ function check_dependencies {
 	echo "Checking dependencies"
 
 	# TODO Slightly different for docker
-	for dep in python3 cargo curl ogr2ogr tippecanoe osmium gunzip; do
+	for dep in python3 cargo curl ogr2ogr osmium gunzip; do
 		if which $dep > /dev/null; then
 			true
 		else

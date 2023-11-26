@@ -16,7 +16,7 @@ for arg in sys.argv[1:]:
                 "Number of edges": data["num_edges_with_count"],
                 "Total pipeline time (s)": data["total_time_seconds"],
                 "Routing time (s)": data["routing_time_seconds"],
-                "Tippecanoe time (s)": data["tippecanoe_time_seconds"],
+                "PMTiles conversion time (s)": data["pmtiles_time_seconds"],
             }
         )
 

@@ -40,7 +40,7 @@ pub struct OutputMetadata {
     // These two aren't recorded in the GeoJSON or PMTiles output, because we'd have to go back and
     // update the files!
     pub total_time_seconds: Option<f32>,
-    pub tippecanoe_time_seconds: Option<f32>,
+    pub pmtiles_time_seconds: Option<f32>,
 }
 
 impl OutputMetadata {
@@ -60,7 +60,7 @@ impl OutputMetadata {
             num_edges_with_count: counts.count_per_edge.len(),
             routing_time_seconds: routing_time.as_secs_f32(),
             total_time_seconds: None,
-            tippecanoe_time_seconds: None,
+            pmtiles_time_seconds: None,
             total_meters_not_allowed: counts.total_distance_by_lts[LTS::NotAllowed as u8 as usize],
             total_meters_lts1: counts.total_distance_by_lts[LTS::LTS1 as u8 as usize],
             total_meters_lts2: counts.total_distance_by_lts[LTS::LTS2 as u8 as usize],
