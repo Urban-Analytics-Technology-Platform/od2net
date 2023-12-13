@@ -8,24 +8,23 @@ use std::io::BufReader;
 
 use anyhow::Result;
 use fs_err::File;
+use osm_reader::{NodeID, WayID};
 use serde::{Deserialize, Serialize};
 
 use lts::{Tags, LTS};
 
 #[derive(Serialize, Deserialize)]
 pub struct Network {
-    // Keyed by a pair of node IDs
     // TODO Doesn't handle multiple edges between the same node pair
-    pub edges: HashMap<(i64, i64), Edge>,
-    // Node IDs that're above
-    pub intersections: HashMap<i64, Position>,
+    pub edges: HashMap<(NodeID, NodeID), Edge>,
+    pub intersections: HashMap<NodeID, Position>,
 }
 
 // TODO Rename this. We don't represent counts, but instead summed uptake. If every single route we
 // considered would actually happen, then this would be equivalent to counts.
 pub struct Counts {
     // TODO Don't use f64 -- we'll end up rounding somewhere anyway, so pick a precision upfront.
-    pub count_per_edge: HashMap<(i64, i64), f64>,
+    pub count_per_edge: HashMap<(NodeID, NodeID), f64>,
     pub errors: u64,
 
     // Count how many times a point is used successfully as an origin or destination
@@ -114,7 +113,7 @@ fn trim_f64(x: f64) -> f64 {
 
 #[derive(Serialize, Deserialize)]
 pub struct Edge {
-    pub way_id: i64,
+    pub way_id: WayID,
     pub tags: Tags,
     geometry: Vec<Position>,
     // Storing the derived field is negligible for file size

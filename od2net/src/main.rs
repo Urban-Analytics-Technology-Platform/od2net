@@ -73,10 +73,7 @@ fn main() -> Result<()> {
             Ok(network) => network,
             Err(err) => {
                 println!("That failed ({err}), so generating it from {osm_pbf_path}");
-                // TODO Support XML input too?
-                let is_pbf = true;
                 let network = od2net::network::Network::make_from_osm(
-                    is_pbf,
                     &fs_err::read(osm_pbf_path)?,
                     &config.lts,
                     &mut config.cost,

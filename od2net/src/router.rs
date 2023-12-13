@@ -4,6 +4,7 @@ use anyhow::Result;
 use fast_paths::{FastGraph, InputGraph, PathCalculator};
 use fs_err::File;
 use indicatif::ParallelProgressIterator;
+use osm_reader::NodeID;
 use rayon::prelude::*;
 use rstar::primitives::GeomWithData;
 use rstar::RTree;
@@ -159,7 +160,7 @@ pub fn handle_request(
 pub struct PreparedCH {
     pub ch: FastGraph,
     #[serde(deserialize_with = "deserialize_nodemap")]
-    pub node_map: NodeMap<i64>,
+    pub node_map: NodeMap<NodeID>,
 }
 
 pub fn build_ch(path: &str, network: &Network, timer: &mut Timer) -> Result<PreparedCH> {
@@ -214,7 +215,7 @@ pub type IntersectionLocation = GeomWithData<[f64; 2], usize>;
 
 pub fn build_closest_intersection(
     network: &Network,
-    node_map: &NodeMap<i64>,
+    node_map: &NodeMap<NodeID>,
     timer: &mut Timer,
 ) -> RTree<IntersectionLocation> {
     timer.start("Building RTree for matching request points to OSM nodes");

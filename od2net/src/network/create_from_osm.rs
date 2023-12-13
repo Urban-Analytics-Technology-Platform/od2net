@@ -1,14 +1,12 @@
 use std::collections::HashMap;
-use std::iter::Peekable;
 
 use anyhow::Result;
 use geo::prelude::HaversineLength;
 use geo::{LineString, Polygon};
 use indicatif::HumanCount;
-use osmpbf::{Element, ElementReader};
+use osm_reader::{Element, NodeID, WayID};
 use rstar::primitives::{GeomWithData, Line};
 use rstar::RTree;
-use xmlparser::Token;
 
 use super::amenities::is_amenity;
 use super::greenspace;
@@ -20,20 +18,14 @@ use lts::{Tags, LTS};
 
 impl Network {
     pub fn make_from_osm(
-        is_pbf: bool,
-        // pbf or osm.xml depending on is_pbf
         input_bytes: &[u8],
         lts: &LtsMapping,
         cost: &mut CostFunction,
         timer: &mut Timer,
     ) -> Result<Network> {
-        timer.start("Make Network from pbf");
+        timer.start("Make Network from xml or pbf");
         timer.start("Scrape OSM data");
-        let (nodes, ways, amenity_positions, greenspace_polygons) = if is_pbf {
-            scrape_elements_from_pbf(input_bytes)?
-        } else {
-            scrape_elements_from_xml(String::from_utf8(input_bytes.to_vec())?)?
-        };
+        let (nodes, ways, amenity_positions, greenspace_polygons) = scrape_elements(input_bytes)?;
         timer.stop();
         println!(
             "  Got {} nodes, {} ways, and {} amenities",
@@ -75,7 +67,7 @@ impl Network {
         timer.start("Calculate LTS for all edges");
         let progress = utils::progress_bar_for_count(network.edges.len());
         // LTS calculations can have high overhead in one case, so calculate them in batches
-        let all_keys: Vec<(i64, i64)> = network.edges.keys().cloned().collect();
+        let all_keys: Vec<(NodeID, NodeID)> = network.edges.keys().cloned().collect();
         for key_batch in all_keys.chunks(1000) {
             let tags_batch: Vec<&Tags> =
                 key_batch.iter().map(|e| &network.edges[&e].tags).collect();
@@ -99,7 +91,7 @@ impl Network {
         cost.normalize()?;
 
         let progress = utils::progress_bar_for_count(self.edges.len());
-        let all_keys: Vec<(i64, i64)> = self.edges.keys().cloned().collect();
+        let all_keys: Vec<(NodeID, NodeID)> = self.edges.keys().cloned().collect();
         for key_batch in all_keys.chunks(1000) {
             let input_batch: Vec<&Edge> = key_batch.iter().map(|e| &self.edges[&e]).collect();
             let output_batch = plugins::cost::calculate_batch(cost, input_batch);
@@ -115,14 +107,14 @@ impl Network {
 
 struct Way {
     tags: Tags,
-    nodes: Vec<i64>,
+    nodes: Vec<NodeID>,
 }
 
-fn scrape_elements_from_pbf(
+fn scrape_elements(
     input_bytes: &[u8],
 ) -> Result<(
-    HashMap<i64, Position>,
-    HashMap<i64, Way>,
+    HashMap<NodeID, Position>,
+    HashMap<WayID, Way>,
     Vec<Position>,
     Vec<Polygon>,
 )> {
@@ -133,273 +125,51 @@ fn scrape_elements_from_pbf(
     let mut amenity_positions = Vec::new();
     let mut greenspace_polygons = Vec::new();
 
-    let reader = ElementReader::new(input_bytes);
-    // TODO par_map_reduce would be fine if we can merge the hashmaps; there should be no repeated
-    // keys
-    reader.for_each(|element| {
-        match element {
-            Element::Node(node) => {
-                let pos = Position {
-                    lon: node.decimicro_lon(),
-                    lat: node.decimicro_lat(),
-                };
-                // TODO Handle TagIter and DenseTagIter instead of this
-                let mut tags = Tags::new();
-                for (k, v) in node.tags() {
-                    tags.insert(k, v);
-                }
+    osm_reader::parse(input_bytes, |elem| match elem {
+        Element::Node { id, lon, lat, tags } => {
+            let pos = Position::from_degrees(lon, lat);
+            nodes.insert(id, pos);
 
-                nodes.insert(node.id(), pos);
-                if is_amenity(&tags) {
-                    amenity_positions.push(pos);
-                }
+            let tags = Tags::from(tags);
+            if is_amenity(&tags) {
+                amenity_positions.push(pos);
             }
-            Element::DenseNode(node) => {
-                let pos = Position {
-                    lon: node.decimicro_lon(),
-                    lat: node.decimicro_lat(),
-                };
-                let mut tags = Tags::new();
-                for (k, v) in node.tags() {
-                    tags.insert(k, v);
-                }
-
-                nodes.insert(node.id(), pos);
-                if is_amenity(&tags) {
-                    amenity_positions.push(pos);
-                }
+        }
+        Element::Way { id, node_ids, tags } => {
+            let tags = Tags::from(tags);
+            if is_amenity(&tags) {
+                // TODO Calculate a centroid instead
+                amenity_positions.push(nodes[&node_ids[0]]);
             }
-            Element::Way(way) => {
-                let mut tags = Tags::new();
-                for (k, v) in way.tags() {
-                    tags.insert(k, v);
-                }
 
-                if is_amenity(&tags) {
-                    // TODO Calculate a centroid instead
-                    let pos = nodes[&way.refs().next().unwrap()];
-                    amenity_positions.push(pos);
-                }
-
-                if let Some(polygon) = greenspace::get_polygon(&tags, &nodes, &way) {
-                    greenspace_polygons.push(polygon);
-                }
-
-                // Include everything here, and let LTS::NotAllowed later filter some out
-                if tags.has("highway") {
-                    ways.insert(
-                        way.id(),
-                        Way {
-                            tags,
-                            nodes: way.refs().collect(),
-                        },
-                    );
-                }
+            if let Some(polygon) = greenspace::get_polygon(&tags, &nodes, &node_ids) {
+                greenspace_polygons.push(polygon);
             }
-            Element::Relation(_) => {
-                // TODO Handle for amenities. What about when they're large, or might be
-                // double-tagged?
-                // https://www.openstreetmap.org/relation/14875126
+
+            // Include everything here, and let LTS::NotAllowed later filter some out
+            if tags.has("highway") {
+                ways.insert(
+                    id,
+                    Way {
+                        tags,
+                        nodes: node_ids,
+                    },
+                );
             }
+        }
+        Element::Relation { .. } => {
+            // TODO Handle for amenities. What about when they're large, or might be
+            // double-tagged?
+            // https://www.openstreetmap.org/relation/14875126
         }
     })?;
 
     Ok((nodes, ways, amenity_positions, greenspace_polygons))
 }
 
-// Ripped out from osm2streets
-// TODO Refactor something osmio-like
-fn scrape_elements_from_xml(
-    input_string: String,
-) -> Result<(
-    HashMap<i64, Position>,
-    HashMap<i64, Way>,
-    Vec<Position>,
-    Vec<Polygon>,
-)> {
-    // Scrape every node ID -> position
-    let mut nodes = HashMap::new();
-    // Scrape every routable road. Just tags and node lists to start.
-    let mut ways = HashMap::new();
-    let mut amenity_positions = Vec::new();
-    let mut _greenspace_polygons = Vec::new();
-
-    // We use the lower-level xmlparser instead of roxmltree to reduce peak memory usage in
-    // large files.
-    // TODO Reconsider -- large inputs should be pbf anyway
-    let mut reader = XmlElementReader {
-        tokenizer: xmlparser::Tokenizer::from(input_string.as_str()),
-    }
-    .peekable();
-
-    while let Some(obj) = reader.next() {
-        match obj.name {
-            "node" => {
-                let id = obj.attribute("id").parse::<i64>().unwrap();
-                let pos = Position::from_degrees(
-                    obj.attribute("lon").parse::<f64>().unwrap(),
-                    obj.attribute("lat").parse::<f64>().unwrap(),
-                );
-                let tags = read_tags(&mut reader);
-
-                nodes.insert(id, pos);
-                if is_amenity(&tags) {
-                    amenity_positions.push(pos);
-                }
-            }
-            "way" => {
-                let id = obj.attribute("id").parse::<i64>().unwrap();
-
-                let mut node_refs = Vec::new();
-                while reader.peek().map(|x| x.name == "nd").unwrap_or(false) {
-                    let node_ref = reader.next().unwrap();
-                    node_refs.push(node_ref.attribute("ref").parse::<i64>().unwrap());
-                }
-
-                // We assume <nd>'s come before <tag>'s
-                let tags = read_tags(&mut reader);
-
-                if is_amenity(&tags) {
-                    // TODO Calculate a centroid instead
-                    amenity_positions.push(nodes[&node_refs[0]]);
-                }
-
-                // TODO
-                /*if let Some(polygon) = greenspace::get_polygon(&tags, &nodes, &way) {
-                    greenspace_polygons.push(polygon);
-                }*/
-
-                // Include everything here, and let LTS::NotAllowed later filter some out
-                if tags.has("highway") {
-                    ways.insert(
-                        id,
-                        Way {
-                            tags,
-                            nodes: node_refs,
-                        },
-                    );
-                }
-            }
-            "relation" => {
-                // TODO
-            }
-            _ => {}
-        }
-    }
-
-    Ok((nodes, ways, amenity_positions, _greenspace_polygons))
-}
-
-fn read_tags(reader: &mut Peekable<XmlElementReader>) -> Tags {
-    let mut tags = Tags::new();
-
-    while reader.peek().map(|x| x.name == "tag").unwrap_or(false) {
-        let obj = reader.next().unwrap();
-        let key = obj.attribute("k");
-        let value = obj.attribute("v");
-        tags.insert(key, unescape(value).unwrap());
-    }
-
-    tags
-}
-
-// Reads one element with attributes at a time. Ignores/flattens nested elements.
-struct XmlElementReader<'a> {
-    tokenizer: xmlparser::Tokenizer<'a>,
-}
-
-struct XmlElement<'a> {
-    name: &'a str,
-    attributes: HashMap<&'a str, &'a str>,
-}
-
-impl<'a> XmlElement<'a> {
-    fn attribute(&self, key: &str) -> &str {
-        self.attributes.get(key).unwrap()
-    }
-}
-
-impl<'a> Iterator for XmlElementReader<'a> {
-    type Item = XmlElement<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut name: Option<&'a str> = None;
-        let mut attributes = HashMap::new();
-        loop {
-            match self.tokenizer.next()?.unwrap() {
-                Token::ElementStart { local, .. } => {
-                    assert!(name.is_none());
-                    assert!(attributes.is_empty());
-                    name = Some(local.as_str());
-                }
-                Token::Attribute { local, value, .. } => {
-                    assert!(name.is_some());
-                    attributes.insert(local.as_str(), value.as_str());
-                }
-                Token::ElementEnd { .. } => {
-                    if name.is_none() {
-                        assert!(attributes.is_empty());
-                        continue;
-                    }
-
-                    return Some(XmlElement {
-                        name: name.unwrap(),
-                        attributes,
-                    });
-                }
-                _ => {}
-            }
-        }
-    }
-}
-
-// Copied from https://github.com/Florob/RustyXML, Apache licensed. Unescapes all valid XML
-// entities in a string.
-fn unescape(input: &str) -> Result<String> {
-    let mut result = String::with_capacity(input.len());
-
-    let mut it = input.split('&');
-
-    // Push everything before the first '&'
-    if let Some(sub) = it.next() {
-        result.push_str(sub);
-    }
-
-    for sub in it {
-        match sub.find(';') {
-            Some(idx) => {
-                let ent = &sub[..idx];
-                match ent {
-                    "quot" => result.push('"'),
-                    "apos" => result.push('\''),
-                    "gt" => result.push('>'),
-                    "lt" => result.push('<'),
-                    "amp" => result.push('&'),
-                    ent => {
-                        let val = if ent.starts_with("#x") {
-                            u32::from_str_radix(&ent[2..], 16).ok()
-                        } else if ent.starts_with('#') {
-                            u32::from_str_radix(&ent[1..], 10).ok()
-                        } else {
-                            None
-                        };
-                        match val.and_then(char::from_u32) {
-                            Some(c) => result.push(c),
-                            None => bail!("&{};", ent),
-                        }
-                    }
-                }
-                result.push_str(&sub[idx + 1..]);
-            }
-            None => bail!("&".to_owned() + sub),
-        }
-    }
-    Ok(result)
-}
-
-fn split_edges(nodes: HashMap<i64, Position>, ways: HashMap<i64, Way>) -> Network {
+fn split_edges(nodes: HashMap<NodeID, Position>, ways: HashMap<WayID, Way>) -> Network {
     // Count how many ways reference each node
-    let mut node_counter: HashMap<i64, usize> = HashMap::new();
+    let mut node_counter: HashMap<NodeID, usize> = HashMap::new();
     for way in ways.values() {
         for node in &way.nodes {
             *node_counter.entry(*node).or_insert(0) += 1;
@@ -459,7 +229,7 @@ fn calculate_length_meters(pts: &[Position]) -> f64 {
 
 // Split every Edge into individual line segments, and identify by the OSM node ID pair.
 // TODO WGS84 caveat, and no linestring primitive?
-type EdgeLocation = GeomWithData<Line<[f64; 2]>, (i64, i64)>;
+type EdgeLocation = GeomWithData<Line<[f64; 2]>, (NodeID, NodeID)>;
 
 fn build_closest_edge(network: &Network, timer: &mut Timer) -> RTree<EdgeLocation> {
     timer.start("Building RTree for matching amenities to edges");

@@ -4,6 +4,7 @@ use anyhow::Result;
 use fs_err::File;
 use geojson::{feature::Id, Feature, FeatureWriter, Geometry, JsonObject, JsonValue, Value};
 use indicatif::HumanCount;
+use osm_reader::NodeID;
 
 use super::{Counts, Edge, Network};
 use crate::OutputMetadata;
@@ -11,8 +12,8 @@ use crate::OutputMetadata;
 impl Edge {
     fn to_geojson(
         &self,
-        node1: i64,
-        node2: i64,
+        node1: NodeID,
+        node2: NodeID,
         count: f64,
         id: usize,
         output_osm_tags: bool,
@@ -24,8 +25,8 @@ impl Edge {
 
     pub fn to_geojson_for_detailed_output(
         &self,
-        node1: i64,
-        node2: i64,
+        node1: NodeID,
+        node2: NodeID,
         geometry_forwards: bool,
     ) -> Feature {
         let mut feature = self.to_base_geojson(0, node1, node2, true);
@@ -40,7 +41,13 @@ impl Edge {
         feature
     }
 
-    fn to_base_geojson(&self, id: usize, node1: i64, node2: i64, output_osm_tags: bool) -> Feature {
+    fn to_base_geojson(
+        &self,
+        id: usize,
+        node1: NodeID,
+        node2: NodeID,
+        output_osm_tags: bool,
+    ) -> Feature {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
         ));
@@ -52,9 +59,9 @@ impl Edge {
             }
             properties.insert("osm_tags".to_string(), tags.into());
         }
-        properties.insert("way".to_string(), JsonValue::from(self.way_id));
-        properties.insert("node1".to_string(), JsonValue::from(node1));
-        properties.insert("node2".to_string(), JsonValue::from(node2));
+        properties.insert("way".to_string(), JsonValue::from(self.way_id.0));
+        properties.insert("node1".to_string(), JsonValue::from(node1.0));
+        properties.insert("node2".to_string(), JsonValue::from(node2.0));
         if let Some(cost) = self.cost {
             properties.insert("cost".to_string(), serde_json::to_value(cost).unwrap());
             properties.insert(

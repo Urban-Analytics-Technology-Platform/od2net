@@ -11,6 +11,10 @@ impl Tags {
         Self(HashMap::new())
     }
 
+    pub fn from(map: HashMap<String, String>) -> Self {
+        Self(map)
+    }
+
     pub fn insert<K: Into<String>, V: Into<String>>(&mut self, k: K, v: V) {
         self.0.insert(k.into(), v.into());
     }

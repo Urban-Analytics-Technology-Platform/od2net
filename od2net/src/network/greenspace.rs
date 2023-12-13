@@ -1,13 +1,17 @@
 use std::collections::HashMap;
 
 use geo::{LineString, Polygon};
-use osmpbf::Way;
+use osm_reader::NodeID;
 
 use lts::Tags;
 
 use crate::network::Position;
 
-pub fn get_polygon(tags: &Tags, nodes: &HashMap<i64, Position>, way: &Way) -> Option<Polygon> {
+pub fn get_polygon(
+    tags: &Tags,
+    nodes: &HashMap<NodeID, Position>,
+    node_ids: &Vec<NodeID>,
+) -> Option<Polygon> {
     if !is_greenspace(tags) {
         return None;
     }
@@ -15,8 +19,8 @@ pub fn get_polygon(tags: &Tags, nodes: &HashMap<i64, Position>, way: &Way) -> Op
     // TODO Only handles closed area ways. No multipolygons, relations, holes, etc.
     // TODO Keep in WGS84 right now
     let mut pts = Vec::new();
-    for id in way.refs() {
-        pts.push(nodes[&id].to_degrees());
+    for id in node_ids {
+        pts.push(nodes[id].to_degrees());
     }
     Some(Polygon::new(LineString::from(pts), vec![]))
 }

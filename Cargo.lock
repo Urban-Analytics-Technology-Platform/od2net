@@ -672,12 +672,11 @@ dependencies = [
  "lts",
  "nanorand",
  "num_cpus",
- "osmpbf",
+ "osm-reader",
  "rayon",
  "rstar",
  "serde",
  "serde_json",
- "xmlparser",
 ]
 
 [[package]]
@@ -687,10 +686,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
 
 [[package]]
+name = "osm-reader"
+version = "0.1.0"
+source = "git+https://github.com/a-b-street/osm-reader#803817ddda8eec0ca7052b6b43e5ce70376fbf6c"
+dependencies = [
+ "anyhow",
+ "osmpbf",
+ "roxmltree",
+ "serde",
+]
+
+[[package]]
 name = "osmpbf"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3bec2671f8eb1e9a353adfe8aafe44c9c5207e0012d469a4b61fb7bf33adf37"
+checksum = "8dbb2e170e56f11e0648dcb149d00b6fc27a205523303e11c4fd5820b246ba30"
 dependencies = [
  "byteorder",
  "flate2",
@@ -850,6 +860,12 @@ name = "robust"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cbf4a6aa5f6d6888f39e980649f3ad6b666acdce1d78e95b8a2cb076e687ae30"
+
+[[package]]
+name = "roxmltree"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3cd14fd5e3b777a7422cca79358c57a8f6e3a703d9ac187448d0daf220c2407f"
 
 [[package]]
 name = "rstar"
@@ -1281,9 +1297,3 @@ name = "windows_x86_64_msvc"
 version = "0.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
-
-[[package]]
-name = "xmlparser"
-version = "0.13.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66fee0b777b0f5ac1c69bb06d361268faafa61cd4682ae064a171c16c433e9e4"
