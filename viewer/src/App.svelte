@@ -68,7 +68,8 @@
           <option value="liverpool_direct">Liverpool (direct)</option>
           <option value="liverpool_quiet">Liverpool (quiet)</option>
           <option value="london">London</option>
-          <option value="seattle">Seattle</option>
+          <option value="seattle">Seattle (Soundcast)</option>
+          <option value="seattle_workers">Seattle (workers)</option>
           <option value="york">York</option>
         </select>
       </label>

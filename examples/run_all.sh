@@ -69,6 +69,7 @@ run_liverpool_example
 # Moderate
 run_example edinburgh
 run_example london
+#run_example seattle_workers
 
 # Huge
 run_example england_2011_home_to_work
