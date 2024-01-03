@@ -2,6 +2,11 @@ import csv
 import json
 import sys
 
+# Import code in ../utils.py:
+# - download(url, outputFilename)
+# - run(args)
+# - extractCentroids(pbfInput, geojsonOutput, where="building IS NOT NULL")
+# - writeFixedOutputFile(path, contents)
 sys.path.append("..")
 
 from utils import *

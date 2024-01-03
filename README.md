@@ -13,7 +13,16 @@ od2net helps you turn *o*rigin/*d*estination data about where people travel into
 
 ## How to use it
 
-...
+After you have installed the necessary dependencies (including Python, Rust, and tippecanoe), you can run the code in the [`examples/`](examples/) directory, e.g.:
+
+```bash
+cd examples/edinburgh
+python3 setup.py
+cargo run --release config.json
+```
+
+Then navigate to https://od2net.org/ (which may redirect) and upload the resulting .pmtiles file in the outputs directory.
+Note: you may need to move code in `examples/utils.py` into `examples/edinburgh/setup.py` to get it to run (see [issue #2](https://github.com/Urban-Analytics-Technology-Platform/od2net/issues/2) for details).
 
 - set up with your own data, run on your computer (directly or with docker), and compute country-wide network with millions of trips in under an hour
 - the quick setup route: clip a small area from OSM, use dummy OD data, tune cost function, and make route networks ending at a single point. interactive in your browser, no install required, get something in minutes
