@@ -34,6 +34,8 @@ pub enum ODPattern {
     FromEveryOriginToOneDestination,
     /// One trip from every origin to the closest (as the crow flies) destination
     FromEveryOriginToNearestDestination,
+    /// One trip from every origin to every destination
+    FromEveryOriginToEveryDestination,
     /// Trips between named zones
     BetweenZones {
         /// Path to a GeoJSON file containing Polygons and MultiPolygons with a "name" property

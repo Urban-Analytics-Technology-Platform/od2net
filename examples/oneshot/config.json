@@ -1,7 +1,7 @@
 {
   "requests": {
     "description": "A one-shot run around some bounding box, with trips between every pair of building centroids",
-    "pattern": "FromEveryOriginToOneDestination",
+    "pattern": "FromEveryOriginToEveryDestination",
     "origins_path": "buildings.geojson",
     "destinations_path": "buildings.geojson"
   },

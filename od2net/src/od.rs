@@ -78,6 +78,24 @@ pub fn generate_requests(
             }
             timer.stop();
         }
+        ODPattern::FromEveryOriginToEveryDestination => {
+            timer.start(format!(
+                "FromEveryOriginToEveryDestination for {} origins and {} destinations",
+                HumanCount(origins.len() as u64),
+                HumanCount(destinations.len() as u64),
+            ));
+            for pt1 in origins {
+                for pt2 in &destinations {
+                    requests.push(Request {
+                        x1: pt1.0,
+                        y1: pt1.1,
+                        x2: pt2.0,
+                        y2: pt2.1,
+                    });
+                }
+            }
+            timer.stop();
+        }
         ODPattern::BetweenZones {
             zones_path,
             csv_path,
