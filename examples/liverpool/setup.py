@@ -16,7 +16,7 @@ def makeOSM():
 
 def makeOrigins():
     extractCentroids(
-        pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
+        osmInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
     )
 
 

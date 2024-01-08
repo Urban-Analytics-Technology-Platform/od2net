@@ -17,7 +17,7 @@ def download(url, outputFilename):
     )
 
 
-def extractCentroids(pbfInput, geojsonOutput, where="building IS NOT NULL"):
+def extractCentroids(osmInput, geojsonOutput, where="building IS NOT NULL"):
     run(
         [
             "ogr2ogr",
@@ -28,7 +28,7 @@ def extractCentroids(pbfInput, geojsonOutput, where="building IS NOT NULL"):
             "-sql",
             f"SELECT ST_Centroid(geometry) FROM multipolygons WHERE {where}",
             geojsonOutput,
-            pbfInput,
+            osmInput,
         ]
     )
 

@@ -5,7 +5,7 @@ import sys
 # Import code in ../utils.py:
 # - download(url, outputFilename)
 # - run(args)
-# - extractCentroids(pbfInput, geojsonOutput, where="building IS NOT NULL")
+# - extractCentroids(osmInput, geojsonOutput, where="building IS NOT NULL")
 # - writeFixedOutputFile(path, contents)
 sys.path.append("..")
 
@@ -35,7 +35,7 @@ def makeOrigins():
     # Not every zone has a school, so for now, just use all buildings for both
     # origins and destinations
     extractCentroids(
-        pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
+        osmInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
     )
 
 

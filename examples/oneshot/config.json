@@ -1,0 +1,11 @@
+{
+  "requests": {
+    "description": "A one-shot run around some bounding box, with trips between every pair of building centroids",
+    "pattern": "FromEveryOriginToOneDestination",
+    "origins_path": "buildings.geojson",
+    "destinations_path": "buildings.geojson"
+  },
+  "cost": "Distance",
+  "uptake": "Identity",
+  "lts": "BikeOttawa"
+}
