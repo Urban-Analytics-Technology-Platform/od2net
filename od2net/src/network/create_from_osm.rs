@@ -146,8 +146,11 @@ fn scrape_elements(
                 greenspace_polygons.push(polygon);
             }
 
+            // If a way crosses the boundary and all nodes aren't present, filter it out up-front
+            let all_nodes = node_ids.iter().all(|n| nodes.contains_key(n));
+
             // Include everything here, and let LTS::NotAllowed later filter some out
-            if tags.has("highway") {
+            if tags.has("highway") && all_nodes {
                 ways.insert(
                     id,
                     Way {

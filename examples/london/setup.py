@@ -14,13 +14,13 @@ def makeOSM():
 
 def makeOrigins():
     extractCentroids(
-        pbfInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
+        osmInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
     )
 
 
 def makeDestinations():
     extractCentroids(
-        pbfInput="input/input.osm.pbf",
+        osmInput="input/input.osm.pbf",
         geojsonOutput="input/schools.geojson",
         where=f"amenity = 'school'",
     )

@@ -67,14 +67,22 @@ fn main() -> Result<()> {
     let network = {
         let bin_path = format!("{directory}/intermediate/network.bin");
         let osm_pbf_path = format!("{directory}/input/input.osm.pbf");
+        let osm_xml_path = format!("{directory}/input/input.osm.xml");
         println!("Trying to load network from {bin_path}");
         // TODO timer around something fallible is annoying
         match od2net::network::Network::load_from_bin(&bin_path) {
             Ok(network) => network,
             Err(err) => {
-                println!("That failed ({err}), so generating it from {osm_pbf_path}");
+                // The input is usually PBF, but could be XML
+                let osm_path = if fs_err::metadata(&osm_pbf_path).is_ok() {
+                    osm_pbf_path
+                } else {
+                    osm_xml_path
+                };
+
+                println!("That failed ({err}), so generating it from {osm_path}");
                 let network = od2net::network::Network::make_from_osm(
-                    &fs_err::read(osm_pbf_path)?,
+                    &fs_err::read(osm_path)?,
                     &config.lts,
                     &mut config.cost,
                     &mut timer,
