@@ -1,0 +1,11 @@
+{
+  "requests": {
+    "description": "A one-shot run around some bounding box, with trips from every building to the nearest school",
+    "pattern": "FromEveryOriginToNearestDestination",
+    "origins_path": "buildings.geojson",
+    "destinations_path": "schools.geojson"
+  },
+  "cost": "Distance",
+  "uptake": "Identity",
+  "lts": "BikeOttawa"
+}
