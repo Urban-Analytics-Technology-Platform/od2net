@@ -106,6 +106,7 @@ def makeOD(oa_ids):
 
 
 if __name__ == "__main__":
+    checkDependencies()
     run(["mkdir", "-p", "input"])
     makeOSM()
     makeOrigins()

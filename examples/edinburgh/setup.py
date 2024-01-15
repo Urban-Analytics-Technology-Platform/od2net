@@ -85,6 +85,7 @@ def makeOD():
 
 
 if __name__ == "__main__":
+    checkDependencies()
     run(["mkdir", "-p", "input"])
     makeOSM()
     makeOrigins()

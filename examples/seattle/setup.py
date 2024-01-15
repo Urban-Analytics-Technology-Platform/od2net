@@ -88,6 +88,7 @@ def makeTrips(parcel_lookup):
 
 
 if __name__ == "__main__":
+    checkDependencies()
     run(["mkdir", "-p", "input"])
     makeOSM()
     parcels = makeParcels()

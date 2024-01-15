@@ -15,7 +15,6 @@ function run_example {
 
 	# Run the pipeline
 	cargo run --release -- config.json --output-metadata
-	# TODO or with docker
 
 	# Host example output
 	rclone copyto output/rnet.pmtiles cloudflare:od2net/output/$1.pmtiles
@@ -45,22 +44,6 @@ function run_liverpool_example {
 
 	cd ..
 }
-
-function check_dependencies {
-	echo "Checking dependencies"
-
-	# TODO Slightly different for docker
-	for dep in python3 cargo curl ogr2ogr tippecanoe osmium gunzip; do
-		if which $dep > /dev/null; then
-			true
-		else
-			echo "You're missing a dependency: $dep";
-			exit 1;
-		fi
-	done
-}
-
-check_dependencies
 
 set -e
 set -x
