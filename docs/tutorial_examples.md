@@ -109,7 +109,7 @@ cargo run --release config.json
 mv output/rnet.pmtiles output/rnet_quiet.pmtiles
 ```
 
-Now you can open `output/rnet_quiet.pmtiles` in the web app and compare results. What changes? Are there any gaps in the quiet network that might be cheap and quick to fix?
+Now you can open `output/rnet_quiet.pmtiles` in the [web app](https://od2net.org) and compare results. What changes? Are there any gaps in the quiet network that might be cheap and quick to fix?
 
 ## Advanced: write your own cost function
 
