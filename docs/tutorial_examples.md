@@ -48,7 +48,7 @@ to see the steps that will happen:
 1.  Download the `osm.pbf` file containing Edinburgh from [Geofabrik](https://download.geofabrik.de/europe/great-britain/scotland.html)
 2.  Use `osmium` to clip that file to a rectangle around just Edinburgh
 3.  Use `ogr2ogr` to get the centroid of every building, storing as points in a GeoJSON file. These will be the origins and destinations of trips in od2net.
-4.  Download a GeoJSON file with polygons representing census zones, courtesy [NPT](https://nptscot.github.io)
+4.  Download a GeoJSON file with polygons representing census zones, courtesy of the Network Planning Tool for Scotland ([NPT](https://www.npt.scot))
 5.  Download (and transform) a CSV file that describes how many trips to calculate between every zone, also from NPT.
 
 Depending on your network and computer, this should take just a few minutes:
@@ -84,15 +84,16 @@ Edit [config.json](https://github.com/Urban-Analytics-Technology-Platform/od2net
 
 Open `config.json` in a text editor, and replace the `"cost": "Distance",` line with something like this:
 
-```
-"cost": {
-  "ByLTS": {
-    "lts1": 1.0,
-    "lts2": 1.5,
-    "lts3": 3.0,
-    "lts4": 5.0
-  }
-},
+```diff
+-  "cost": "Distance",
++  "cost": {
++    "ByLTS": {
++      "lts1": 1.0,
++      "lts2": 1.5,
++      "lts3": 3.0,
++      "lts4": 5.0
++    }
++  },
 ```
 
 These factors will be multiplied by the length of each road, and higher results are worse. So totally safe LTS 1 streets will just use distance as the cost. For LTS 2 routes, we'll penalize them by multiplying by 1.5. For high-stress LTS 4 roads, we'll penalize them by a factor of 5. That means a cyclist would choose to take a quiet LTS 1 route that's 5 times longer, just to avoid the LTS 4 road. You can tune these numbers, of course!
