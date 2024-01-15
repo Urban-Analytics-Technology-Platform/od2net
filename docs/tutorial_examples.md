@@ -28,11 +28,17 @@ docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:mai
 ## Running the Edinburgh example
 
 Open your terminal and let's get started! First we'll clone the git repo and
-navigate to the Edinburgh example.
+navigate into the `od2net` directory:
 
 ```shell
 git clone https://github.com/Urban-Analytics-Technology-Platform/od2net
-cd od2net/examples/edinburgh
+cd od2net # if you're not already in the repo
+```
+
+Then we'll navigate to the Edinburgh example.
+
+```shell
+cd examples/edinburgh
 ```
 
 Next we'll prepare all of the input data. Take a look through
@@ -59,8 +65,7 @@ cargo run --release config.json
 
 This will take a few minutes to compile od2net the first time. After that,
 running for this example should take under a minute. You'll see some output
-stats printed at the end, but don't worry, these will be also shown in the web
-app.
+stats printed at the end. These are also shown in the web app version.
 
 ## Exploring output with the web app
 
@@ -73,9 +78,9 @@ Do you notice any patterns?
 
 ## Changing the cost function
 
-This example made a pretty bold assumption -- cyclists picked the shortest route. That means they'll treat a quiet residential street, segregated cycle lane, and a motorway all the same. The LTS colors show this. This means the results are only useful if we can improve **any** road, no matter the cost or political pushback. This is quite unrealistic in most places, so what if we instead want to see how the network looks if people avoid stressful roads? That'll tell us what existing quiet streets form useful routes and reveal any gaps where using quiet options isn't possible.
+This example made a pretty bold assumption: cyclists choose the shortest route. That means they'll treat a quiet residential street, segregated cycle lane, and a motorway all the same. The LTS colors show this. This results imply interventions on **any** road segment are equally plausible, regardless of political or economic costs. This is a useful starting point but unrealistic in most places. What if we instead want to see how the network looks if people avoid stressful roads? That should show what existing quiet streets form useful routes and reveal any gaps where using quiet options isn't possible.
 
-We'll edit [config.json](https://github.com/Urban-Analytics-Technology-Platform/od2net/blob/main/examples/edinburgh/config.json) to do this. This file refers to the input files we created with the Python script and describes the origin/destination requests we want to route for. It also describes how cyclists will choose routes. Let's edit that!
+Edit [config.json](https://github.com/Urban-Analytics-Technology-Platform/od2net/blob/main/examples/edinburgh/config.json) to do this. This file refers to the input files we created with the Python script and describes the origin/destination requests we want to route for. It also describes how cyclists will choose routes.
 
 Open `config.json` in a text editor, and replace the `"cost": "Distance",` line with something like this:
 
