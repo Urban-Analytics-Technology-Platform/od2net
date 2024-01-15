@@ -13,29 +13,15 @@ od2net helps you turn *o*rigin/*d*estination data about where people travel into
 
 ## How to use it
 
-After you have installed the necessary dependencies (including Python, Rust, and tippecanoe), you can run the code in the [`examples/`](examples/) directory, e.g.:
+You can quickly try out od2net without installing anything:
 
-```bash
-cd examples/edinburgh
-python3 setup.py
-cargo run --release config.json
-```
+- [Exploring pre-built examples](https://od2net.org)
+- [Generating a route network in your browser for a small area](http://od2net.org/interactive.html)
 
-Then navigate to https://od2net.org/ (which may redirect) and upload the resulting .pmtiles file in the outputs directory.
-Note: you may need to move code in `examples/utils.py` into `examples/edinburgh/setup.py` to get it to run (see [issue #2](https://github.com/Urban-Analytics-Technology-Platform/od2net/issues/2) for details).
-
-- set up with your own data, run on your computer (directly or with docker), and compute country-wide network with millions of trips in under an hour
-- the quick setup route: clip a small area from OSM, use dummy OD data, tune cost function, and make route networks ending at a single point. interactive in your browser, no install required, get something in minutes
+Once you're ready to run in a large area with your own origin/destination data, then start with the [tutorial](docs/tutorial_examples.md) and see [all documentation](https://github.com/Urban-Analytics-Technology-Platform/od2net/tree/main/docs). Again note this project status is still pre-alpha; docs are not all written yet.
 
 ## Contributing
 
 We'd love contributions of all sorts -- developers, designers, data scientists, and applying it somewhere new! Check out [GitHub Issues](https://github.com/Urban-Analytics-Technology-Platform/od2net/issues), file a new one, or email <dabreegster@gmail.com> to get started.
 
 This project follows the [Rust code of conduct](https://www.rust-lang.org/policies/code-of-conduct) and is Apache 2.0 licensed. See all [credits](docs/credits.md).
-
-
-
-
-
-
-

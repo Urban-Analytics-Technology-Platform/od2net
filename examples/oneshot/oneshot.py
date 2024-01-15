@@ -2,8 +2,6 @@ import json
 import requests
 import sys
 
-sys.path.append("..")
-
 from utils import *
 
 
