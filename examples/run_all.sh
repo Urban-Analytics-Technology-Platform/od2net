@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "You probably don't want to run this script, unless you're regenerating all benchmarks. See https://github.com/Urban-Analytics-Technology-Platform/od2net/blob/main/docs/tutorial_examples.md if you're trying to run one example.";
+exit 1
+
 function run_example {
 	echo "Running example ${1}"
 	cd $1
