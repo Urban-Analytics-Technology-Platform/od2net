@@ -15,6 +15,8 @@ pub struct InputConfig {
     pub uptake: Uptake,
 
     pub lts: LtsMapping,
+
+    pub dem: DEM, 
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -146,4 +148,9 @@ pub enum LtsMapping {
     /// OSM tags representing one segment. The output must be an equally sized JSON array of
     /// numbers 0-4, representing the resulting LTS.
     ExternalCommand(String),
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum DEM {
+    pub dem_path: string
 }
