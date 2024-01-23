@@ -1,4 +1,5 @@
 use std::io::BufWriter;
+use std::io::BufReader;
 use std::process::Command;
 
 use anyhow::{bail, Result};
@@ -79,6 +80,8 @@ fn main() -> Result<()> {
                 } else {
                     osm_xml_path
                 };
+                
+                let dem_file_path = format!("directory/input/{}", config.dem);
 
                 println!("That failed ({err}), so generating it from {osm_path}");
                 let network = od2net::network::Network::make_from_osm(
@@ -86,6 +89,7 @@ fn main() -> Result<()> {
                     &config.lts,
                     &mut config.cost,
                     &mut timer,
+                    Some(BufReader::new(fs_err::File::open(dem_file_path)?.into())),
                 )?;
 
                 timer.start(format!("Saving to {bin_path}"));

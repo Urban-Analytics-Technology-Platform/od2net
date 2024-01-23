@@ -1,6 +1,14 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    io::BufReader,
+    io::Read,
+    io::Seek,
+};
+
+use std::fs::File;
 
 use anyhow::Result;
+use elevation::GeoTiffElevation;
 use geo::prelude::HaversineLength;
 use geo::{LineString, Polygon};
 use indicatif::HumanCount;
@@ -22,6 +30,7 @@ impl Network {
         lts: &LtsMapping,
         cost: &mut CostFunction,
         timer: &mut Timer,
+        dem_input_buffer: Option<BufReader<std::fs::File>>,
     ) -> Result<Network> {
         timer.start("Make Network from xml or pbf");
         timer.start("Scrape OSM data");
@@ -83,6 +92,10 @@ impl Network {
         network.recalculate_cost(cost)?;
         timer.stop();
 
+        timer.start("Calculate elevation for all edges");
+        let geo_tiff = GeoTiffElevation::new(dem_input_buffer.unwrap());
+        timer.stop();
+
         timer.stop();
         Ok(network)
     }
@@ -102,6 +115,15 @@ impl Network {
         }
 
         Ok(())
+    }
+
+    pub fn calculate_elavation(&mut self, elevation_data: &GeoTiffElevation<BufReader<File>>){
+        let progress = utils::progress_bar_for_count(self.edges.len());
+        let all_keys: Vec<(NodeID, NodeID)> = self.edges.keys().cloned().collect();
+        for key_batch in all_keys.chunks(1000) {
+            let input_batch: Vec<&Edge> = key_batch.iter().map(|e| &self.edges[&e]).collect();
+            
+        }
     }
 }
 
@@ -206,6 +228,8 @@ fn split_edges(nodes: HashMap<NodeID, Position>, ways: HashMap<WayID, Way>) -> N
                         length_meters,
                         // Temporary
                         cost: None,
+                        slope: 0.0,
+                        slope_factor: 0.0,
                         lts: LTS::NotAllowed,
                         nearby_amenities: 0,
                     },
