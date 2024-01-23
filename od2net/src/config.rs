@@ -16,7 +16,7 @@ pub struct InputConfig {
 
     pub lts: LtsMapping,
 
-    pub dem: DEM, 
+    pub dem: String, 
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -150,7 +150,3 @@ pub enum LtsMapping {
     ExternalCommand(String),
 }
 
-#[derive(Serialize, Deserialize)]
-pub enum DEM {
-    pub dem_path: string
-}

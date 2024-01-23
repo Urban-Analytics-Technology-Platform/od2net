@@ -315,6 +315,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 
 [[package]]
+name = "elevation"
+version = "0.1.0"
+source = "git+https://github.com/dabreegster/elevation#e8d0fd4e11774b6204474be2ecb5ad7d05636f2e"
+dependencies = [
+ "georaster",
+]
+
+[[package]]
 name = "encode_unicode"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -429,6 +437,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "georaster"
+version = "0.1.0"
+source = "git+https://github.com/pka/georaster#dca2d8b7c4e40c6d3b83f29352af5c04083a366b"
+dependencies = [
+ "tiff",
+]
+
+[[package]]
 name = "hash32"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -527,6 +543,12 @@ name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
+
+[[package]]
+name = "jpeg-decoder"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5d4a7da358eff58addd2877a45865158f0d78c911d43a5784ceb7bbf52833b0"
 
 [[package]]
 name = "js-sys"
@@ -661,6 +683,7 @@ dependencies = [
  "clap",
  "console",
  "csv",
+ "elevation",
  "fast_paths",
  "fs-err",
  "geo",
@@ -1054,6 +1077,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tiff"
+version = "0.9.1"
+source = "git+https://github.com/image-rs/image-tiff#b0ba4a6788cc897cd14bd20d93a6472ae1200295"
+dependencies = [
+ "flate2",
+ "jpeg-decoder",
+ "weezl",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1154,6 +1187,12 @@ dependencies = [
  "js-sys",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "weezl"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9193164d4de03a926d909d3bc7c30543cecb35400c02114792c2cae20d5e2dbb"
 
 [[package]]
 name = "which"
