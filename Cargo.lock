@@ -1166,6 +1166,7 @@ dependencies = [
  "console_error_panic_hook",
  "console_log",
  "fast_paths",
+ "fs-err",
  "geojson",
  "instant",
  "log",

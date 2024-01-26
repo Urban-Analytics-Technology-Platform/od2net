@@ -2,8 +2,6 @@
 extern crate log;
 
 use std::sync::Once;
-use std::io::BufReader;
-use std::fs::File;
 
 use instant::Instant;
 use rstar::RTree;
@@ -42,19 +40,21 @@ struct Input {
 impl JsNetwork {
     /// Call with bytes of an osm.pbf or osm.xml string
     #[wasm_bindgen(constructor)]
-    pub fn new(input_bytes: &[u8], input_config: JsValue ) -> Result<JsNetwork, JsValue> {
+    pub fn new(input_bytes: &[u8], dem_input_buffer: Option<Box<[u8]>>) -> Result<JsNetwork, JsValue> {
         // Panics shouldn't happen, but if they do, console.log them.
         console_error_panic_hook::set_once();
         
-        let config: InputConfig = serde_wasm_bindgen::from_value(input_config)?;
-
         START.call_once(|| {
             console_log::init_with_level(log::Level::Info).unwrap();
         });
-        
-        let dem_file_path = format!("directory/input/{}", config.dem);
-
+       
         info!("Got {} bytes, parsing as an osm.pbf", input_bytes.len());
+        if dem_input_buffer.is_some() {
+            let bytes = dem_input_buffer.as_ref().unwrap();
+            info!("Dem file detected got {} bytes", bytes.len());
+        } else {
+            info!("No dem file detected!");
+        }
         let mut timer = Timer::new();
         // TODO Default config
         let network = Network::make_from_osm(
@@ -62,7 +62,7 @@ impl JsNetwork {
             &od2net::config::LtsMapping::BikeOttawa,
             &mut CostFunction::Distance,
             &mut timer,
-            Some(BufReader::new(File::open(dem_file_path).unwrap().into())),
+            dem_input_buffer,
         )
         .map_err(err_to_js)?;
 

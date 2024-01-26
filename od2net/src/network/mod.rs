@@ -5,7 +5,9 @@ mod output;
 
 use std::collections::HashMap;
 use std::io::BufReader;
+use std::io::{Read, Seek};
 
+use elevation::GeoTiffElevation;
 use anyhow::Result;
 use fs_err::File;
 use osm_reader::{NodeID, WayID};
@@ -116,8 +118,8 @@ pub struct Edge {
     pub way_id: WayID,
     pub tags: Tags,
     geometry: Vec<Position>,
-    pub slope: f64,
-    pub slope_factor: f64,
+    pub slope: f32,
+    pub slope_factor: f32,
     // Storing the derived field is negligible for file size
     pub length_meters: f64,
     // LTS is often incorporated in cost, but is also used for visualization. It's useful to
@@ -129,3 +131,15 @@ pub struct Edge {
     // modifiers for greenspace, lighting, commercial areas
     pub nearby_amenities: usize,
 }
+
+impl Edge{
+    pub fn apply_elevation<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> f32{
+        let first_node = self.geometry[0];
+        let second_node = self.geometry[1];
+        let first_node_height = elevation_data.get_height_for_lon_lat(first_node.lat as f32/1e7, first_node.lon as f32/1e7).unwrap();
+        let second_node_height = elevation_data.get_height_for_lon_lat(second_node.lat as f32/1e7, second_node.lon as f32/1e7).unwrap();
+        let slope = (second_node_height -  first_node_height) / self.length_meters as f32;
+        slope
+    }
+}
+
