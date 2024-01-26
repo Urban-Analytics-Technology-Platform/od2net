@@ -1,5 +1,4 @@
 use std::io::BufWriter;
-use std::io::BufReader;
 use std::process::Command;
 
 use anyhow::{bail, Result};
@@ -80,17 +79,28 @@ fn main() -> Result<()> {
                 } else {
                     osm_xml_path
                 };
-                
-                let dem_file_path = format!("directory/input/{}", config.dem);
-
+                 
                 println!("That failed ({err}), so generating it from {osm_path}");
-                let network = od2net::network::Network::make_from_osm(
-                    &fs_err::read(osm_path)?,
-                    &config.lts,
-                    &mut config.cost,
-                    &mut timer,
-                    Some(BufReader::new(fs_err::File::open(dem_file_path)?.into())),
-                )?;
+                let dem_file_path = format!("{directory}/input/{}", config.dem);
+                let network = if fs_err::metadata(&dem_file_path).is_ok() { 
+                    println!("Dem file detected so elevations will be calculated"); 
+                    od2net::network::Network::make_from_osm(
+                        &fs_err::read(osm_path)?,
+                        &config.lts,
+                        &mut config.cost,
+                        &mut timer,
+                        Some(fs_err::read(&dem_file_path)?.into_boxed_slice()),
+                    )?
+                } else {
+                    println!("No Dem file detected, no elevations will be calculated");
+                    od2net::network::Network::make_from_osm(
+                        &fs_err::read(osm_path)?,
+                        &config.lts,
+                        &mut config.cost,
+                        &mut timer,
+                        None,
+                    )?
+                };
 
                 timer.start(format!("Saving to {bin_path}"));
                 let writer = BufWriter::new(File::create(bin_path)?);

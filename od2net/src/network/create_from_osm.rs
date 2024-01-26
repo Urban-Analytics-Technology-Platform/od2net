@@ -1,11 +1,7 @@
 use std::{
     collections::HashMap,
-    io::BufReader,
-    io::Read,
-    io::Seek,
+    io::Cursor,
 };
-
-use std::fs::File;
 
 use anyhow::Result;
 use elevation::GeoTiffElevation;
@@ -30,7 +26,7 @@ impl Network {
         lts: &LtsMapping,
         cost: &mut CostFunction,
         timer: &mut Timer,
-        dem_input_buffer: Option<BufReader<std::fs::File>>,
+        dem_input_buffer: Option<Box<[u8]>>,
     ) -> Result<Network> {
         timer.start("Make Network from xml or pbf");
         timer.start("Scrape OSM data");
@@ -92,9 +88,12 @@ impl Network {
         network.recalculate_cost(cost)?;
         timer.stop();
 
-        timer.start("Calculate elevation for all edges");
-        let geo_tiff = GeoTiffElevation::new(dem_input_buffer.unwrap());
-        timer.stop();
+        if let Some(buffer) = dem_input_buffer {
+            timer.start("Calculate elevation for all edges");
+            let mut geo_tiff = GeoTiffElevation::new(Cursor::new(buffer));
+            network.calculate_elevation(&mut geo_tiff)?;
+            timer.stop();
+        }
 
         timer.stop();
         Ok(network)
@@ -117,13 +116,21 @@ impl Network {
         Ok(())
     }
 
-    pub fn calculate_elavation(&mut self, elevation_data: &GeoTiffElevation<BufReader<File>>){
+    pub fn calculate_elevation(&mut self, elevation_data: &mut GeoTiffElevation<Cursor<Box<[u8]>>>) -> Result<()>{
         let progress = utils::progress_bar_for_count(self.edges.len());
         let all_keys: Vec<(NodeID, NodeID)> = self.edges.keys().cloned().collect();
         for key_batch in all_keys.chunks(1000) {
-            let input_batch: Vec<&Edge> = key_batch.iter().map(|e| &self.edges[&e]).collect();
-            
+            let edge_elevations: Vec<f32> = key_batch.iter().map(|e| {
+                let slope = self.edges[&e].apply_elevation(elevation_data);
+                slope
+            }).collect();
+            for (key, elevation) in key_batch.into_iter().zip(edge_elevations) {
+                progress.inc(1);
+                self.edges.get_mut(&key).unwrap().slope = elevation;
+            }
         }
+
+        Ok(())
     }
 }
 
