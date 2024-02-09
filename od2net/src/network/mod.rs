@@ -134,7 +134,7 @@ pub struct Edge {
 }
 
 impl Edge{
-    pub fn apply_elevation<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<f32> {
+    pub fn apply_elevation<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<(f32, f32)> {
         let slope = if let Some(slope) = self.get_slope(elevation_data){
             slope
         } else {
@@ -145,7 +145,7 @@ impl Edge{
         
         let slope_factor = Edge::calculate_slope_factor(slope, length);
 
-        Some(slope_factor)
+        Some((slope, slope_factor))
     }
     
     fn calculate_slope_factor(slope: f32, length: f32) -> f32 {
