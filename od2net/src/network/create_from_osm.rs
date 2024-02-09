@@ -120,7 +120,7 @@ impl Network {
         let progress = utils::progress_bar_for_count(self.edges.len());
         let all_keys: Vec<(NodeID, NodeID)> = self.edges.keys().cloned().collect();
         for key_batch in all_keys.chunks(1000) {
-            let edge_elevations: Vec<f32> = key_batch.iter().map(|e| {
+            let edge_elevations: Vec<Option<f32>> = key_batch.iter().map(|e| {
                 let slope = self.edges[&e].apply_elevation(elevation_data);
                 slope
             }).collect();
@@ -235,8 +235,8 @@ fn split_edges(nodes: HashMap<NodeID, Position>, ways: HashMap<WayID, Way>) -> N
                         length_meters,
                         // Temporary
                         cost: None,
-                        slope: 0.0,
-                        slope_factor: 0.0,
+                        slope: None,
+                        slope_factor: None,
                         lts: LTS::NotAllowed,
                         nearby_amenities: 0,
                     },
