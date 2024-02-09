@@ -201,3 +201,29 @@ impl Edge{
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::Edge;
+
+    #[test]
+    fn speed_slope_test() {
+        let speed_flat = 15.0;
+        let slope = 3.0;
+        let length = 50.0;
+        let slope_factor = Edge::calculate_slope_factor(slope, length);
+        let slope_speed = speed_flat/slope_factor;
+        let delta = slope_speed - 12.67241;
+        assert!(delta < f32::EPSILON);
+
+        let slope = -8.0;
+        let length = 100.0;
+        let slope_factor = Edge::calculate_slope_factor(slope, length);
+        let slope_speed = speed_flat/slope_factor;
+        let delta = slope_speed - 37.17009;
+        assert!(delta < f32::EPSILON);
+
+
+    }
+}
+
+
