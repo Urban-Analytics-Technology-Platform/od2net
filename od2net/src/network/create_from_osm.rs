@@ -120,13 +120,19 @@ impl Network {
         let progress = utils::progress_bar_for_count(self.edges.len());
         let all_keys: Vec<(NodeID, NodeID)> = self.edges.keys().cloned().collect();
         for key_batch in all_keys.chunks(1000) {
-            let edge_elevations: Vec<Option<f32>> = key_batch.iter().map(|e| {
+            let edge_elevations: Vec<Option<(f32, f32)>> = key_batch.iter().map(|e| {
                 let slope = self.edges[&e].apply_elevation(elevation_data);
                 slope
             }).collect();
             for (key, elevation) in key_batch.into_iter().zip(edge_elevations) {
                 progress.inc(1);
-                self.edges.get_mut(&key).unwrap().slope = elevation;
+                let slope_metrics = if let Some(slope_metric_data) = elevation {
+                    (Some(slope_metric_data.0), Some(slope_metric_data.1))
+                } else {
+                    (None, None)
+                };
+                self.edges.get_mut(&key).unwrap().slope = slope_metrics.0;
+                self.edges.get_mut(&key).unwrap().slope = slope_metrics.1;
             }
         }
 
