@@ -54,7 +54,7 @@ impl JsNetwork {
             info!("Dem file detected got {} bytes", bytes.len());
         } else {
             info!("No dem file detected!");
-        }
+        };
         let mut timer = Timer::new();
         // TODO Default config
         let network = Network::make_from_osm(

@@ -82,25 +82,21 @@ fn main() -> Result<()> {
                  
                 println!("That failed ({err}), so generating it from {osm_path}");
                 let dem_file_path = format!("{directory}/input/{}", config.dem);
-                let network = if fs_err::metadata(&dem_file_path).is_ok() { 
+                let file_data = if let Ok(byte_vector) = fs_err::read(&dem_file_path) {
                     println!("Dem file detected so elevations will be calculated"); 
-                    od2net::network::Network::make_from_osm(
-                        &fs_err::read(osm_path)?,
-                        &config.lts,
-                        &mut config.cost,
-                        &mut timer,
-                        Some(fs_err::read(&dem_file_path)?.into_boxed_slice()),
-                    )?
+                    Some(byte_vector.into_boxed_slice()) 
                 } else {
                     println!("No Dem file detected, no elevations will be calculated");
-                    od2net::network::Network::make_from_osm(
-                        &fs_err::read(osm_path)?,
-                        &config.lts,
-                        &mut config.cost,
-                        &mut timer,
-                        None,
-                    )?
+                    None
                 };
+
+                let network = od2net::network::Network::make_from_osm(
+                    &fs_err::read(osm_path)?,
+                    &config.lts,
+                    &mut config.cost,
+                    &mut timer,
+                    file_data,
+                )?;
 
                 timer.start(format!("Saving to {bin_path}"));
                 let writer = BufWriter::new(File::create(bin_path)?);

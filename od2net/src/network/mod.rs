@@ -118,8 +118,9 @@ pub struct Edge {
     pub way_id: WayID,
     pub tags: Tags,
     geometry: Vec<Position>,
-    pub slope: f32,
-    pub slope_factor: f32,
+    // slope as a percentage.
+    pub slope: Option<f32>,
+    pub slope_factor: Option<f32>,
     // Storing the derived field is negligible for file size
     pub length_meters: f64,
     // LTS is often incorporated in cost, but is also used for visualization. It's useful to
@@ -133,13 +134,70 @@ pub struct Edge {
 }
 
 impl Edge{
-    pub fn apply_elevation<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> f32{
+    pub fn apply_elevation<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<f32> {
+        let slope = if let Some(slope) = self.get_slope(elevation_data){
+            slope
+        } else {
+            return None
+        };
+
+        let length = self.length_meters as f32;
+        
+        let slope_factor = Edge::calculate_slope_factor(slope, length);
+
+        Some(slope_factor)
+    }
+    
+    fn calculate_slope_factor(slope: f32, length: f32) -> f32 {
+    
+        let g = match (slope, length) {
+            (x,y) if 13.0 >= x && x > 10.0 && y > 15.0 => {
+                4.0
+            },
+            (x,y) if x < 8.0 && x <= 10.0 && y > 30.0 => {
+                4.5
+            },
+            (x,y) if x < 5.0 && x <= 8.0 && y > 60.0 => {
+                5.0
+            },
+            (x,y) if x < 3.0 && x <= 5.0 && y > 120.0=> {
+                6.0
+            },
+            _ => {
+                7.0
+            }
+        };
+
+        let slope_factor = match slope {
+            x if x < -30.0 => { 1.5 },
+            x if x < 0.0 && x >= -30.0 => { 
+                1.0 + 2.0*0.7*slope/13.0 + 0.7 * slope * slope /13.0 /13.0
+            },
+            x if x <= 20.0 && x >= 0.0 => {
+                1.0 + slope * slope / g / g
+            },
+            _ => { 10.0 }
+        };
+        
+        slope_factor
+    }  
+
+    fn get_slope<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<f32> {
         let first_node = self.geometry[0];
         let second_node = self.geometry[1];
-        let first_node_height = elevation_data.get_height_for_lon_lat(first_node.lat as f32/1e7, first_node.lon as f32/1e7).unwrap();
-        let second_node_height = elevation_data.get_height_for_lon_lat(second_node.lat as f32/1e7, second_node.lon as f32/1e7).unwrap();
-        let slope = (second_node_height -  first_node_height) / self.length_meters as f32;
-        slope
+        
+        let first_node_height = match elevation_data.get_height_for_lon_lat(first_node.lat as f32/1e7, first_node.lon as f32/1e7) {
+            Some(elevation) => elevation,
+            None => return None
+        };
+        
+        let second_node_height = match elevation_data.get_height_for_lon_lat(second_node.lat as f32/1e7, second_node.lon as f32/1e7) {
+            Some(elevation) => elevation,
+            None => return None
+        };
+        
+        let slope = (second_node_height -  first_node_height) / self.length_meters as f32 * 100.0;
+        Some(slope)
     }
 }
 
