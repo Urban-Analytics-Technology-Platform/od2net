@@ -119,8 +119,8 @@ pub struct Edge {
     pub tags: Tags,
     geometry: Vec<Position>,
     // slope as a percentage.
-    pub slope: Option<f32>,
-    pub slope_factor: Option<f32>,
+    pub slope: Option<f64>,
+    pub slope_factor: Option<(f64, f64)>,
     // Storing the derived field is negligible for file size
     pub length_meters: f64,
     // LTS is often incorporated in cost, but is also used for visualization. It's useful to
@@ -133,22 +133,23 @@ pub struct Edge {
     pub nearby_amenities: usize,
 }
 
-impl Edge{
-    pub fn apply_elevation<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<(f32, f32)> {
+impl Edge {
+    pub fn apply_elevation<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<(f64, (f64, f64))> {
         let slope = if let Some(slope) = self.get_slope(elevation_data){
             slope
         } else {
             return None
         };
 
-        let length = self.length_meters as f32;
+        let length = self.length_meters;
         
-        let slope_factor = Edge::calculate_slope_factor(slope, length);
+        let forward_slope_factor = Edge::calculate_slope_factor(slope, length);
+        let backward_slope_factor = Edge::calculate_slope_factor(-slope, length);
 
-        Some((slope, slope_factor))
+        Some((slope, (forward_slope_factor, backward_slope_factor)))
     }
     
-    fn calculate_slope_factor(slope: f32, length: f32) -> f32 {
+    fn calculate_slope_factor(slope: f64, length: f64) -> f64 {
     
         let g = match (slope, length) {
             (x,y) if 13.0 >= x && x > 10.0 && y > 15.0 => {
@@ -182,7 +183,7 @@ impl Edge{
         slope_factor
     }  
 
-    fn get_slope<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<f32> {
+    fn get_slope<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<f64> {
         let first_node = self.geometry[0];
         let second_node = self.geometry[1];
         
@@ -197,7 +198,7 @@ impl Edge{
         };
         
         let slope = (second_node_height -  first_node_height) / self.length_meters as f32 * 100.0;
-        Some(slope)
+        Some(slope.into())
     }
 }
 
@@ -213,14 +214,14 @@ mod tests {
         let slope_factor = Edge::calculate_slope_factor(slope, length);
         let slope_speed = speed_flat/slope_factor;
         let delta = slope_speed - 12.67241;
-        assert!(delta < f32::EPSILON);
+        assert!(delta < f64::EPSILON);
 
         let slope = -8.0;
         let length = 100.0;
         let slope_factor = Edge::calculate_slope_factor(slope, length);
         let slope_speed = speed_flat/slope_factor;
         let delta = slope_speed - 37.17009;
-        assert!(delta < f32::EPSILON);
+        assert!(delta < f64::EPSILON);
 
 
     }
