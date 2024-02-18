@@ -84,16 +84,16 @@ impl Network {
         }
         timer.stop();
 
-        timer.start("Calculate cost for all edges");
-        network.recalculate_cost(cost)?;
-        timer.stop();
-
         if let Some(buffer) = dem_input_buffer {
             timer.start("Calculate elevation for all edges");
             let mut geo_tiff = GeoTiffElevation::new(Cursor::new(buffer));
             network.calculate_elevation(&mut geo_tiff)?;
             timer.stop();
         }
+        
+        timer.start("Calculate cost for all edges");
+        network.recalculate_cost(cost)?;
+        timer.stop();
 
         timer.stop();
         Ok(network)
