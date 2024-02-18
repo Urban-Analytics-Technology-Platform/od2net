@@ -9,7 +9,7 @@ use crate::config::{CostFunction, GeneralizedCostFunction};
 use crate::network::Edge;
 use lts::LTS;
 
-pub fn calculate_batch(cost: &CostFunction, input_batch: Vec<&Edge>) -> Vec<Option<usize>> {
+pub fn calculate_batch(cost: &CostFunction, input_batch: Vec<&Edge>) -> Vec<Option<(usize, usize)>> {
     match cost {
         CostFunction::Distance => input_batch.into_iter().map(distance).collect(),
         CostFunction::OsmHighwayType(ref weights) => input_batch
@@ -29,21 +29,44 @@ pub fn calculate_batch(cost: &CostFunction, input_batch: Vec<&Edge>) -> Vec<Opti
             .into_iter()
             .map(|e| generalized(e, params))
             .collect(),
-        CostFunction::ExternalCommand(command) => external_command(command, input_batch).unwrap(),
+        // Was not sure how to add slope_factor to external commands, I also 
+        // assume that user who use external command will do it themselves?
+        CostFunction::ExternalCommand(command) => external_command(command, input_batch)
+            .unwrap()
+            .into_iter()
+            .map(
+                |raw_weight| if let Some(weight) = raw_weight {
+                    Some((weight, weight))
+                } else {
+                    None
+                }
+            )
+            .collect(),
     }
 }
 
-fn distance(edge: &Edge) -> Option<usize> {
+fn distance(edge: &Edge) -> Option<(usize, usize) > {
     by_lts(edge, 1.0, 1.0, 1.0, 1.0)
 }
 
-fn osm_highway_type(edge: &Edge, weights: &HashMap<String, f64>) -> Option<usize> {
-    let weight = weights.get(edge.tags.get("highway").unwrap())?;
-    Some((weight * edge.length_meters).round() as usize)
+fn osm_highway_type(edge: &Edge, weights: &HashMap<String, f64>) -> Option<(usize, usize)> {
+    let raw_weight = weights.get(edge.tags.get("highway").unwrap())?;
+    let slope_factor = if let Some(slope_factor) = edge.slope_factor {
+        slope_factor 
+    } else {
+        (1., 1.)
+    };
+
+    let weight = (
+        (raw_weight * slope_factor.0 * edge.length_meters).round() as usize, 
+        (raw_weight * slope_factor.1 * edge.length_meters).round() as usize
+        );
+
+    Some(weight)
 }
 
-fn by_lts(edge: &Edge, lts1: f64, lts2: f64, lts3: f64, lts4: f64) -> Option<usize> {
-    let weight = match edge.lts {
+fn by_lts(edge: &Edge, lts1: f64, lts2: f64, lts3: f64, lts4: f64) -> Option<(usize, usize)> {
+    let raw_weight = match edge.lts {
         LTS::NotAllowed => {
             return None;
         }
@@ -52,10 +75,22 @@ fn by_lts(edge: &Edge, lts1: f64, lts2: f64, lts3: f64, lts4: f64) -> Option<usi
         LTS::LTS3 => lts3,
         LTS::LTS4 => lts4,
     };
-    Some((weight * edge.length_meters).round() as usize)
+
+    let slope_factor = if let Some(slope_factor) = edge.slope_factor {
+        slope_factor 
+    } else {
+        (1., 1.)
+    };
+
+    let weight = (
+        (raw_weight * slope_factor.0 * edge.length_meters).round() as usize, 
+        (raw_weight * slope_factor.1 * edge.length_meters).round() as usize
+        );
+    
+    Some(weight)
 }
 
-fn generalized(edge: &Edge, params: &GeneralizedCostFunction) -> Option<usize> {
+fn generalized(edge: &Edge, params: &GeneralizedCostFunction) -> Option<(usize, usize)> {
     let lts_weight = match edge.lts {
         LTS::NotAllowed => {
             return None;
@@ -75,12 +110,27 @@ fn generalized(edge: &Edge, params: &GeneralizedCostFunction) -> Option<usize> {
     // TODO For now, every edge gets the bad weight
     let greenspace_weight = 1.0;
 
+    let slope_factor = if let Some(slope_factor) = edge.slope_factor {
+        slope_factor 
+    } else {
+        (1., 1.)
+    };
+    
     // Use the tradeoffs to get a final penalty
-    let penalty = (params.tradeoff_lts * lts_weight)
+    let forward_penalty = (params.tradeoff_lts * lts_weight * slope_factor.0)
+        + (params.tradeoff_amenities * amenities_weight)
+        + (params.tradeoff_greenspace * greenspace_weight);
+    
+    let backward_penalty = (params.tradeoff_lts * lts_weight * slope_factor.0)
         + (params.tradeoff_amenities * amenities_weight)
         + (params.tradeoff_greenspace * greenspace_weight);
 
-    Some((penalty * edge.length_meters).round() as usize)
+    let penalty = (
+        (forward_penalty * edge.length_meters).round() as usize,
+        (backward_penalty * edge.length_meters).round() as usize,
+        );  
+    
+    Some(penalty)
 }
 
 fn external_command(command: &str, input_batch: Vec<&Edge>) -> Result<Vec<Option<usize>>> {
