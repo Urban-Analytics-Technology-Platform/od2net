@@ -193,10 +193,10 @@ pub fn just_build_ch(network: &Network, timer: &mut Timer) -> PreparedCH {
         let node1 = node_map.get_or_insert(*node1);
         let node2 = node_map.get_or_insert(*node2);
 
-        if let Some(cost) = edge.cost {
+        if let Some((forward_cost, backward_cost)) = edge.cost {
             // Everything bidirectional for now!
-            input_graph.add_edge(node1, node2, cost);
-            input_graph.add_edge(node2, node1, cost);
+            input_graph.add_edge(node1, node2, forward_cost);
+            input_graph.add_edge(node2, node1, backward_cost);
         }
     }
     input_graph.freeze();

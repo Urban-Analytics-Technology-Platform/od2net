@@ -127,7 +127,7 @@ pub struct Edge {
     // conceptually separate these.
     pub lts: LTS,
     // TODO Option is weird -- we should upfront filter this out.
-    pub cost: Option<usize>,
+    pub cost: Option<(usize, usize)>,
     // TODO Maybe generalize as a cost and a bunch of properties per edge -- like proximity
     // modifiers for greenspace, lighting, commercial areas
     pub nearby_amenities: usize,
