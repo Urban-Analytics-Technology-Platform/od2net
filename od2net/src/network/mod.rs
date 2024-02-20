@@ -184,15 +184,15 @@ impl Edge {
     }  
 
     fn get_slope<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<f64> {
-        let first_node = self.geometry[0];
-        let second_node = self.geometry[1];
-        
-        let first_node_height = match elevation_data.get_height_for_lon_lat(first_node.lat as f32/1e7, first_node.lon as f32/1e7) {
+        let first_node = self.geometry[0].to_degrees();
+        let second_node = self.geometry[1].to_degrees();
+
+        let first_node_height = match elevation_data.get_height_for_lon_lat(first_node.0 as f32, first_node.1 as f32) {
             Some(elevation) => elevation,
             None => return None
         };
-        
-        let second_node_height = match elevation_data.get_height_for_lon_lat(second_node.lat as f32/1e7, second_node.lon as f32/1e7) {
+
+        let second_node_height = match elevation_data.get_height_for_lon_lat(second_node.0 as f32, second_node.1 as f32) {
             Some(elevation) => elevation,
             None => return None
         };

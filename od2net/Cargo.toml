@@ -36,3 +36,4 @@ instant = "0.1.12"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
+

@@ -13,5 +13,5 @@
   "cost": "Distance",
   "uptake": "Identity",
   "lts": "BikeOttawa",
-  "dem": " "
+  "dem": "UK-dem-50-4326.tif"
 }
