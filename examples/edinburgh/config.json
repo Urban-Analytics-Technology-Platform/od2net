@@ -12,5 +12,6 @@
   },
   "cost": "Distance",
   "uptake": "GoDutchPCT",
-  "lts": "BikeOttawa"
+  "lts": "BikeOttawa",
+  "dem": "UK-dem-50m-4326.tif"
 }
