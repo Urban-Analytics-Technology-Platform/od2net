@@ -109,7 +109,7 @@ impl JsNetwork {
                 destinations_path: "".to_string(),
             },
             cost: self.last_cost.clone(),
-            dem: "".to_string(),
+            dem: None,
             uptake: od2net::config::Uptake::Identity,
             lts: od2net::config::LtsMapping::BikeOttawa,
         };

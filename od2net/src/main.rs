@@ -81,14 +81,20 @@ fn main() -> Result<()> {
                 };
                  
                 println!("That failed ({err}), so generating it from {osm_path}");
-                let dem_file_path = format!("{directory}/input/{}", config.dem);
-                let file_data = if let Ok(byte_vector) = fs_err::read(&dem_file_path) {
-                    println!("Dem file detected so elevations will be calculated"); 
-                    Some(byte_vector.into_boxed_slice()) 
+                let file_data = if let Some(ref dem) = config.dem {
+                    let dem_file_path = format!("{directory}/input/{}", dem);
+                    if let Ok(byte_vector) = fs_err::read(&dem_file_path) {
+                        println!("Dem file detected so elevations will be calculated"); 
+                        Some(byte_vector.into_boxed_slice()) 
+                    } else {
+                        println!("No Dem file detected, no elevations will be calculated");
+                        None
+                    }
                 } else {
                     println!("No Dem file detected, no elevations will be calculated");
                     None
                 };
+
 
                 let network = od2net::network::Network::make_from_osm(
                     &fs_err::read(osm_path)?,
