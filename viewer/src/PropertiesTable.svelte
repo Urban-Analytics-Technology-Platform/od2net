@@ -22,9 +22,14 @@
 {/if}
 {#if properties.cost}
   <div>
-    Cost: {properties.cost} (<b
-      >{(properties.cost / properties.length).toFixed(2)}</b
-    >x the length)
+    Cost: [{properties.cost[1]}, {properties.cost[2]}] (<b
+      >[{(properties.cost[1] / properties.length).toFixed(2)}, {(properties.cost[2] / properties.length).toFixed(2)}]</b
+    > x the length)
+  </div>
+{/if}
+{#if properties.slope}
+  <div>
+    Slope: [{properties.slope.toFixed(2)}, {-properties.slope.toFixed(2)}]
   </div>
 {/if}
 <div>Nearby amenities: <b>{properties.nearby_amenities}</b></div>

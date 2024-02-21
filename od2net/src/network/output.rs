@@ -68,6 +68,9 @@ impl Edge {
                 "length".to_string(),
                 serde_json::to_value(self.length_meters).unwrap(),
             );
+            if let Some(slope) = self.slope {
+                properties.insert("slope".to_string(), serde_json::to_value(slope).unwrap());
+            };  
         }
         properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
         properties.insert(
