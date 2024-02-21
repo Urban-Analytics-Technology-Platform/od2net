@@ -16,7 +16,7 @@ pub struct InputConfig {
 
     pub lts: LtsMapping,
 
-    pub dem: String, 
+    pub dem: Option<String>, 
 }
 
 #[derive(Clone, Serialize, Deserialize)]
