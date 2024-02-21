@@ -20,10 +20,10 @@
 {#if properties.count}
   <div>Count: <b>{properties.count.toFixed(2)}</b></div>
 {/if}
-{#if properties.cost}
+{#if properties.forward_cost}
   <div>
-    Cost: [{properties.cost[1]}, {properties.cost[2]}] (<b
-      >[{(properties.cost[1] / properties.length).toFixed(2)}, {(properties.cost[2] / properties.length).toFixed(2)}]</b
+    Cost: [{properties.forward_cost}, {properties.backward_cost}] (<b
+      >[{(properties.forward_cost / properties.length).toFixed(2)}, {(properties.backward_cost / properties.length).toFixed(2)}]</b
     > x the length)
   </div>
 {/if}
