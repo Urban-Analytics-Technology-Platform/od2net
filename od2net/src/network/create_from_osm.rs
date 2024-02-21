@@ -109,7 +109,15 @@ impl Network {
             let output_batch = plugins::cost::calculate_batch(cost, input_batch);
             for (key, cost) in key_batch.into_iter().zip(output_batch) {
                 progress.inc(1);
-                self.edges.get_mut(&key).unwrap().cost = cost;
+                
+                let output_cost = if let Some((forward_cost, backward_cost)) = cost {
+                    (Some(forward_cost), Some(backward_cost))
+                } else {
+                    (None, None)
+                };
+
+                self.edges.get_mut(&key).unwrap().forward_cost = output_cost.0;
+                self.edges.get_mut(&key).unwrap().backward_cost = output_cost.1;
             }
         }
 
@@ -249,7 +257,8 @@ fn split_edges(nodes: HashMap<NodeID, Position>, ways: HashMap<WayID, Way>) -> N
                         geometry: std::mem::take(&mut pts),
                         length_meters,
                         // Temporary
-                        cost: None,
+                        forward_cost: None,
+                        backward_cost: None,
                         slope: None,
                         slope_factor: None,
                         lts: LTS::NotAllowed,
