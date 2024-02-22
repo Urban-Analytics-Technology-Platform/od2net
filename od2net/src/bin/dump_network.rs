@@ -25,6 +25,7 @@ fn main() -> Result<()> {
         &config.lts,
         &mut config.cost,
         &mut timer,
+        None,
     )?;
 
     fs_err::write("network.geojson", &network.to_debug_geojson()?)?;
