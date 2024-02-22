@@ -32,9 +32,7 @@ pub fn calculate_batch(cost: &CostFunction, input_batch: Vec<&Edge>) -> Vec<Opti
         // Was not sure how to add slope_factor to external commands, I also 
         // assume that user who use external command will do it themselves?
         CostFunction::ExternalCommand(command) => external_command(command, input_batch)
-            .unwrap()
-            .into_iter()
-            .collect(),
+            .unwrap(),
     }
 }
 
@@ -44,11 +42,7 @@ fn distance(edge: &Edge) -> Option<(usize, usize) > {
 
 fn osm_highway_type(edge: &Edge, weights: &HashMap<String, f64>) -> Option<(usize, usize)> {
     let raw_weight = weights.get(edge.tags.get("highway").unwrap())?;
-    let slope_factor = if let Some(slope_factor) = edge.slope_factor {
-        slope_factor 
-    } else {
-        (1., 1.)
-    };
+    let slope_factor = edge.slope_factor.unwrap_or((1., 1.));
 
     let weight = (
         (raw_weight * slope_factor.0 * edge.length_meters).round() as usize, 
@@ -69,11 +63,7 @@ fn by_lts(edge: &Edge, lts1: f64, lts2: f64, lts3: f64, lts4: f64) -> Option<(us
         LTS::LTS4 => lts4,
     };
 
-    let slope_factor = if let Some(slope_factor) = edge.slope_factor {
-        slope_factor 
-    } else {
-        (1., 1.)
-    };
+    let slope_factor = edge.slope_factor.unwrap_or((1.,1.));
 
     let weight = (
         (raw_weight * slope_factor.0 * edge.length_meters).round() as usize, 
@@ -103,11 +93,7 @@ fn generalized(edge: &Edge, params: &GeneralizedCostFunction) -> Option<(usize, 
     // TODO For now, every edge gets the bad weight
     let greenspace_weight = 1.0;
 
-    let slope_factor = if let Some(slope_factor) = edge.slope_factor {
-        slope_factor 
-    } else {
-        (1., 1.)
-    };
+    let slope_factor = edge.slope_factor.unwrap_or((1.,1.));
     
     // Use the tradeoffs to get a final penalty
     let forward_penalty = (params.tradeoff_lts * lts_weight * slope_factor.0)
