@@ -83,15 +83,8 @@ fn main() -> Result<()> {
                 println!("That failed ({err}), so generating it from {osm_path}");
                 let dem_geotiff = if let Some(ref dem) = config.dem {
                     let dem_file_path = format!("{directory}/input/{}", dem);
-                    if let Ok(byte_vector) = fs_err::read(&dem_file_path) {
-                        println!("Dem file detected so elevations will be calculated"); 
-                        Some(byte_vector) 
-                    } else {
-                        println!("No Dem file detected, no elevations will be calculated");
-                        None
-                    }
+                    Some(fs_err::read(&dem_file_path)?) 
                 } else {
-                    println!("No Dem file detected, no elevations will be calculated");
                     None
                 };
 
