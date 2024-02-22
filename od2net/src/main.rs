@@ -85,7 +85,7 @@ fn main() -> Result<()> {
                     let dem_file_path = format!("{directory}/input/{}", dem);
                     if let Ok(byte_vector) = fs_err::read(&dem_file_path) {
                         println!("Dem file detected so elevations will be calculated"); 
-                        Some(byte_vector.into_boxed_slice()) 
+                        Some(byte_vector) 
                     } else {
                         println!("No Dem file detected, no elevations will be calculated");
                         None
