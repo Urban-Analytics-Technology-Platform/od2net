@@ -13,7 +13,7 @@ RUN git clone https://github.com/felt/tippecanoe.git
 RUN cd tippecanoe && make -j
 
 FROM debian:bookworm-slim
-COPY --from=builder /app/target/release/od2net /usr/local/bin/od2net
+COPY --from=builder /app/target/release/main /usr/local/bin/od2net
 COPY --from=builder /app/tippecanoe/tippecanoe /usr/local/bin/tippecanoe
 # Need a dynamic library
 RUN apt-get update
