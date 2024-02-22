@@ -26,7 +26,7 @@ impl Network {
         lts: &LtsMapping,
         cost: &mut CostFunction,
         timer: &mut Timer,
-        dem_input_buffer: Option<Box<[u8]>>,
+        dem_input_buffer: Option<Vec<u8>>,
     ) -> Result<Network> {
         timer.start("Make Network from xml or pbf");
         timer.start("Scrape OSM data");
@@ -124,7 +124,7 @@ impl Network {
         Ok(())
     }
 
-    pub fn calculate_elevation(&mut self, elevation_data: &mut GeoTiffElevation<Cursor<Box<[u8]>>>) -> Result<()>{
+    pub fn calculate_elevation(&mut self, elevation_data: &mut GeoTiffElevation<Cursor<Vec<u8>>>) -> Result<()>{
         let progress = utils::progress_bar_for_count(self.edges.len());
         let mut elevations_obtained = 0;
         let all_keys: Vec<(NodeID, NodeID)> = self.edges.keys().cloned().collect();

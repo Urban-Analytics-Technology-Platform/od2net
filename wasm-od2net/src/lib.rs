@@ -40,7 +40,7 @@ struct Input {
 impl JsNetwork {
     /// Call with bytes of an osm.pbf or osm.xml string
     #[wasm_bindgen(constructor)]
-    pub fn new(input_bytes: &[u8], dem_input_buffer: Option<Box<[u8]>>) -> Result<JsNetwork, JsValue> {
+    pub fn new(input_bytes: &[u8]) -> Result<JsNetwork, JsValue> {
         // Panics shouldn't happen, but if they do, console.log them.
         console_error_panic_hook::set_once();
         
@@ -49,12 +49,6 @@ impl JsNetwork {
         });
        
         info!("Got {} bytes, parsing as an osm.pbf", input_bytes.len());
-        if dem_input_buffer.is_some() {
-            let bytes = dem_input_buffer.as_ref().unwrap();
-            info!("Dem file detected got {} bytes", bytes.len());
-        } else {
-            info!("No dem file detected!");
-        };
         let mut timer = Timer::new();
         // TODO Default config
         let network = Network::make_from_osm(
@@ -62,7 +56,7 @@ impl JsNetwork {
             &od2net::config::LtsMapping::BikeOttawa,
             &mut CostFunction::Distance,
             &mut timer,
-            dem_input_buffer,
+            None,
         )
         .map_err(err_to_js)?;
 
