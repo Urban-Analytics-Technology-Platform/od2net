@@ -79,15 +79,14 @@ fn main() -> Result<()> {
                 } else {
                     osm_xml_path
                 };
-                 
+
                 println!("That failed ({err}), so generating it from {osm_path}");
                 let dem_geotiff = if let Some(ref dem) = config.dem {
                     let dem_file_path = format!("{directory}/input/{}", dem);
-                    Some(fs_err::read(&dem_file_path)?) 
+                    Some(fs_err::read(&dem_file_path)?)
                 } else {
                     None
                 };
-
 
                 let network = od2net::network::Network::make_from_osm(
                     &fs_err::read(osm_path)?,

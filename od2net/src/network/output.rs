@@ -65,8 +65,14 @@ impl Edge {
         if let (Some(forward_cost), Some(backward_cost)) = (self.forward_cost, self.backward_cost) {
             // Either both costs are defined or none of them are so the expression above should
             // be enough.
-            properties.insert("forward_cost".to_string(), serde_json::to_value(forward_cost).unwrap());
-            properties.insert("backward_cost".to_string(), serde_json::to_value(backward_cost).unwrap());
+            properties.insert(
+                "forward_cost".to_string(),
+                serde_json::to_value(forward_cost).unwrap(),
+            );
+            properties.insert(
+                "backward_cost".to_string(),
+                serde_json::to_value(backward_cost).unwrap(),
+            );
             properties.insert(
                 "length".to_string(),
                 serde_json::to_value(self.length_meters).unwrap(),
@@ -76,7 +82,7 @@ impl Edge {
             // slope.
             if let Some(slope) = self.slope {
                 properties.insert("slope".to_string(), serde_json::to_value(slope).unwrap());
-            };  
+            };
         }
 
         properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());

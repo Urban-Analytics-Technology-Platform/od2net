@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    io::Cursor,
-};
+use std::{collections::HashMap, io::Cursor};
 
 use anyhow::Result;
 use elevation::GeoTiffElevation;
@@ -90,7 +87,7 @@ impl Network {
             network.calculate_elevation(&mut geo_tiff)?;
             timer.stop();
         }
-        
+
         timer.start("Calculate cost for all edges");
         network.recalculate_cost(cost)?;
         timer.stop();
@@ -109,20 +106,22 @@ impl Network {
             let output_batch = plugins::cost::calculate_batch(cost, input_batch);
             for (key, cost) in key_batch.into_iter().zip(output_batch) {
                 progress.inc(1);
-                
+
                 if let Some((forward_cost, backward_cost)) = cost {
                     let edge = self.edges.get_mut(&key).unwrap();
                     edge.forward_cost = Some(forward_cost);
                     edge.backward_cost = Some(backward_cost);
-                }; 
-
+                };
             }
         }
 
         Ok(())
     }
 
-    pub fn calculate_elevation(&mut self, elevation_data: &mut GeoTiffElevation<Cursor<Vec<u8>>>) -> Result<()>{
+    pub fn calculate_elevation(
+        &mut self,
+        elevation_data: &mut GeoTiffElevation<Cursor<Vec<u8>>>,
+    ) -> Result<()> {
         let progress = utils::progress_bar_for_count(self.edges.len());
         for (_, edge) in &mut self.edges {
             let elevation_details = edge.apply_elevation(elevation_data);
@@ -130,7 +129,7 @@ impl Network {
                 progress.inc(1);
                 edge.slope = Some(slope);
                 edge.slope_factor = Some(slope_factor);
-            }; 
+            };
         }
 
         Ok(())
@@ -284,4 +283,3 @@ fn build_closest_edge(network: &Network, timer: &mut Timer) -> RTree<EdgeLocatio
     timer.stop();
     rtree
 }
-

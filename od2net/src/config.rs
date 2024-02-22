@@ -16,7 +16,7 @@ pub struct InputConfig {
 
     pub lts: LtsMapping,
 
-    pub dem: Option<String>, 
+    pub dem: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -152,4 +152,3 @@ pub enum LtsMapping {
     /// numbers 0-4, representing the resulting LTS.
     ExternalCommand(String),
 }
-

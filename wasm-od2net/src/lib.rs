@@ -43,11 +43,11 @@ impl JsNetwork {
     pub fn new(input_bytes: &[u8]) -> Result<JsNetwork, JsValue> {
         // Panics shouldn't happen, but if they do, console.log them.
         console_error_panic_hook::set_once();
-        
+
         START.call_once(|| {
             console_log::init_with_level(log::Level::Info).unwrap();
         });
-       
+
         info!("Got {} bytes, parsing as an osm.pbf", input_bytes.len());
         let mut timer = Timer::new();
         // TODO Default config

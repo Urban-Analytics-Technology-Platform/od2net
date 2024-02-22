@@ -23,7 +23,9 @@
 {#if properties.forward_cost}
   <div>
     Cost: [{properties.forward_cost}, {properties.backward_cost}] (<b
-      >[{(properties.forward_cost / properties.length).toFixed(2)}, {(properties.backward_cost / properties.length).toFixed(2)}]</b
+      >[{(properties.forward_cost / properties.length).toFixed(2)}, {(
+        properties.backward_cost / properties.length
+      ).toFixed(2)}]</b
     > x the length)
   </div>
 {/if}
