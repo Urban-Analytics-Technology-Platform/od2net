@@ -103,6 +103,7 @@ fn main() -> Result<()> {
     let requests = od2net::od::generate_requests(
         &config.requests,
         format!("{directory}/input"),
+        &network,
         args.rng_seed,
         &mut timer,
     )?;

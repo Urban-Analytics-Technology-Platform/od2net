@@ -55,6 +55,9 @@ pub enum ODPattern {
     },
     /// Just read GeoJSON LineStrings from this path
     LineStrings(String),
+    /// One trip from every intersection to every other intersection. This is likely a very
+    /// unrealistic pattern.
+    AllPairsIntersections,
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]

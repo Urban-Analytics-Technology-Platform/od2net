@@ -11,12 +11,14 @@ use rstar::{RTree, AABB};
 use serde::Deserialize;
 
 use super::config::{ODPattern, Requests};
+use super::network::Network;
 use super::requests::Request;
 use super::timer::Timer;
 
 pub fn generate_requests(
     config: &Requests,
     input_directory: String,
+    network: &Network,
     rng_seed: u64,
     timer: &mut Timer,
 ) -> Result<Vec<Request>> {
@@ -176,6 +178,15 @@ pub fn generate_requests(
             timer.start(format!("Loading LineString requests from {path}"));
             requests = Request::load_from_geojson(format!("{input_directory}/{path}"))?;
             timer.stop();
+        }
+        ODPattern::AllPairsIntersections => {
+            for from in network.intersections.values() {
+                let (x1, y1) = from.to_degrees();
+                for to in network.intersections.values() {
+                    let (x2, y2) = to.to_degrees();
+                    requests.push(Request { x1, y1, x2, y2 });
+                }
+            }
         }
     }
 
