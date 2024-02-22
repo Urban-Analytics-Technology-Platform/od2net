@@ -138,11 +138,7 @@ pub struct Edge {
 
 impl Edge {
     pub fn apply_elevation<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<(f64, (f64, f64))> {
-        let slope = if let Some(slope) = self.get_slope(elevation_data){
-            slope
-        } else {
-            return None
-        };
+        let slope = self.get_slope(elevation_data)?;
 
         let length = self.length_meters;
         
@@ -157,33 +153,26 @@ impl Edge {
     /// instead of using the slope_factor to divide the speed of a rider, we instead use it
     /// multiplicatively on the cost to augment it before routing 
     fn calculate_slope_factor(slope: f64, length: f64) -> f64 {
-        let g = match (slope, length) {
-            (x,y) if 13.0 >= x && x > 10.0 && y > 15.0 => {
-                4.0
-            },
-            (x,y) if x < 8.0 && x <= 10.0 && y > 30.0 => {
-                4.5
-            },
-            (x,y) if x < 5.0 && x <= 8.0 && y > 60.0 => {
-                5.0
-            },
-            (x,y) if x < 3.0 && x <= 5.0 && y > 120.0=> {
-                6.0
-            },
-            _ => {
-                7.0
-            }
+        let g =  if 13.0 >= slope && slope > 10.0 && length > 15.0  {
+            4.0
+        } else if slope < 8.0 && slope <= 10.0 && length > 30.0 {
+            4.5
+        } else if slope < 5.0 && slope <= 8.0 && length > 60.0 {
+            5.0
+        } else if slope < 3.0 && slope <= 5.0 && length > 120.0 {
+            6.0
+        } else {
+            7.0
         };
 
-        let slope_factor = match slope {
-            x if x < -30.0 => { 1.5 },
-            x if x < 0.0 && x >= -30.0 => { 
-                1.0 + 2.0*0.7*slope/13.0 + 0.7 * slope * slope /13.0 /13.0
-            },
-            x if x <= 20.0 && x >= 0.0 => {
-                1.0 + slope * slope / g / g
-            },
-            _ => { 10.0 }
+        let slope_factor =  if slope < -30.0 { 
+            1.5 
+        } else if slope < 0.0 && slope >= -30.0 { 
+            1.0 + 2.0*0.7*slope/13.0 + 0.7 * slope * slope /13.0 /13.0
+        } else if slope <= 20.0 && slope >= 0.0 {
+            1.0 + slope * slope / g / g
+        } else { 
+            10.0 
         };
         
         slope_factor
@@ -193,15 +182,9 @@ impl Edge {
         let first_node = self.geometry[0].to_degrees();
         let second_node = self.geometry[self.geometry.len() -1].to_degrees();
 
-        let first_node_height = match elevation_data.get_height_for_lon_lat(first_node.0 as f32, first_node.1 as f32) {
-            Some(elevation) => elevation,
-            None => return None
-        };
+        let first_node_height = elevation_data.get_height_for_lon_lat(first_node.0 as f32, first_node.1 as f32)?;
 
-        let second_node_height = match elevation_data.get_height_for_lon_lat(second_node.0 as f32, second_node.1 as f32) {
-            Some(elevation) => elevation,
-            None => return None
-        };
+        let second_node_height = elevation_data.get_height_for_lon_lat(second_node.0 as f32, second_node.1 as f32)?;
         
         let slope = (second_node_height -  first_node_height) / self.length_meters as f32 * 100.0;
         Some(slope.into())
