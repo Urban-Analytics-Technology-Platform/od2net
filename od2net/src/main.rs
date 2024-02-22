@@ -101,7 +101,7 @@ fn main() -> Result<()> {
                     &config.lts,
                     &mut config.cost,
                     &mut timer,
-                    dem_geotif,
+                    dem_geotiff,
                 )?;
 
                 timer.start(format!("Saving to {bin_path}"));
