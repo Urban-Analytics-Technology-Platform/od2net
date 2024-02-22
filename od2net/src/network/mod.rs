@@ -121,7 +121,7 @@ pub struct Edge {
     // slope as a percentage, for example a 3% slope is represented as 3.0.
     pub slope: Option<f64>,
     // slope factor is the value we will multiply the cost by to account for the 
-    // slope of a given edge. 
+    // slope of a given edge. The factor is given for traversing the edge in both directions. 
     pub slope_factor: Option<(f64, f64)>,
     // Storing the derived field is negligible for file size
     pub length_meters: f64,
@@ -191,7 +191,7 @@ impl Edge {
 
     fn get_slope<R: Read + Seek + Send>(&self, elevation_data: &mut GeoTiffElevation<R>) -> Option<f64> {
         let first_node = self.geometry[0].to_degrees();
-        let second_node = self.geometry[1].to_degrees();
+        let second_node = self.geometry[self.geometry.len() -1].to_degrees();
 
         let first_node_height = match elevation_data.get_height_for_lon_lat(first_node.0 as f32, first_node.1 as f32) {
             Some(elevation) => elevation,
