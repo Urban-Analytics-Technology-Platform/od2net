@@ -81,7 +81,7 @@ fn main() -> Result<()> {
                 };
                  
                 println!("That failed ({err}), so generating it from {osm_path}");
-                let dem_config = if let Some(ref dem) = config.dem {
+                let dem_geotiff = if let Some(ref dem) = config.dem {
                     let dem_file_path = format!("{directory}/input/{}", dem);
                     if let Ok(byte_vector) = fs_err::read(&dem_file_path) {
                         println!("Dem file detected so elevations will be calculated"); 
@@ -101,7 +101,7 @@ fn main() -> Result<()> {
                     &config.lts,
                     &mut config.cost,
                     &mut timer,
-                    dem_config,
+                    dem_geotif,
                 )?;
 
                 timer.start(format!("Saving to {bin_path}"));
