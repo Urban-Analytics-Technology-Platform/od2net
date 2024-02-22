@@ -34,13 +34,6 @@ pub fn calculate_batch(cost: &CostFunction, input_batch: Vec<&Edge>) -> Vec<Opti
         CostFunction::ExternalCommand(command) => external_command(command, input_batch)
             .unwrap()
             .into_iter()
-            .map(
-                |raw_weight| if let Some(weight) = raw_weight {
-                    Some((weight, weight))
-                } else {
-                    None
-                }
-            )
             .collect(),
     }
 }
@@ -133,7 +126,7 @@ fn generalized(edge: &Edge, params: &GeneralizedCostFunction) -> Option<(usize, 
     Some(penalty)
 }
 
-fn external_command(command: &str, input_batch: Vec<&Edge>) -> Result<Vec<Option<usize>>> {
+fn external_command(command: &str, input_batch: Vec<&Edge>) -> Result<Vec<Option<(usize, usize)>>> {
     let args: Vec<&str> = command.split(" ").collect();
 
     let mut cmd = Command::new(args[0])
@@ -149,13 +142,15 @@ fn external_command(command: &str, input_batch: Vec<&Edge>) -> Result<Vec<Option
                 lts: edge.lts,
                 nearby_amenities: edge.nearby_amenities,
                 length_meters: edge.length_meters,
+                slope: edge.slope,
+                slope_factor: edge.slope_factor 
             })
             .collect();
         write!(stdin, "{}", serde_json::to_string(&input)?)?;
     }
     // TODO Intermediate string needed?
     let output = String::from_utf8(cmd.wait_with_output()?.stdout)?;
-    let output_batch: Vec<Option<usize>> = serde_json::from_str(&output)?;
+    let output_batch: Vec<Option<(usize, usize)>> = serde_json::from_str(&output)?;
     Ok(output_batch)
 }
 
@@ -165,4 +160,6 @@ struct EdgeInput<'a> {
     lts: LTS,
     nearby_amenities: usize,
     length_meters: f64,
+    slope: Option<f64>,
+    slope_factor: Option<(f64, f64)>
 }
