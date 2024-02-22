@@ -118,8 +118,10 @@ pub struct Edge {
     pub way_id: WayID,
     pub tags: Tags,
     geometry: Vec<Position>,
-    // slope as a percentage.
+    // slope as a percentage, for example a 3% slope is represented as 3.0.
     pub slope: Option<f64>,
+    // slope factor is the value we will multiply the cost by to account for the 
+    // slope of a given edge. 
     pub slope_factor: Option<(f64, f64)>,
     // Storing the derived field is negligible for file size
     pub length_meters: f64,
@@ -150,8 +152,11 @@ impl Edge {
         Some((slope, (forward_slope_factor, backward_slope_factor)))
     }
     
+    /// This function takes in a slope and length and will calculate a slope factor
+    /// an explanation of the logic used can be found here:  https://github.com/U-Shift/Declives-RedeViaria/blob/main/SpeedSlopeFactor/SpeedSlopeFactor.md#speed-slope-factor-1
+    /// instead of using the slope_factor to divide the speed of a rider, we instead use it
+    /// multiplicatively on the cost to augment it before routing 
     fn calculate_slope_factor(slope: f64, length: f64) -> f64 {
-    
         let g = match (slope, length) {
             (x,y) if 13.0 >= x && x > 10.0 && y > 15.0 => {
                 4.0
