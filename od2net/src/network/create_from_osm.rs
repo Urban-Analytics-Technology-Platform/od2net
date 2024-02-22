@@ -110,14 +110,12 @@ impl Network {
             for (key, cost) in key_batch.into_iter().zip(output_batch) {
                 progress.inc(1);
                 
-                let output_cost = if let Some((forward_cost, backward_cost)) = cost {
-                    (Some(forward_cost), Some(backward_cost))
-                } else {
-                    (None, None)
-                };
+                if let Some((forward_cost, backward_cost)) = cost {
+                    let edge = self.edges.get_mut(&key).unwrap();
+                    edge.forward_cost = Some(forward_cost);
+                    edge.backward_cost = Some(backward_cost);
+                }; 
 
-                self.edges.get_mut(&key).unwrap().forward_cost = output_cost.0;
-                self.edges.get_mut(&key).unwrap().backward_cost = output_cost.1;
             }
         }
 
@@ -126,32 +124,14 @@ impl Network {
 
     pub fn calculate_elevation(&mut self, elevation_data: &mut GeoTiffElevation<Cursor<Vec<u8>>>) -> Result<()>{
         let progress = utils::progress_bar_for_count(self.edges.len());
-        let mut elevations_obtained = 0;
-        let all_keys: Vec<(NodeID, NodeID)> = self.edges.keys().cloned().collect();
-        for key_batch in all_keys.chunks(1000) {
-            let edge_elevations: Vec<Option<(f64, (f64, f64))>> = key_batch.iter().map(|e| {
-                let slope = self.edges[&e].apply_elevation(elevation_data);
-                slope
-            }).collect();
-            for (key, elevation) in key_batch.into_iter().zip(edge_elevations) {
+        for (_, edge) in &mut self.edges {
+            let elevation_details = edge.apply_elevation(elevation_data);
+            if let Some((slope, slope_factor)) = elevation_details {
                 progress.inc(1);
-                let slope_metrics = if let Some(slope_metric_data) = elevation {
-                    elevations_obtained += 1;
-                    (Some(slope_metric_data.0), Some(slope_metric_data.1))
-                } else {
-                    (None, None)
-                };
-                self.edges.get_mut(&key).unwrap().slope = slope_metrics.0;
-                self.edges.get_mut(&key).unwrap().slope_factor = slope_metrics.1;
-            }
+                edge.slope = Some(slope);
+                edge.slope_factor = Some(slope_factor);
+            }; 
         }
-        println!("######## THERE WERE {} ELEVATIONS OBTAINED, bounds of the tff are ({},{},{},{}) #######", 
-                 elevations_obtained, 
-                 elevation_data.get_bounds().0,
-                 elevation_data.get_bounds().1,
-                 elevation_data.get_bounds().2,
-                 elevation_data.get_bounds().3 
-                 );
 
         Ok(())
     }
