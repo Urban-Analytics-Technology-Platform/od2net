@@ -1,0 +1,18 @@
+{
+  "requests": {
+    "description": "One trip from every building to the nearest (as the crow flies) school. Elevation is included.",
+    "pattern": "FromEveryOriginToNearestDestination",
+    "origins_path": "buildings.geojson",
+    "destinations_path": "schools.geojson"
+  },
+  "cost": {
+    "ByLTS": {
+      "lts1": 1.0,
+      "lts2": 1.5,
+      "lts3": 3.0,
+      "lts4": 5.0
+    }
+  },
+  "uptake": "Identity",
+  "lts": "BikeOttawa"
+}
