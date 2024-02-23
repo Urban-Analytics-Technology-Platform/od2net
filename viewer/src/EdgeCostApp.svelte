@@ -1,12 +1,17 @@
 <script lang="ts">
+  import type { FeatureCollection } from "geojson";
   import initLts from "lts";
-  import type { Map as MapType } from "maplibre-gl";
+  import type {
+    Map as MapType,
+    DataDrivenPropertyValueSpecification,
+  } from "maplibre-gl";
   import { onMount } from "svelte";
   import {
     GeoJSON,
     hoverStateFilter,
     LineLayer,
     MapLibre,
+    type LayerClickInfo,
   } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
   import ClippedPBFs from "./ClippedPBFs.svelte";
@@ -16,6 +21,7 @@
     colorScale,
     ltsNames,
     makeColorRamp,
+    type Cost,
   } from "./common";
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
@@ -32,15 +38,17 @@
     await initLts();
   });
 
+  type ColorBy = "lts" | "cost" | "nearby_amenities";
+
   let map: MapType;
   let network: JsNetwork | undefined;
   let example = "";
-  let gj = {
+  let gj: FeatureCollection = {
     type: "FeatureCollection",
     features: [],
   };
-  let cost = "Distance";
-  let colorBy: "lts" | "cost" | "nearby_amenities" = "cost";
+  let cost: Cost = "Distance";
+  let colorBy: ColorBy = "cost";
   let showNotAllowed = false;
   let loading = false;
   // Note the 0th entry is "not allowed"; it won't be filled out at all
@@ -55,7 +63,7 @@
     loadBytes(await fileInput.files![0].arrayBuffer());
   }
 
-  function loadBytes(buffer) {
+  function loadBytes(buffer: ArrayBuffer) {
     try {
       network = new JsNetwork(new Uint8Array(buffer));
       cost = "Distance";
@@ -75,7 +83,7 @@
     loading = false;
   }
 
-  async function loadExample(example) {
+  async function loadExample(example: string) {
     if (example != "") {
       loading = true;
       let resp = await fetch(
@@ -88,38 +96,37 @@
   $: loadExample(example);
 
   function updateGj() {
-    gj = JSON.parse(network.debugNetwork());
+    gj = JSON.parse(network!.debugNetwork());
     let allSum = 0;
     let ltsSum = [0, 0, 0, 0, 0];
     maxCostRatio = 0.0;
     maxNearbyAmenities = 0;
     for (let f of gj.features) {
-      maxNearbyAmenities = Math.max(
-        maxNearbyAmenities,
-        f.properties.nearby_amenities,
-      );
+      let props = f.properties!;
+      maxNearbyAmenities = Math.max(maxNearbyAmenities, props.nearby_amenities);
 
       // A "not allowed" edge without a cost or length
-      if (!f.properties.length) {
+      if (!props.length) {
         continue;
       }
-      maxCostRatio = Math.max(
-        maxCostRatio,
-        f.properties.cost / f.properties.length,
-      );
+      maxCostRatio = Math.max(maxCostRatio, props.cost / props.length);
 
-      allSum += f.properties.length;
-      ltsSum[f.properties.lts] += f.properties.length;
+      allSum += props.length;
+      ltsSum[props.lts] += props.length;
     }
     percentByLength = ltsSum.map((x) => (x / allSum) * 100);
   }
 
-  function openOSM(feature) {
-    let id = feature.properties.way;
+  function openOSM(e: CustomEvent<LayerClickInfo>) {
+    let id = e.detail.features[0].properties!.way;
     window.open(`http://openstreetmap.org/way/${id}`, "_blank");
   }
 
-  function lineColorBy(colorBy, maxCostRatio, maxNearbyAmenities) {
+  function lineColorBy(
+    colorBy: ColorBy,
+    maxCostRatio: number,
+    maxNearbyAmenities: number,
+  ): DataDrivenPropertyValueSpecification<string> {
     if (colorBy == "lts") {
       return colorByLts;
     } else if (colorBy == "cost") {
@@ -127,6 +134,7 @@
         "case",
         ["==", 0, ["get", "lts"]],
         colors.lts_not_allowed,
+        // @ts-ignore Not sure the problem
         makeColorRamp(
           ["/", ["get", "cost"], ["get", "length"]],
           limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
@@ -139,10 +147,15 @@
         limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
         colorScale,
       );
+    } else {
+      throw new Error("unreachable");
     }
   }
 
-  function lineOpacity(colorBy, showNotAllowed) {
+  function lineOpacity(
+    colorBy: ColorBy,
+    showNotAllowed: boolean,
+  ): DataDrivenPropertyValueSpecification<number> {
     let hover = hoverStateFilter(1.0, 0.5);
     if (colorBy == "nearby_amenities") {
       return ["case", ["==", 0, ["get", "nearby_amenities"]], 0.0, hover];
@@ -153,17 +166,23 @@
     return ["case", ["==", 0, ["get", "lts"]], 0.0, hover];
   }
 
-  function limitsFor(colorBy, maxCostRatio, maxNearbyAmenities) {
+  function limitsFor(
+    colorBy: ColorBy,
+    maxCostRatio: number,
+    maxNearbyAmenities: number,
+  ): number[] {
     if (colorBy == "lts") {
-      return null;
+      return [];
     } else if (colorBy == "cost") {
       return equalBins(0.0, maxCostRatio);
     } else if (colorBy == "nearby_amenities") {
       return equalBins(0, maxNearbyAmenities);
+    } else {
+      throw new Error("unreachable");
     }
   }
 
-  function equalBins(min, max) {
+  function equalBins(min: number, max: number): number[] {
     let result = [];
     let step = (max - min) / 5.0;
     for (let i = 0; i < 6; i++) {
@@ -180,7 +199,7 @@
     overpassMessage = "";
   }
 
-  function updateCost(cost) {
+  function updateCost(cost: Cost) {
     if (network) {
       network.updateCostFunction(cost);
       updateGj();
@@ -288,7 +307,7 @@
             "line-opacity": lineOpacity(colorBy, showNotAllowed),
           }}
           beforeId="Road labels"
-          on:click={(e) => openOSM(e.detail.features[0])}
+          on:click={openOSM}
         >
           <Popup let:props>
             <PropertiesTable properties={props} />

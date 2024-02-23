@@ -1,4 +1,5 @@
 <script lang="ts">
+  // TODO Mostly giving up on TS in here
   import { Chart, registerables } from "chart.js";
   // @ts-ignore No types
   import ChartJSdragDataPlugin from "chartjs-plugin-dragdata";
@@ -16,7 +17,7 @@
     change: string;
   }>();
 
-  let barChart = null;
+  let barChart: Chart | null = null;
   let colors = ["red", "blue", "green"];
 
   normalize();
@@ -33,9 +34,9 @@
     }
   }
 
-  function makeRadarChart(node) {
+  function makeRadarChart(node: HTMLCanvasElement) {
     let options = {
-      type: "radar",
+      type: "radar" as const,
       data: {
         labels: ["LTS", "Amenities", "Greenspace"],
         datasets: [
@@ -48,7 +49,7 @@
       },
       options: {
         responsive: false,
-        onHover: function (e) {
+        onHover: function (e: any) {
           const point = e.chart.getElementsAtEventForMode(
             e,
             "nearest",
@@ -61,10 +62,15 @@
           dragData: {
             round: 1,
             showTooltip: true,
-            onDragStart: function (e) {
+            onDragStart: function (e: any) {
               e.target.style.cursor = "grabbing";
             },
-            onDragEnd: function (e, datasetIndex, index, value) {
+            onDragEnd: function (
+              e: any,
+              datasetIndex: number,
+              index: number,
+              value: any,
+            ) {
               e.target.style.cursor = "default";
               if (index == 0) {
                 lts = value;
@@ -98,12 +104,13 @@
         },
       },
     };
-    new Chart(node.getContext("2d"), options);
+    // @ts-ignore dragData isn't recognized
+    new Chart(node.getContext("2d")!, options);
   }
 
-  function makeBarChart(node) {
+  function makeBarChart(node: HTMLCanvasElement) {
     let options = {
-      type: "bar",
+      type: "bar" as const,
       data: {
         labels: ["LTS", "Amenities", "Greenspace"],
         datasets: [
@@ -115,10 +122,10 @@
         ],
       },
       options: {
-        indexAxis: "y",
+        indexAxis: "y" as const,
       },
     };
-    barChart = new Chart(node.getContext("2d"), options);
+    barChart = new Chart(node.getContext("2d")!, options);
   }
 </script>
 

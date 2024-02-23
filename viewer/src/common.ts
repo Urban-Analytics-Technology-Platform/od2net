@@ -10,6 +10,32 @@ export interface LayersControls {
   streetviewOn: boolean;
 }
 
+export type Cost =
+  | "Distance"
+  | {
+      ByLTS: {
+        lts1: number;
+        lts2: number;
+        lts3: number;
+        lts4: number;
+      };
+    }
+  | { OsmHighwayType: { [key: string]: any } }
+  | {
+      Generalized: {
+        tradeoff_lts: number;
+        tradeoff_amenities: number;
+        tradeoff_greenspace: number;
+
+        lts1: number;
+        lts2: number;
+        lts3: number;
+        lts4: number;
+
+        minimum_amenities: number;
+      };
+    };
+
 export let colors = {
   origins: "blue",
   destinations: "purple",

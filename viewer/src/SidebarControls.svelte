@@ -5,7 +5,7 @@
   import { showDestinations, showOrigins, showRouteNetwork } from "./stores";
   import StreetView from "./StreetView.svelte";
 
-  export let outputMetadata;
+  export let outputMetadata: any;
   export let map: Map;
   export let controls: LayersControls;
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { FeatureCollection } from "geojson";
   import initLts from "lts";
   import type { Map as MapType } from "maplibre-gl";
   import { onMount } from "svelte";
@@ -6,7 +7,7 @@
   import init, { JsNetwork } from "wasm-od2net";
   import markerSvg from "../assets/marker.svg?raw";
   import ClippedPBFs from "./ClippedPBFs.svelte";
-  import { type LayersControls } from "./common";
+  import { type Cost, type LayersControls } from "./common";
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
@@ -24,14 +25,14 @@
   let network: JsNetwork | undefined;
   let example = "";
   let markerPosition = { lng: 0.0, lat: 0.0 };
-  let gj = {
+  let gj: FeatureCollection & { metadata?: any } = {
     type: "FeatureCollection",
     features: [],
   };
   let loading = false;
 
   let maxRequests = 1000;
-  let cost = "Distance";
+  let cost: Cost = "Distance";
   let controls: LayersControls = {
     maxCount: 1000,
     originRadius: 3,
@@ -46,7 +47,7 @@
     loadBytes(await fileInput.files![0].arrayBuffer());
   }
 
-  function loadBytes(buffer) {
+  function loadBytes(buffer: ArrayBuffer) {
     try {
       network = new JsNetwork(new Uint8Array(buffer));
       cost = "Distance";
@@ -68,7 +69,7 @@
     loading = false;
   }
 
-  async function loadExample(example) {
+  async function loadExample(example: string) {
     if (example != "") {
       loading = true;
       let resp = await fetch(
@@ -94,7 +95,10 @@
     );
   }
 
-  $: recalculate(cost, maxRequests);
+  function onUpdate(cost: Cost, maxRequests: number) {
+    recalculate();
+  }
+  $: onUpdate(cost, maxRequests);
 
   let overpassMessage = "";
   function gotXml(e: CustomEvent<string>) {

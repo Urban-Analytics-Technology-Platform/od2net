@@ -1,12 +1,14 @@
 <script lang="ts">
-  import { ltsNames } from "./common";
+  import { ltsNames, type Cost } from "./common";
   import TradeoffRadar from "./TradeoffRadar.svelte";
 
-  export let cost;
+  export let cost: Cost;
   let dialog: HTMLDialogElement;
 
+  type Choice = "Distance" | "Generalized" | "ByLTS" | "OsmHighwayType";
+
   // TODO Maybe not in sync with what's passed in initially
-  let costChoice = "Distance";
+  let costChoice: Choice = "Distance";
 
   let generalized = {
     tradeoff_lts: 50,
@@ -21,6 +23,7 @@
     minimum_amenities: 1,
   };
 
+  let ltsKeys = ["lts1", "lts2", "lts3", "lts4"] as const;
   let ltsWeights = {
     lts1: 1.0,
     lts2: 1.0,
@@ -29,7 +32,7 @@
   };
 
   // TODO Let people add/remove choices
-  let osmHighwayWeights = {};
+  let osmHighwayWeights: { [key: string]: any } = {};
   for (let key of [
     "cycleway",
     "footway",
@@ -55,7 +58,7 @@
     osmHighwayWeights[key] = 1.0;
   }
 
-  function setCost(costChoice) {
+  function setCost(costChoice: Choice) {
     if (costChoice == "OsmHighwayType") {
       cost = { OsmHighwayType: osmHighwayWeights };
     } else if (costChoice == "ByLTS") {
@@ -110,7 +113,7 @@
   </ul>
 {:else if costChoice == "ByLTS"}
   <ul>
-    {#each ["lts1", "lts2", "lts3", "lts4"] as key}
+    {#each ltsKeys as key}
       <li>
         <label>
           {ltsNames[key]}
@@ -133,7 +136,7 @@
     on:change={() => (cost = cost)}
   />
   <ul>
-    {#each ["lts1", "lts2", "lts3", "lts4"] as key}
+    {#each ltsKeys as key}
       <li style="display: flex; justify-content: space-between;">
         {ltsNames[key]}: {generalized[key]}
         <input

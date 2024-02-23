@@ -4,7 +4,6 @@
   import type { IControl, LngLat, Map } from "maplibre-gl";
   import { createEventDispatcher, onDestroy } from "svelte";
   import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
-  import type { OsmSelection } from "./types";
 
   export let map: Map | null;
 
