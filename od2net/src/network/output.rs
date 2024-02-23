@@ -51,44 +51,37 @@ impl Edge {
         let geometry = Geometry::new(Value::LineString(
             self.geometry.iter().map(|pt| pt.to_degrees_vec()).collect(),
         ));
-        let mut properties = JsonObject::new();
+        let mut feature = Feature {
+            bbox: None,
+            geometry: Some(geometry),
+            id: Some(Id::Number(id.into())),
+            properties: None,
+            foreign_members: None,
+        };
+
         if output_osm_tags {
             let mut tags = JsonObject::new();
             for (key, value) in self.tags.inner() {
                 tags.insert(key.to_string(), JsonValue::from(value.to_string()));
             }
-            properties.insert("osm_tags".to_string(), tags.into());
+            feature.set_property("osm_tags", tags);
         }
-        properties.insert("way".to_string(), JsonValue::from(self.way_id.0));
-        properties.insert("node1".to_string(), JsonValue::from(node1.0));
-        properties.insert("node2".to_string(), JsonValue::from(node2.0));
+        feature.set_property("way", self.way_id.0);
+        feature.set_property("node1", node1.0);
+        feature.set_property("node2", node2.0);
+        feature.set_property("length", self.length_meters);
         if let Some(forward_cost) = self.forward_cost {
-            properties.insert(
-                "forward_cost".to_string(),
-                serde_json::to_value(forward_cost).unwrap(),
-            );
+            feature.set_property("forward_cost", forward_cost);
         }
         if let Some(backward_cost) = self.backward_cost {
-            properties.insert(
-                "backward_cost".to_string(),
-                serde_json::to_value(backward_cost).unwrap(),
-            );
+            feature.set_property("backward_cost", backward_cost);
         }
         if let Some(slope) = self.slope {
-            properties.insert("slope".to_string(), serde_json::to_value(slope).unwrap());
+            feature.set_property("slope", slope);
         };
-        properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
-        properties.insert(
-            "nearby_amenities".to_string(),
-            serde_json::to_value(self.nearby_amenities).unwrap(),
-        );
-        Feature {
-            bbox: None,
-            geometry: Some(geometry),
-            id: Some(Id::Number(id.into())),
-            properties: Some(properties),
-            foreign_members: None,
-        }
+        feature.set_property("lts", serde_json::to_value(self.lts).unwrap());
+        feature.set_property("nearby_amenities", self.nearby_amenities);
+        feature
     }
 }
 
