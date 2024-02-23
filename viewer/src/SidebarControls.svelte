@@ -1,11 +1,12 @@
 <script lang="ts">
+  import type { Map } from "maplibre-gl";
   import { colors, ltsNames, type LayersControls } from "./common";
   import Legend from "./Legend.svelte";
+  import { showDestinations, showOrigins, showRouteNetwork } from "./stores";
   import StreetView from "./StreetView.svelte";
-  import ToggleLayer from "./ToggleLayer.svelte";
 
   export let outputMetadata;
-  export let map;
+  export let map: Map;
   export let controls: LayersControls;
 
   function total(meters: number): string {
@@ -21,7 +22,11 @@
     >See all output details</button
   >
 </div>
-<ToggleLayer layer="input-layer" {map} show>Route network</ToggleLayer>
+<div>
+  <label
+    ><input type="checkbox" bind:checked={$showRouteNetwork} />Route network</label
+  >
+</div>
 <div>
   <label>
     Max for line width styling:<br />
@@ -34,11 +39,14 @@
   </label>
 </div>
 
-<ToggleLayer layer="origins-layer" {map} show={false}
-  ><span style="color: {colors.origins}"
-    >Origins ({outputMetadata.num_origins.toLocaleString()})</span
-  ></ToggleLayer
->
+<div>
+  <label
+    ><input type="checkbox" bind:checked={$showOrigins} />
+    <span style="color: {colors.origins}"
+      >Origins ({outputMetadata.num_origins.toLocaleString()})</span
+    >
+  </label>
+</div>
 <div>
   <label>
     Change origin point size:<br />
@@ -51,11 +59,14 @@
   </label>
 </div>
 
-<ToggleLayer layer="destinations-layer" {map} show={false}
-  ><span style="color: {colors.destinations}"
-    >Destinations ({outputMetadata.num_destinations.toLocaleString()})</span
-  ></ToggleLayer
->
+<div>
+  <label
+    ><input type="checkbox" bind:checked={$showDestinations} />
+    <span style="color: {colors.destinations}"
+      >Destinations ({outputMetadata.num_destinations.toLocaleString()})</span
+    >
+  </label>
+</div>
 <div>
   <label>
     Change destination point size:<br />

@@ -12,6 +12,7 @@
   import { colorByLts, colors, type LayersControls } from "./common";
   import Popup from "./Popup.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
+  import { showDestinations, showOrigins, showRouteNetwork } from "./stores";
 
   export let sourceOverride = {};
   export let controls: LayersControls;
@@ -61,6 +62,9 @@
     "line-color": colorByLts,
     "line-opacity": hoverStateFilter(1.0, 0.5),
   }}
+  layout={{
+    visibility: $showRouteNetwork ? "visible" : "none",
+  }}
   beforeId="Road labels"
   on:click={openOSM}
 >
@@ -80,7 +84,9 @@
     "circle-color": colors.origins,
     "circle-radius": controls.originRadius,
   }}
-  layout={{ visibility: "none" }}
+  layout={{
+    visibility: $showOrigins ? "visible" : "none",
+  }}
 >
   <Popup let:props>
     {props.origin_count} routes start here
@@ -96,7 +102,9 @@
     "circle-color": colors.destinations,
     "circle-radius": controls.destinationRadius,
   }}
-  layout={{ visibility: "none" }}
+  layout={{
+    visibility: $showDestinations ? "visible" : "none",
+  }}
 >
   <Popup let:props>
     {props.destination_count} routes end here

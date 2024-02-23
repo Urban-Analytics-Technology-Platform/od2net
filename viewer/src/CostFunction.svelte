@@ -3,7 +3,7 @@
   import TradeoffRadar from "./TradeoffRadar.svelte";
 
   export let cost;
-  let dialog;
+  let dialog: HTMLDialogElement;
 
   // TODO Maybe not in sync with what's passed in initially
   let costChoice = "Distance";
