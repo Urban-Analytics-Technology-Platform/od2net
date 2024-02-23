@@ -1,7 +1,7 @@
 <script lang="ts">
   import init from "lts";
   import type { Map as MapType } from "maplibre-gl";
-  import { FileAPISource, PMTiles } from "pmtiles";
+  import { FileSource, PMTiles } from "pmtiles";
   import { onMount } from "svelte";
   import { MapLibre } from "svelte-maplibre";
   import { type LayersControls } from "./common";
@@ -32,7 +32,7 @@
     try {
       example = "";
       let files = fileInput.files!;
-      pmtiles = new PMTiles(new FileAPISource(files[0]));
+      pmtiles = new PMTiles(new FileSource(files[0]));
     } catch (err) {
       window.alert(
         `Problem loading this PMTiles file. Don't open the GeoJSON file; make sure to select .pmtiles. Error: ${err}`,

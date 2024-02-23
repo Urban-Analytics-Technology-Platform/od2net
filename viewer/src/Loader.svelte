@@ -54,7 +54,7 @@
 
   async function pmtilesInfo(file: PMTiles): Promise<Info> {
     let header = await file.getHeader();
-    let metadata = await file.getMetadata();
+    let metadata = await file.getMetadata() as any;
 
     return {
       bounds: [header.minLon, header.minLat, header.maxLon, header.maxLat],

@@ -30,7 +30,7 @@
     "@mapbox/mapbox-gl-draw": "^1.4.3",
     "chart.js": "^4.4.1",
     "chartjs-plugin-dragdata": "^2.2.5",
-    "pmtiles": "^2.10.0",
-    "svelte-maplibre": "^0.7.7"
+    "pmtiles": "^3.0.3",
+    "svelte-maplibre": "^0.8.1"
   }
 }
