@@ -37,43 +37,51 @@
   <p>
     od2net is an <a
       href="https://github.com/Urban-Analytics-Technology-Platform/od2net"
-      target="_blank">open-source project</a
+      target="_blank"
     >
-    by <a href="https://dcarlino.org" target="_blank">Dustin Carlino</a>, part
-    of the
+      open-source project
+    </a>
+    by
+    <a href="https://dcarlino.org" target="_blank">Dustin Carlino</a>
+    , part of the
     <a
       href="https://urban-analytics-technology-platform.github.io"
-      target="_blank">Urban Analytics Technology Platform</a
-    >. It wouldn't be possible without:
+      target="_blank"
+    >
+      Urban Analytics Technology Platform
+    </a>
+    . It wouldn't be possible without:
   </p>
   <ul>
     <li>
-      <a href="https://maps.bikeottawa.ca/lts" target="_blank"
-        >BikeOttawa's Level of Traffic Stress definition</a
-      >
+      <a href="https://maps.bikeottawa.ca/lts" target="_blank">
+        BikeOttawa's Level of Traffic Stress definition
+      </a>
     </li>
     <li><a href="https://georust.org" target="_blank">GeoRust</a></li>
     <li>
-      <a href="https://github.com/dimfeld/svelte-maplibre/" target="_blank"
-        >svelte-maplibre</a
-      >
+      <a href="https://github.com/dimfeld/svelte-maplibre/" target="_blank">
+        svelte-maplibre
+      </a>
     </li>
     <li><a href="https://maplibre.org" target="_blank">MapLibre GL JS</a></li>
     <li>
       <a
         href="https://www.npmjs.com/package/chartjs-plugin-dragdata"
-        target="_blank">ChartJS</a
+        target="_blank"
       >
+        ChartJS
+      </a>
     </li>
     <li>
-      <a href="https://www.openstreetmap.org/about" target="_blank"
-        >OpenStreetMap</a
-      >
+      <a href="https://www.openstreetmap.org/about" target="_blank">
+        OpenStreetMap
+      </a>
     </li>
     <li>
-      <a href="https://github.com/easbar/fast_paths" target="_blank"
-        >fast-paths</a
-      >
+      <a href="https://github.com/easbar/fast_paths" target="_blank">
+        fast-paths
+      </a>
     </li>
     <li>
       <a href="https://pct.bike" target="_blank">Propensity to Cycle Tool</a>
@@ -83,13 +91,13 @@
     </li>
     <li>
       Special thanks to
-      <a href="https://github.com/HSalat/" target="_blank">Hadrien Salat</a> for
-      the logo and
+      <a href="https://github.com/HSalat/" target="_blank">Hadrien Salat</a>
+      for the logo and
       <a href="https://github.com/stuartlynn/" target="_blank">Stuart Lynn</a>
       for feedback and help with pmtiles, both from
-      <a href="https://www.turing.ac.uk/" target="_blank"
-        >the Alan Turing Institute</a
-      >
+      <a href="https://www.turing.ac.uk/" target="_blank">
+        the Alan Turing Institute
+      </a>
     </li>
   </ul>
 </dialog>

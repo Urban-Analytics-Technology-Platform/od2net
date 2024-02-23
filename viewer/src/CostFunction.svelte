@@ -83,7 +83,10 @@
 
 <dialog bind:this={dialog}>
   <button on:click={() => dialog.close()}>Close</button>
-  <p>Copy this into a <i>config.json</i> file</p>
+  <p>
+    Copy this into a <i>config.json</i>
+    file
+  </p>
   <pre>"cost": {JSON.stringify(cost, null, 2)}</pre>
 </dialog>
 <button on:click={() => dialog.showModal()}>See cost function JSON</button>
@@ -92,15 +95,16 @@
   <ul>
     {#each Object.keys(osmHighwayWeights) as key}
       <li>
-        <label
-          >{key}<input
+        <label>
+          {key}
+          <input
             type="number"
             min="1.0"
             step="0.1"
             bind:value={osmHighwayWeights[key]}
             on:change={() => (cost = cost)}
-          /></label
-        >
+          />
+        </label>
       </li>
     {/each}
   </ul>
@@ -108,15 +112,16 @@
   <ul>
     {#each ["lts1", "lts2", "lts3", "lts4"] as key}
       <li>
-        <label
-          >{ltsNames[key]}<input
+        <label>
+          {ltsNames[key]}
+          <input
             type="number"
             min="1.0"
             step="0.1"
             bind:value={ltsWeights[key]}
             on:change={() => (cost = cost)}
-          /></label
-        >
+          />
+        </label>
       </li>
     {/each}
   </ul>
@@ -144,14 +149,14 @@
   </ul>
 
   <div>
-    <label
-      >Give roads a good score if they have at least this many nearby amenities:
+    <label>
+      Give roads a good score if they have at least this many nearby amenities:
       <input
         type="number"
         min="0"
         bind:value={generalized.minimum_amenities}
         on:change={() => (cost = cost)}
-      /></label
-    >
+      />
+    </label>
   </div>
 {/if}

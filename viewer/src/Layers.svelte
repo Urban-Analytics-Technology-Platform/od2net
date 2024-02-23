@@ -22,7 +22,7 @@
 
   $: lineWidth = getLineWidth(controls.maxCount);
   function getLineWidth(
-    maxCount: number
+    maxCount: number,
   ): DataDrivenPropertyValueSpecification<number> {
     let min = 0;
 

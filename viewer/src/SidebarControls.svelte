@@ -19,17 +19,20 @@
 <div>
   <button
     on:click={() => window.alert(JSON.stringify(outputMetadata, null, "  "))}
-    >See all output details</button
   >
-</div>
-<div>
-  <label
-    ><input type="checkbox" bind:checked={$showRouteNetwork} />Route network</label
-  >
+    See all output details
+  </button>
 </div>
 <div>
   <label>
-    Max for line width styling:<br />
+    <input type="checkbox" bind:checked={$showRouteNetwork} />
+    Route network
+  </label>
+</div>
+<div>
+  <label>
+    Max for line width styling:
+    <br />
     <input
       type="number"
       bind:value={controls.maxCount}
@@ -40,16 +43,17 @@
 </div>
 
 <div>
-  <label
-    ><input type="checkbox" bind:checked={$showOrigins} />
-    <span style="color: {colors.origins}"
-      >Origins ({outputMetadata.num_origins.toLocaleString()})</span
-    >
+  <label>
+    <input type="checkbox" bind:checked={$showOrigins} />
+    <span style="color: {colors.origins}">
+      Origins ({outputMetadata.num_origins.toLocaleString()})
+    </span>
   </label>
 </div>
 <div>
   <label>
-    Change origin point size:<br />
+    Change origin point size:
+    <br />
     <input
       type="number"
       bind:value={controls.originRadius}
@@ -60,16 +64,17 @@
 </div>
 
 <div>
-  <label
-    ><input type="checkbox" bind:checked={$showDestinations} />
-    <span style="color: {colors.destinations}"
-      >Destinations ({outputMetadata.num_destinations.toLocaleString()})</span
-    >
+  <label>
+    <input type="checkbox" bind:checked={$showDestinations} />
+    <span style="color: {colors.destinations}">
+      Destinations ({outputMetadata.num_destinations.toLocaleString()})
+    </span>
   </label>
 </div>
 <div>
   <label>
-    Change destination point size:<br />
+    Change destination point size:
+    <br />
     <input
       type="number"
       bind:value={controls.destinationRadius}
@@ -101,7 +106,7 @@
     // Shouldn't happen
     [
       `${ltsNames.lts_not_allowed}: ${total(
-        outputMetadata.total_meters_not_allowed
+        outputMetadata.total_meters_not_allowed,
       )}`,
       colors.lts_not_allowed,
     ],
@@ -110,8 +115,10 @@
 <p>
   Note: LTS model from <a
     href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
-    target="_blank">BikeOttawa</a
+    target="_blank"
   >
+    BikeOttawa
+  </a>
 </p>
 <hr />
 <StreetView {map} bind:enabled={controls.streetviewOn} />

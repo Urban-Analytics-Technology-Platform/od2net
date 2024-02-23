@@ -29,12 +29,12 @@
     if (source == "google") {
       window.open(
         `http://maps.google.com/maps?q=&layer=c&cbll=${lat},${lon}&cbp=11,0,0,0,0`,
-        "_blank"
+        "_blank",
       );
     } else if (source == "bing") {
       window.open(
         `https://www.bing.com/maps?cp=${lat}~${lon}&style=x`,
-        "_blank"
+        "_blank",
       );
     }
   }
@@ -55,10 +55,12 @@
 {#if enabled}
   <div>
     <label>
-      <input type="radio" bind:group={source} value="google" />Google StreetView
+      <input type="radio" bind:group={source} value="google" />
+      Google StreetView
     </label>
     <label>
-      <input type="radio" bind:group={source} value="bing" />Bing Streetside
+      <input type="radio" bind:group={source} value="bing" />
+      Bing Streetside
     </label>
   </div>
 {/if}

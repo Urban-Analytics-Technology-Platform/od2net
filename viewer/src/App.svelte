@@ -35,14 +35,14 @@
       pmtiles = new PMTiles(new FileAPISource(files[0]));
     } catch (err) {
       window.alert(
-        `Problem loading this PMTiles file. Don't open the GeoJSON file; make sure to select .pmtiles. Error: ${err}`
+        `Problem loading this PMTiles file. Don't open the GeoJSON file; make sure to select .pmtiles. Error: ${err}`,
       );
     }
   }
 
   $: if (example != "") {
     pmtiles = new PMTiles(
-      `https://assets.od2net.org/output/${example}.pmtiles`
+      `https://assets.od2net.org/output/${example}.pmtiles`,
     );
   }
 </script>
@@ -52,8 +52,9 @@
     <Header app="main" />
     <label>
       {#if pmtiles == null}
-        Open a <i>.pmtiles</i> file produced by the tool. Note this file stays in
-        your browser; it doesn't get uploaded anywhere.
+        Open a <i>.pmtiles</i>
+        file produced by the tool. Note this file stays in your browser; it doesn't
+        get uploaded anywhere.
       {/if}
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
@@ -63,9 +64,9 @@
         <select bind:value={example}>
           <option value="">Custom file loaded</option>
           <option value="edinburgh">Edinburgh</option>
-          <option value="england_2011_home_to_work"
-            >England (2011 home-to-work)</option
-          >
+          <option value="england_2011_home_to_work">
+            England (2011 home-to-work)
+          </option>
           <option value="liverpool_direct">Liverpool (direct)</option>
           <option value="liverpool_quiet">Liverpool (quiet)</option>
           <option value="london">London</option>

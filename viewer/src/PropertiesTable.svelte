@@ -18,15 +18,19 @@
 </script>
 
 {#if properties.count}
-  <div>Count: <b>{properties.count.toFixed(2)}</b></div>
+  <div>
+    Count: <b>{properties.count.toFixed(2)}</b>
+  </div>
 {/if}
 {#if properties.forward_cost}
   <div>
-    Cost: [{properties.forward_cost}, {properties.backward_cost}] (<b
-      >[{(properties.forward_cost / properties.length).toFixed(2)}, {(
+    Cost: [{properties.forward_cost}, {properties.backward_cost}] (
+    <b>
+      [{(properties.forward_cost / properties.length).toFixed(2)}, {(
         properties.backward_cost / properties.length
-      ).toFixed(2)}]</b
-    > x the length)
+      ).toFixed(2)}]
+    </b>
+    x the length)
   </div>
 {/if}
 {#if properties.slope}
@@ -34,8 +38,12 @@
     Slope: [{properties.slope.toFixed(2)}, {-properties.slope.toFixed(2)}]
   </div>
 {/if}
-<div>Nearby amenities: <b>{properties.nearby_amenities}</b></div>
-<div>LTS: <b>{properties.lts}</b></div>
+<div>
+  Nearby amenities: <b>{properties.nearby_amenities}</b>
+</div>
+<div>
+  LTS: <b>{properties.lts}</b>
+</div>
 <ul>
   {#each ltsMessages as msg}
     <li>{msg}</li>
@@ -45,7 +53,10 @@
   <table>
     <tbody>
       {#each Object.entries(tags) as [key, value]}
-        <tr><td>{key}</td><td>{value}</td></tr>
+        <tr>
+          <td>{key}</td>
+          <td>{value}</td>
+        </tr>
       {/each}
     </tbody>
   </table>

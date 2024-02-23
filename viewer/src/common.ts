@@ -43,7 +43,7 @@ export let colorByLts: ExpressionSpecification = [
 export function makeColorRamp(
   input: DataDrivenPropertyValueSpecification<number>,
   limits: number[],
-  colorScale: string[]
+  colorScale: string[],
 ): DataDrivenPropertyValueSpecification<string> {
   let step: any[] = ["step", input];
   for (let i = 1; i < limits.length; i++) {

@@ -53,7 +53,7 @@
             e,
             "nearest",
             { intersect: true },
-            false
+            false,
           );
           e.native.target.style.cursor = point.length ? "grab" : "default";
         },

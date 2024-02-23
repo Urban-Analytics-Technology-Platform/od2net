@@ -57,7 +57,7 @@
           [bbox[0], bbox[1]],
           [bbox[2], bbox[3]],
         ],
-        { padding: 20, animate: false }
+        { padding: 20, animate: false },
       );
       markerPosition.lng = (bbox[0] + bbox[2]) / 2.0;
       markerPosition.lat = (bbox[1] + bbox[3]) / 2.0;
@@ -72,7 +72,7 @@
     if (example != "") {
       loading = true;
       let resp = await fetch(
-        `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`
+        `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`,
       );
       loadBytes(await resp.arrayBuffer());
     }
@@ -90,7 +90,7 @@
         lat: markerPosition.lat,
         max_requests: maxRequests,
         cost,
-      })
+      }),
     );
   }
 
@@ -109,7 +109,8 @@
   <div slot="left">
     <Header app="interactive" />
     <label>
-      Open an <i>.osm.pbf</i> file
+      Open an <i>.osm.pbf</i>
+      file
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
     <ClippedPBFs bind:example />
@@ -126,7 +127,8 @@
     {#if network}
       <div>
         <label>
-          Max requests (limit for faster updates):<br />
+          Max requests (limit for faster updates):
+          <br />
           <input type="number" bind:value={maxRequests} min={1} />
         </label>
       </div>
@@ -145,9 +147,9 @@
       hash
       bind:map
     >
-      <Marker bind:lngLat={markerPosition} draggable on:dragend={recalculate}
-        >{@html markerSvg}</Marker
-      >
+      <Marker bind:lngLat={markerPosition} draggable on:dragend={recalculate}>
+        {@html markerSvg}
+      </Marker>
       <GeoJSON data={gj}>
         <Layers {controls} />
       </GeoJSON>

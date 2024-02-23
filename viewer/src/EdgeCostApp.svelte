@@ -66,7 +66,7 @@
           [bbox[0], bbox[1]],
           [bbox[2], bbox[3]],
         ],
-        { padding: 20, animate: false }
+        { padding: 20, animate: false },
       );
       updateGj();
     } catch (err) {
@@ -79,7 +79,7 @@
     if (example != "") {
       loading = true;
       let resp = await fetch(
-        `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`
+        `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`,
       );
       loadBytes(await resp.arrayBuffer());
     }
@@ -96,7 +96,7 @@
     for (let f of gj.features) {
       maxNearbyAmenities = Math.max(
         maxNearbyAmenities,
-        f.properties.nearby_amenities
+        f.properties.nearby_amenities,
       );
 
       // A "not allowed" edge without a cost or length
@@ -105,7 +105,7 @@
       }
       maxCostRatio = Math.max(
         maxCostRatio,
-        f.properties.cost / f.properties.length
+        f.properties.cost / f.properties.length,
       );
 
       allSum += f.properties.length;
@@ -130,14 +130,14 @@
         makeColorRamp(
           ["/", ["get", "cost"], ["get", "length"]],
           limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
-          colorScale
+          colorScale,
         ),
       ];
     } else if (colorBy == "nearby_amenities") {
       return makeColorRamp(
         ["get", "nearby_amenities"],
         limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
-        colorScale
+        colorScale,
       );
     }
   }
@@ -193,7 +193,8 @@
   <div slot="left">
     <Header app="costs" />
     <label>
-      Open an <i>.osm.pbf</i> file
+      Open an <i>.osm.pbf</i>
+      file
       <input bind:this={fileInput} on:change={fileLoaded} type="file" />
     </label>
     <ClippedPBFs bind:example />
@@ -224,7 +225,7 @@
           rows={[
             [
               `${ltsNames.lts1}: ${percentByLength[1].toFixed(
-                0
+                0,
               )}% of roads by distance`,
               colors.lts1,
             ],
@@ -245,8 +246,10 @@
         <p>
           Note: LTS model from <a
             href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
-            target="_blank">BikeOttawa</a
+            target="_blank"
           >
+            BikeOttawa
+          </a>
         </p>
       {:else}
         <SequentialLegend
@@ -280,7 +283,7 @@
             "line-color": lineColorBy(
               colorBy,
               maxCostRatio,
-              maxNearbyAmenities
+              maxNearbyAmenities,
             ),
             "line-opacity": lineOpacity(colorBy, showNotAllowed),
           }}
