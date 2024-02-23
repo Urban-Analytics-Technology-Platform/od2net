@@ -13,24 +13,24 @@
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
-    "@sveltejs/vite-plugin-svelte": "^2.4.2",
-    "@tsconfig/svelte": "^4.0.1",
+    "@sveltejs/vite-plugin-svelte": "^2.5.3",
+    "@tsconfig/svelte": "^5.0.2",
     "@types/mapbox__mapbox-gl-draw": "^1.4.6",
     "@types/node": "^20.11.20",
     "prettier": "^3.2.5",
     "prettier-plugin-svelte": "^3.2.1",
-    "svelte": "^4.0.0",
-    "svelte-check": "^3.4.4",
-    "tslib": "^2.6.0",
-    "typescript": "^5.1.3",
-    "vite": "^4.3.9",
+    "svelte": "^4.2.12",
+    "svelte-check": "^3.6.4",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3",
+    "vite": "^4.5.2",
     "vite-plugin-wasm-pack": "0.1.11"
   },
   "dependencies": {
     "@mapbox/mapbox-gl-draw": "^1.4.3",
-    "chart.js": "^4.4.0",
+    "chart.js": "^4.4.1",
     "chartjs-plugin-dragdata": "^2.2.5",
     "pmtiles": "^2.10.0",
-    "svelte-maplibre": "^0.6.0"
+    "svelte-maplibre": "^0.7.7"
   }
 }
