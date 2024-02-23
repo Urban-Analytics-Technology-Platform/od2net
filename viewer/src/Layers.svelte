@@ -1,16 +1,20 @@
 <script lang="ts">
-  import type { DataDrivenPropertyValueSpecification } from "maplibre-gl";
+  import type {
+    DataDrivenPropertyValueSpecification,
+    ExpressionSpecification,
+  } from "maplibre-gl";
   import {
     CircleLayer,
     hoverStateFilter,
     LineLayer,
-    Popup,
+    type LayerClickInfo,
   } from "svelte-maplibre";
-  import { colorByLts, colors } from "./common";
+  import { colorByLts, colors, type LayersControls } from "./common";
+  import Popup from "./Popup.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
 
   export let sourceOverride = {};
-  export let controls;
+  export let controls: LayersControls;
 
   // TODO The reactivity doesn't seem to see the update to the field
   $: enableControls = !controls.streetviewOn;
@@ -28,7 +32,7 @@
     let range_input = maxCount - min;
     let range_output = thick - thin;
     // min(1, (value - min) / range_input)
-    let calculatePercent = [
+    let calculatePercent: ExpressionSpecification = [
       "min",
       1.0,
       ["/", ["-", ["get", "count"], min], range_input],
@@ -37,11 +41,11 @@
     return ["+", thin, ["*", range_output, calculatePercent]];
   }
 
-  function openOSM(feature) {
+  function openOSM(e: CustomEvent<LayerClickInfo>) {
     if (!enableControls) {
       return;
     }
-    let id = feature.properties.way;
+    let id = e.detail.features[0].properties!.way;
     window.open(`http://openstreetmap.org/way/${id}`, "_blank");
   }
 </script>
@@ -58,11 +62,11 @@
     "line-opacity": hoverStateFilter(1.0, 0.5),
   }}
   beforeId="Road labels"
-  on:click={(e) => openOSM(e.detail.features[0])}
+  on:click={openOSM}
 >
   {#if enableControls}
-    <Popup openOn="hover" let:features>
-      <PropertiesTable properties={features[0].properties} />
+    <Popup let:props>
+      <PropertiesTable properties={props} />
     </Popup>
   {/if}
 </LineLayer>
@@ -78,8 +82,8 @@
   }}
   layout={{ visibility: "none" }}
 >
-  <Popup openOn="hover" let:features>
-    {features[0].properties.origin_count} routes start here
+  <Popup let:props>
+    {props.origin_count} routes start here
   </Popup>
 </CircleLayer>
 
@@ -94,7 +98,7 @@
   }}
   layout={{ visibility: "none" }}
 >
-  <Popup openOn="hover" let:features>
-    {features[0].properties.destination_count} routes end here
+  <Popup let:props>
+    {props.destination_count} routes end here
   </Popup>
 </CircleLayer>

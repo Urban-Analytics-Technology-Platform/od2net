@@ -6,6 +6,7 @@
   import init, { JsNetwork } from "wasm-od2net";
   import markerSvg from "../assets/marker.svg?raw";
   import ClippedPBFs from "./ClippedPBFs.svelte";
+  import { type LayersControls } from "./common";
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
@@ -31,7 +32,7 @@
 
   let maxRequests = 1000;
   let cost = "Distance";
-  let controls = {
+  let controls: LayersControls = {
     maxCount: 1000,
     originRadius: 3,
     destinationRadius: 3,

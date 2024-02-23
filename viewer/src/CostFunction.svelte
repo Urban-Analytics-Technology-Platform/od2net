@@ -82,7 +82,7 @@
 </div>
 
 <dialog bind:this={dialog}>
-  <button autofocus on:click={() => dialog.close()}>Close</button>
+  <button on:click={() => dialog.close()}>Close</button>
   <p>Copy this into a <i>config.json</i> file</p>
   <pre>"cost": {JSON.stringify(cost, null, 2)}</pre>
 </dialog>

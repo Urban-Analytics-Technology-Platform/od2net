@@ -4,7 +4,7 @@
   // TODO Merge apps into one page, or detect what the user's loading?
   export let app: string;
 
-  let dialog;
+  let dialog: HTMLDialogElement;
 
   function switchApp() {
     if (app == "main") {
@@ -30,7 +30,7 @@
 <dialog bind:this={dialog}>
   <div style="display: flex; justify-content: space-between">
     <h1>About od2net</h1>
-    <button autofocus on:click={() => dialog.close()}>Close</button>
+    <button on:click={() => dialog.close()}>Close</button>
   </div>
   <img src={logoUrl} width="300" alt="od2net logo by Hadrien Salat" />
 

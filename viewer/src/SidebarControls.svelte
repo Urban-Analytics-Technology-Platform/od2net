@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { colors, ltsNames } from "./common";
+  import { colors, ltsNames, type LayersControls } from "./common";
   import Legend from "./Legend.svelte";
   import StreetView from "./StreetView.svelte";
   import ToggleLayer from "./ToggleLayer.svelte";
 
   export let outputMetadata;
   export let map;
-  export let controls;
+  export let controls: LayersControls;
 
   function total(meters: number): string {
     let km = meters / 1000.0;

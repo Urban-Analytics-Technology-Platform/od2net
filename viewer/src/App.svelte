@@ -4,6 +4,7 @@
   import { FileAPISource, PMTiles } from "pmtiles";
   import { onMount } from "svelte";
   import { MapLibre } from "svelte-maplibre";
+  import { type LayersControls } from "./common";
   import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
@@ -19,7 +20,7 @@
   let example = "";
   let outputMetadata: any | undefined;
 
-  let controls = {
+  let controls: LayersControls = {
     maxCount: 1000,
     originRadius: 3,
     destinationRadius: 3,

@@ -7,7 +7,6 @@
     hoverStateFilter,
     LineLayer,
     MapLibre,
-    Popup,
   } from "svelte-maplibre";
   import init, { JsNetwork } from "wasm-od2net";
   import ClippedPBFs from "./ClippedPBFs.svelte";
@@ -24,6 +23,7 @@
   import Legend from "./Legend.svelte";
   import Loading from "./Loading.svelte";
   import OverpassSelector from "./OverpassSelector.svelte";
+  import Popup from "./Popup.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
   import SequentialLegend from "./SequentialLegend.svelte";
 
@@ -287,8 +287,8 @@
           beforeId="Road labels"
           on:click={(e) => openOSM(e.detail.features[0])}
         >
-          <Popup openOn="hover" let:features>
-            <PropertiesTable properties={features[0].properties} />
+          <Popup let:props>
+            <PropertiesTable properties={props} />
           </Popup>
         </LineLayer>
       </GeoJSON>

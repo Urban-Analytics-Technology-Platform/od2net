@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Chart, registerables } from "chart.js";
+  // @ts-ignore No types
   import ChartJSdragDataPlugin from "chartjs-plugin-dragdata";
   import { createEventDispatcher } from "svelte";
 

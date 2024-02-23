@@ -1,4 +1,14 @@
-import type { DataDrivenPropertyValueSpecification } from "maplibre-gl";
+import type {
+  DataDrivenPropertyValueSpecification,
+  ExpressionSpecification,
+} from "maplibre-gl";
+
+export interface LayersControls {
+  maxCount: number;
+  originRadius: number;
+  destinationRadius: number;
+  streetviewOn: boolean;
+}
 
 export let colors = {
   origins: "blue",
@@ -12,7 +22,7 @@ export let colors = {
   lts_not_allowed: "red",
 };
 
-export let colorByLts = [
+export let colorByLts: ExpressionSpecification = [
   "match",
   ["get", "lts"],
   0,
@@ -57,3 +67,13 @@ export let ltsNames = {
   lts4: "LTS 4 - high stress",
   lts_not_allowed: "Cyclists not allowed",
 };
+
+// Hack around
+// https://stackoverflow.com/questions/67336062/typescript-not-parsed-in-svelte-html-section
+// until we're using Svelte 5
+export function notNull<T>(x: T | null | undefined): T {
+  if (x == null || x == undefined) {
+    throw new Error("Oops, notNull given something null");
+  }
+  return x;
+}
