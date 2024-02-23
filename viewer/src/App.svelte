@@ -1,4 +1,5 @@
 <script lang="ts">
+  import chevron from "../assets/chevron.png?url";
   import init from "lts";
   import type { Map as MapType } from "maplibre-gl";
   import { FileSource, PMTiles } from "pmtiles";
@@ -85,6 +86,8 @@
       standardControls
       hash
       bind:map
+      on:error={(e) => console.log(e.detail)}
+      images={[{ id: "chevron", url: chevron }]}
     >
       {#if outputMetadata}
         {#key outputMetadata}

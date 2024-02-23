@@ -1,8 +1,20 @@
 <script lang="ts">
   import type { Map } from "maplibre-gl";
-  import { colors, ltsNames, type LayersControls } from "./common";
+  import {
+    slopeLimits,
+    slopeColors,
+    colors,
+    ltsNames,
+    type LayersControls,
+  } from "./common";
   import Legend from "./Legend.svelte";
-  import { showDestinations, showOrigins, showRouteNetwork } from "./stores";
+  import SequentialLegend from "./SequentialLegend.svelte";
+  import {
+    showSlope,
+    showDestinations,
+    showOrigins,
+    showRouteNetwork,
+  } from "./stores";
   import StreetView from "./StreetView.svelte";
 
   export let outputMetadata: any;
@@ -84,41 +96,55 @@
   </label>
 </div>
 
-<hr />
-<Legend
-  rows={[
-    [
-      `${ltsNames.lts1}: ${total(outputMetadata.total_meters_lts1)}`,
-      colors.lts1,
-    ],
-    [
-      `${ltsNames.lts2}: ${total(outputMetadata.total_meters_lts2)}`,
-      colors.lts2,
-    ],
-    [
-      `${ltsNames.lts3}: ${total(outputMetadata.total_meters_lts3)}`,
-      colors.lts3,
-    ],
-    [
-      `${ltsNames.lts4}: ${total(outputMetadata.total_meters_lts4)}`,
-      colors.lts4,
-    ],
-    // Shouldn't happen
-    [
-      `${ltsNames.lts_not_allowed}: ${total(
-        outputMetadata.total_meters_not_allowed,
-      )}`,
-      colors.lts_not_allowed,
-    ],
-  ]}
-/>
-<p>
-  Note: LTS model from <a
-    href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
-    target="_blank"
-  >
-    BikeOttawa
-  </a>
-</p>
+{#if outputMetadata.config.elevation_geotiff}
+  <div>
+    <label>
+      <input type="checkbox" bind:checked={$showSlope} />
+      Visualize slope
+    </label>
+  </div>
+{/if}
+
+{#if $showSlope}
+  <SequentialLegend colorScale={slopeColors} limits={slopeLimits} />
+{:else}
+  <hr />
+  <Legend
+    rows={[
+      [
+        `${ltsNames.lts1}: ${total(outputMetadata.total_meters_lts1)}`,
+        colors.lts1,
+      ],
+      [
+        `${ltsNames.lts2}: ${total(outputMetadata.total_meters_lts2)}`,
+        colors.lts2,
+      ],
+      [
+        `${ltsNames.lts3}: ${total(outputMetadata.total_meters_lts3)}`,
+        colors.lts3,
+      ],
+      [
+        `${ltsNames.lts4}: ${total(outputMetadata.total_meters_lts4)}`,
+        colors.lts4,
+      ],
+      // Shouldn't happen
+      [
+        `${ltsNames.lts_not_allowed}: ${total(
+          outputMetadata.total_meters_not_allowed,
+        )}`,
+        colors.lts_not_allowed,
+      ],
+    ]}
+  />
+  <p>
+    Note: LTS model from <a
+      href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
+      target="_blank"
+    >
+      BikeOttawa
+    </a>
+  </p>
+{/if}
+
 <hr />
 <StreetView {map} bind:enabled={controls.streetviewOn} />
