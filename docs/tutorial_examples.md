@@ -123,12 +123,15 @@ First let's tell od2net to use a custom command for cost. Edit `config.json` and
 },
 ```
 
-Then create a new file called `cost.py`, copying from a different [example cost.py](https://github.com/Urban-Analytics-Technology-Platform/od2net/blob/main/examples/edinburgh/example_cost.py). The program gets a JSON array of dictionaries in STDIN and needs to print a JSON array of integer numbers as a result. Each dictionary input gives you:
+Then create a new file called `cost.py`, copying from a different [example cost.py](https://github.com/Urban-Analytics-Technology-Platform/od2net/blob/main/examples/edinburgh/example_cost.py). The program gets a JSON array of dictionaries in STDIN and needs to print a JSON array of pairs of integer numbers as a result. Each dictionary input gives you:
 
 - `length_meters`
 - `tags`, a JSON dictionary with the raw OSM tags
 - `lts` as a number 0 to 4, with 0 representing "cyclists not allowed here"
 - `nearby_amenities`, the number of shops that're closest to this road
+- Optional `slope`, the percent grade in the forwards direction
+
+The output is a corresponding JSON array with a pair of costs for each edge. The pair is `[forward_cost, backward_cost]`, which may be the same.
 
 The example does something very boring -- if [highway = residential](https://wiki.openstreetmap.org/wiki/Tag:highway%3Dresidential), just return length. Otherwise, multiply by 10, meaning all other roads will be **heavily** penalized. Write something more interesting here!
 

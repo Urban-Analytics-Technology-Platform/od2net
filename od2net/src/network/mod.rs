@@ -118,10 +118,9 @@ pub struct Edge {
     pub way_id: WayID,
     pub tags: Tags,
     geometry: Vec<Position>,
-    // slope as a percentage, for example a 3% slope is represented as 3.0.
+    // A 3% slope is represented as 3.0.
     pub slope: Option<f64>,
-    // slope factor is the value we will multiply the cost by to account for the
-    // slope of a given edge. The factor is given for traversing the edge in both directions.
+    // A factor to multiply cost by in the (forwards, backwards) direction
     pub slope_factor: Option<(f64, f64)>,
     // Storing the derived field is negligible for file size
     pub length_meters: f64,
@@ -137,87 +136,80 @@ pub struct Edge {
 }
 
 impl Edge {
-    pub fn apply_elevation<R: Read + Seek + Send>(
-        &self,
-        elevation_data: &mut GeoTiffElevation<R>,
-    ) -> Option<(f64, (f64, f64))> {
-        let slope = self.get_slope(elevation_data)?;
-
-        let length = self.length_meters;
-
-        let forward_slope_factor = Edge::calculate_slope_factor(slope, length);
-        let backward_slope_factor = Edge::calculate_slope_factor(-slope, length);
-
-        Some((slope, (forward_slope_factor, backward_slope_factor)))
+    /// Sets `slope` and `slope_factor`.
+    pub fn apply_elevation<R: Read + Seek + Send>(&mut self, geotiff: &mut GeoTiffElevation<R>) {
+        let Some(slope) = self.get_slope(geotiff) else {
+            // Silently return if this fails
+            return;
+        };
+        self.slope = Some(slope);
+        self.slope_factor = Some((
+            calculate_slope_factor(slope, self.length_meters),
+            calculate_slope_factor(-slope, self.length_meters),
+        ));
     }
 
-    /// This function takes in a slope and length and will calculate a slope factor
-    /// an explanation of the logic used can be found here:  https://github.com/U-Shift/Declives-RedeViaria/blob/main/SpeedSlopeFactor/SpeedSlopeFactor.md#speed-slope-factor-1
-    /// instead of using the slope_factor to divide the speed of a rider, we instead use it
-    /// multiplicatively on the cost to augment it before routing
-    fn calculate_slope_factor(slope: f64, length: f64) -> f64 {
-        let g = if 13.0 >= slope && slope > 10.0 && length > 15.0 {
-            4.0
-        } else if slope < 8.0 && slope <= 10.0 && length > 30.0 {
-            4.5
-        } else if slope < 5.0 && slope <= 8.0 && length > 60.0 {
-            5.0
-        } else if slope < 3.0 && slope <= 5.0 && length > 120.0 {
-            6.0
-        } else {
-            7.0
-        };
+    fn get_slope<R: Read + Seek + Send>(&self, geotiff: &mut GeoTiffElevation<R>) -> Option<f64> {
+        let (lon1, lat1) = self.geometry[0].to_degrees();
+        let (lon2, lat2) = self.geometry.last().unwrap().to_degrees();
 
-        let slope_factor = if slope < -30.0 {
-            1.5
-        } else if slope < 0.0 && slope >= -30.0 {
-            1.0 + 2.0 * 0.7 * slope / 13.0 + 0.7 * slope * slope / 13.0 / 13.0
-        } else if slope <= 20.0 && slope >= 0.0 {
-            1.0 + slope * slope / g / g
-        } else {
-            10.0
-        };
+        let height1 = geotiff.get_height_for_lon_lat(lon1 as f32, lat1 as f32)?;
+        let height2 = geotiff.get_height_for_lon_lat(lon2 as f32, lat2 as f32)?;
 
-        slope_factor
-    }
-
-    fn get_slope<R: Read + Seek + Send>(
-        &self,
-        elevation_data: &mut GeoTiffElevation<R>,
-    ) -> Option<f64> {
-        let first_node = self.geometry[0].to_degrees();
-        let second_node = self.geometry[self.geometry.len() - 1].to_degrees();
-
-        let first_node_height =
-            elevation_data.get_height_for_lon_lat(first_node.0 as f32, first_node.1 as f32)?;
-
-        let second_node_height =
-            elevation_data.get_height_for_lon_lat(second_node.0 as f32, second_node.1 as f32)?;
-
-        let slope = (second_node_height - first_node_height) / self.length_meters as f32 * 100.0;
+        let slope = (height2 - height1) / (self.length_meters as f32) * 100.0;
         Some(slope.into())
     }
 }
 
+/// This returns a factor to multiply cost by, to adjust the speed of a cyclist. See
+/// <https://github.com/U-Shift/Declives-RedeViaria/blob/main/SpeedSlopeFactor/SpeedSlopeFactor.md#speed-slope-factor-1>.
+fn calculate_slope_factor(slope: f64, length: f64) -> f64 {
+    // Ported from https://github.com/U-Shift/Declives-RedeViaria/blob/5b5680ba769ab57f0fe061fd16c626cec66a0452/SpeedSlopeFactor/SpeedSlopeFactor.Rmd#L114
+    let g = if slope > 3.0 && slope <= 5.0 && length > 120.0 {
+        6.0
+    } else if slope > 5.0 && slope <= 8.0 && length > 60.0 {
+        5.0
+    } else if slope > 8.0 && slope <= 10.0 && length > 30.0 {
+        4.5
+    } else if slope > 10.0 && slope <= 13.0 && length > 15.0 {
+        4.0
+    } else {
+        7.0
+    };
+
+    // TODO Check this one again
+    let slope_factor = if slope < -30.0 {
+        1.5
+    } else if slope < 0.0 && slope >= -30.0 {
+        1.0 + 2.0 * 0.7 * slope / 13.0 + 0.7 * slope * slope / 13.0 / 13.0
+    } else if slope <= 20.0 && slope >= 0.0 {
+        1.0 + slope * slope / g / g
+    } else {
+        10.0
+    };
+
+    slope_factor
+}
+
 #[cfg(test)]
 mod tests {
-    use super::Edge;
+    use super::*;
 
     #[test]
     fn speed_slope_test() {
         let speed_flat = 15.0;
         let slope = 3.0;
         let length = 50.0;
-        let slope_factor = Edge::calculate_slope_factor(slope, length);
+        let slope_factor = calculate_slope_factor(slope, length);
         let slope_speed = speed_flat / slope_factor;
         let delta = slope_speed - 12.67241;
-        assert!(delta < f64::EPSILON);
+        assert!(delta < 0.00001);
 
         let slope = -8.0;
         let length = 100.0;
-        let slope_factor = Edge::calculate_slope_factor(slope, length);
+        let slope_factor = calculate_slope_factor(slope, length);
         let slope_speed = speed_flat / slope_factor;
         let delta = slope_speed - 37.17009;
-        assert!(delta < f64::EPSILON);
+        assert!(delta < 0.00001);
     }
 }

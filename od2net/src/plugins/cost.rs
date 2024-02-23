@@ -32,13 +32,12 @@ pub fn calculate_batch(
             .into_iter()
             .map(|e| generalized(e, params))
             .collect(),
-        // Was not sure how to add slope_factor to external commands, I also
-        // assume that user who use external command will do it themselves?
         CostFunction::ExternalCommand(command) => external_command(command, input_batch).unwrap(),
     }
 }
 
 fn distance(edge: &Edge) -> Option<(usize, usize)> {
+    // Note this accounts for slope_factor
     by_lts(edge, 1.0, 1.0, 1.0, 1.0)
 }
 
@@ -46,12 +45,10 @@ fn osm_highway_type(edge: &Edge, weights: &HashMap<String, f64>) -> Option<(usiz
     let raw_weight = weights.get(edge.tags.get("highway").unwrap())?;
     let slope_factor = edge.slope_factor.unwrap_or((1., 1.));
 
-    let weight = (
+    Some((
         (raw_weight * slope_factor.0 * edge.length_meters).round() as usize,
         (raw_weight * slope_factor.1 * edge.length_meters).round() as usize,
-    );
-
-    Some(weight)
+    ))
 }
 
 fn by_lts(edge: &Edge, lts1: f64, lts2: f64, lts3: f64, lts4: f64) -> Option<(usize, usize)> {
@@ -67,12 +64,10 @@ fn by_lts(edge: &Edge, lts1: f64, lts2: f64, lts3: f64, lts4: f64) -> Option<(us
 
     let slope_factor = edge.slope_factor.unwrap_or((1., 1.));
 
-    let weight = (
+    Some((
         (raw_weight * slope_factor.0 * edge.length_meters).round() as usize,
         (raw_weight * slope_factor.1 * edge.length_meters).round() as usize,
-    );
-
-    Some(weight)
+    ))
 }
 
 fn generalized(edge: &Edge, params: &GeneralizedCostFunction) -> Option<(usize, usize)> {
@@ -95,6 +90,8 @@ fn generalized(edge: &Edge, params: &GeneralizedCostFunction) -> Option<(usize, 
     // TODO For now, every edge gets the bad weight
     let greenspace_weight = 1.0;
 
+    // TODO Does it make sense to apply this along with the LTS? Does this approach need a way to
+    // look at cyclist speed?
     let slope_factor = edge.slope_factor.unwrap_or((1., 1.));
 
     // Use the tradeoffs to get a final penalty
@@ -102,7 +99,7 @@ fn generalized(edge: &Edge, params: &GeneralizedCostFunction) -> Option<(usize, 
         + (params.tradeoff_amenities * amenities_weight)
         + (params.tradeoff_greenspace * greenspace_weight);
 
-    let backward_penalty = (params.tradeoff_lts * lts_weight * slope_factor.0)
+    let backward_penalty = (params.tradeoff_lts * lts_weight * slope_factor.1)
         + (params.tradeoff_amenities * amenities_weight)
         + (params.tradeoff_greenspace * greenspace_weight);
 

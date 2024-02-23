@@ -62,29 +62,21 @@ impl Edge {
         properties.insert("way".to_string(), JsonValue::from(self.way_id.0));
         properties.insert("node1".to_string(), JsonValue::from(node1.0));
         properties.insert("node2".to_string(), JsonValue::from(node2.0));
-        if let (Some(forward_cost), Some(backward_cost)) = (self.forward_cost, self.backward_cost) {
-            // Either both costs are defined or none of them are so the expression above should
-            // be enough.
+        if let Some(forward_cost) = self.forward_cost {
             properties.insert(
                 "forward_cost".to_string(),
                 serde_json::to_value(forward_cost).unwrap(),
             );
+        }
+        if let Some(backward_cost) = self.backward_cost {
             properties.insert(
                 "backward_cost".to_string(),
                 serde_json::to_value(backward_cost).unwrap(),
             );
-            properties.insert(
-                "length".to_string(),
-                serde_json::to_value(self.length_meters).unwrap(),
-            );
-
-            // put the slope in here since if the cost is None there is no need to pull in the
-            // slope.
-            if let Some(slope) = self.slope {
-                properties.insert("slope".to_string(), serde_json::to_value(slope).unwrap());
-            };
         }
-
+        if let Some(slope) = self.slope {
+            properties.insert("slope".to_string(), serde_json::to_value(slope).unwrap());
+        };
         properties.insert("lts".to_string(), serde_json::to_value(self.lts).unwrap());
         properties.insert(
             "nearby_amenities".to_string(),
