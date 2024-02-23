@@ -1,6 +1,6 @@
 {
   "requests": {
-    "description": "Existing home to school cycling trips in Edinburgh, from NPT data. The origins and destinations are both building centroids, since not every zone has a school.",
+    "description": "Existing home to school cycling trips in Edinburgh, from NPT data. The origins and destinations are both building centroids, since not every zone has a school. Elevation is included.",
     "pattern": {
       "BetweenZones": {
         "zones_path": "zones.geojson",
@@ -12,5 +12,6 @@
   },
   "cost": "Distance",
   "uptake": "GoDutchPCT",
-  "lts": "BikeOttawa"
+  "lts": "BikeOttawa",
+  "elevation_geotiff": "UK-dem-50m-4326.tif"
 }

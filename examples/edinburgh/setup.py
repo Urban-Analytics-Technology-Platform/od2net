@@ -23,6 +23,14 @@ def makeOSM():
     )
 
 
+def makeElevation():
+    download(
+        url="https://play.abstreet.org/dev/data/input/shared/elevation/UK-dem-50m-4326.tif.gz",
+        outputFilename="input/UK-dem-50m-4326.tif.gz"
+    )
+    run(["gunzip", "input/UK-dem-50m-4326.tif.gz"])
+
+
 def makeOrigins():
     # Not every zone has a school, so for now, just use all buildings for both
     # origins and destinations
@@ -80,6 +88,7 @@ if __name__ == "__main__":
     checkDependencies()
     run(["mkdir", "-p", "input"])
     makeOSM()
+    makeElevation()
     makeOrigins()
     makeDestinations()
     makeZones()
