@@ -109,7 +109,7 @@
       if (!props.length) {
         continue;
       }
-      maxCostRatio = Math.max(maxCostRatio, props.cost / props.length);
+      maxCostRatio = Math.max(maxCostRatio, props.forward_cost / props.length);
 
       allSum += props.length;
       ltsSum[props.lts] += props.length;
@@ -136,7 +136,7 @@
         colors.lts_not_allowed,
         // @ts-ignore Not sure the problem
         makeColorRamp(
-          ["/", ["get", "cost"], ["get", "length"]],
+          ["/", ["get", "forward_cost"], ["get", "length"]],
           limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
           colorScale,
         ),
