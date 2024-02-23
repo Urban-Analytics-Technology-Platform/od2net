@@ -18,6 +18,8 @@ Special thanks to [Hadrien Salat](https://github.com/HSalat) for the logo and
 [Stuart Lynn](https://github.com/stuartlynn) for help with pmtiles, both from
 [the Alan Turing Institute](https://www.turing.ac.uk).
 
+Thanks to [KDKasonde](https://github.com/KDKasonde) for adding elevation support.
+
 ## References / inspiration:
 
 - [Propensity to Cycle Tool](https://www.pct.bike) / [NPTScot](https://nptscot.github.io)

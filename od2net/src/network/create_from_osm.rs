@@ -23,7 +23,7 @@ impl Network {
         lts: &LtsMapping,
         cost: &mut CostFunction,
         timer: &mut Timer,
-        dem_input_buffer: Option<Vec<u8>>,
+        geotiff_bytes: Option<Vec<u8>>,
     ) -> Result<Network> {
         timer.start("Make Network from xml or pbf");
         timer.start("Scrape OSM data");
@@ -81,10 +81,14 @@ impl Network {
         }
         timer.stop();
 
-        if let Some(buffer) = dem_input_buffer {
+        if let Some(bytes) = geotiff_bytes {
             timer.start("Calculate elevation for all edges");
-            let mut geo_tiff = GeoTiffElevation::new(Cursor::new(buffer));
-            network.calculate_elevation(&mut geo_tiff)?;
+            let mut geotiff = GeoTiffElevation::new(Cursor::new(bytes));
+            let progress = utils::progress_bar_for_count(network.edges.len());
+            for (_, edge) in &mut network.edges {
+                progress.inc(1);
+                edge.apply_elevation(&mut geotiff);
+            }
             timer.stop();
         }
 
@@ -113,23 +117,6 @@ impl Network {
                     edge.backward_cost = Some(backward_cost);
                 };
             }
-        }
-
-        Ok(())
-    }
-
-    pub fn calculate_elevation(
-        &mut self,
-        elevation_data: &mut GeoTiffElevation<Cursor<Vec<u8>>>,
-    ) -> Result<()> {
-        let progress = utils::progress_bar_for_count(self.edges.len());
-        for (_, edge) in &mut self.edges {
-            let elevation_details = edge.apply_elevation(elevation_data);
-            if let Some((slope, slope_factor)) = elevation_details {
-                progress.inc(1);
-                edge.slope = Some(slope);
-                edge.slope_factor = Some(slope_factor);
-            };
         }
 
         Ok(())

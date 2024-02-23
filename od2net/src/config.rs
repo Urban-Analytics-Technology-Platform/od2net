@@ -16,7 +16,9 @@ pub struct InputConfig {
 
     pub lts: LtsMapping,
 
-    pub dem: Option<String>,
+    /// Path to a GeoTIFF file with elevation data. It must use WGS84 coordinates and have heights
+    /// in units of meters.
+    pub elevation_geotiff: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]

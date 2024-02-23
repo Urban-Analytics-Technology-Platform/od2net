@@ -81,9 +81,8 @@ fn main() -> Result<()> {
                 };
 
                 println!("That failed ({err}), so generating it from {osm_path}");
-                let dem_geotiff = if let Some(ref dem) = config.dem {
-                    let dem_file_path = format!("{directory}/input/{}", dem);
-                    Some(fs_err::read(&dem_file_path)?)
+                let geotiff_bytes = if let Some(ref filename) = config.elevation_geotiff {
+                    Some(fs_err::read(&format!("{directory}/input/{filename}"))?)
                 } else {
                     None
                 };
@@ -93,7 +92,7 @@ fn main() -> Result<()> {
                     &config.lts,
                     &mut config.cost,
                     &mut timer,
-                    dem_geotiff,
+                    geotiff_bytes,
                 )?;
 
                 timer.start(format!("Saving to {bin_path}"));
