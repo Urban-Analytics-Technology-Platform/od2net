@@ -94,12 +94,13 @@ export let ltsNames = {
   lts_not_allowed: "Cyclists not allowed",
 };
 
-// Hack around
-// https://stackoverflow.com/questions/67336062/typescript-not-parsed-in-svelte-html-section
-// until we're using Svelte 5
-export function notNull<T>(x: T | null | undefined): T {
-  if (x == null || x == undefined) {
-    throw new Error("Oops, notNull given something null");
-  }
-  return x;
-}
+// Thanks to https://ropensci.github.io/slopes/articles/roadnetworkcycling.html
+export let slopeLimits = [0, 3, 5, 8, 10, 20, 100];
+export let slopeColors = [
+  "#267300",
+  "#70A800",
+  "#FFAA00",
+  "#E60000",
+  "#A80000",
+  "#730000",
+];

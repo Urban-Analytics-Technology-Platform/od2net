@@ -35,7 +35,7 @@
 {/if}
 {#if properties.slope}
   <div>
-    Slope: [{properties.slope.toFixed(2)}, {-properties.slope.toFixed(2)}]
+    Slope: {properties.slope.toFixed(2)}&percnt;
   </div>
 {/if}
 <div>

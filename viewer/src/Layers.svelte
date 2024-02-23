@@ -8,11 +8,24 @@
     hoverStateFilter,
     LineLayer,
     type LayerClickInfo,
+    SymbolLayer,
   } from "svelte-maplibre";
-  import { colorByLts, colors, type LayersControls } from "./common";
+  import {
+    slopeLimits,
+    slopeColors,
+    colorByLts,
+    colors,
+    type LayersControls,
+    makeColorRamp,
+  } from "./common";
   import Popup from "./Popup.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
-  import { showDestinations, showOrigins, showRouteNetwork } from "./stores";
+  import {
+    showSlope,
+    showDestinations,
+    showOrigins,
+    showRouteNetwork,
+  } from "./stores";
 
   export let sourceOverride = {};
   export let controls: LayersControls;
@@ -49,6 +62,12 @@
     let id = e.detail.features[0].properties!.way;
     window.open(`http://openstreetmap.org/way/${id}`, "_blank");
   }
+
+  let colorBySlope = makeColorRamp(
+    ["abs", ["get", "slope"]],
+    slopeLimits,
+    slopeColors,
+  );
 </script>
 
 <LineLayer
@@ -59,7 +78,7 @@
   hoverCursor={enableControls ? "pointer" : undefined}
   paint={{
     "line-width": lineWidth,
-    "line-color": colorByLts,
+    "line-color": $showSlope ? colorBySlope : colorByLts,
     "line-opacity": hoverStateFilter(1.0, 0.5),
   }}
   layout={{
@@ -74,6 +93,26 @@
     </Popup>
   {/if}
 </LineLayer>
+
+<SymbolLayer
+  id="slope-arrows"
+  {...sourceOverride}
+  filter={[
+    "all",
+    ["==", ["geometry-type"], "LineString"],
+    [">", ["abs", ["get", "slope"]], 3],
+  ]}
+  minzoom={12}
+  layout={{
+    "icon-image": "chevron",
+    "icon-size": 1.0,
+    "symbol-placement": "line",
+    "symbol-spacing": 50,
+    "icon-allow-overlap": true,
+    "icon-rotate": ["case", ["<", ["get", "slope"], 0], 180, 0],
+    visibility: $showSlope ? "visible" : "none",
+  }}
+/>
 
 <CircleLayer
   id="origins-layer"
