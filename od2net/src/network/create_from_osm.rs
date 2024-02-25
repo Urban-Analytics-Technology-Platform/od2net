@@ -84,12 +84,20 @@ impl Network {
         if let Some(bytes) = geotiff_bytes {
             timer.start("Calculate elevation for all edges");
             let mut geotiff = GeoTiffElevation::new(Cursor::new(bytes));
+            let mut succeeded = 0;
             let progress = utils::progress_bar_for_count(network.edges.len());
             for (_, edge) in &mut network.edges {
                 progress.inc(1);
-                edge.apply_elevation(&mut geotiff);
+                if edge.apply_elevation(&mut geotiff) {
+                    succeeded += 1;
+                }
             }
             timer.stop();
+            println!(
+                "Got elevation for {} / {} edges",
+                HumanCount(succeeded as u64),
+                HumanCount(network.edges.len() as u64)
+            );
         }
 
         timer.start("Calculate cost for all edges");
