@@ -73,6 +73,7 @@
           <option value="london">London</option>
           <option value="seattle">Seattle</option>
           <option value="york">York</option>
+          <option value="lisbon">Lisbon</option>
         </select>
       </label>
     </div>

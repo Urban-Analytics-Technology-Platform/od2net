@@ -136,17 +136,20 @@ pub struct Edge {
 }
 
 impl Edge {
-    /// Sets `slope` and `slope_factor`.
-    pub fn apply_elevation<R: Read + Seek + Send>(&mut self, geotiff: &mut GeoTiffElevation<R>) {
+    /// Sets `slope` and `slope_factor` if true. If false, failed to get data.
+    pub fn apply_elevation<R: Read + Seek + Send>(
+        &mut self,
+        geotiff: &mut GeoTiffElevation<R>,
+    ) -> bool {
         let Some(slope) = self.get_slope(geotiff) else {
-            // Silently return if this fails
-            return;
+            return false;
         };
         self.slope = Some(slope);
         self.slope_factor = Some((
             calculate_slope_factor(slope, self.length_meters),
             calculate_slope_factor(-slope, self.length_meters),
         ));
+        true
     }
 
     fn get_slope<R: Read + Seek + Send>(&self, geotiff: &mut GeoTiffElevation<R>) -> Option<f64> {

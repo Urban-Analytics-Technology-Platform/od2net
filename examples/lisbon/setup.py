@@ -24,11 +24,9 @@ def makeOSM():
 
 
 def makeElevation():
-    # TODO LisboaCOPERNICUS_clip.tif doesn't have any errors, but no data seems to get scraped
-    # TODO LisboaIST_clip_r1.tif is apparently missing a TIF signature?
     download(
-        url="https://github.com/U-Shift/Declives-RedeViaria/raw/main/raster/LisboaCOPERNICUS_clip.tif",
-        outputFilename="input/LisboaCOPERNICUS_clip.tif",
+        url="https://assets.od2net.org/input/LisboaIST_10m_4326.tif",
+        outputFilename="input/LisboaIST_10m_4326.tif",
     )
 
 
@@ -52,6 +50,6 @@ if __name__ == "__main__":
     checkDependencies()
     run(["mkdir", "-p", "input"])
     makeOSM()
-    #makeElevation()
+    makeElevation()
     makeOrigins()
     makeDestinations()
