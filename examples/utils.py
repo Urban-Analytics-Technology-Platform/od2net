@@ -23,6 +23,7 @@ def download(url, outputFilename):
     run(
         [
             "curl",
+            "-L",
             url,
             "-o",
             outputFilename,

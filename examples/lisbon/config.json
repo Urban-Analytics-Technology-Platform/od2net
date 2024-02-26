@@ -1,9 +1,14 @@
 {
   "requests": {
     "description": "One trip from every building to the nearest (as the crow flies) school. Elevation is included.",
-    "pattern": "FromEveryOriginToNearestDestination",
+    "pattern": {
+      "BetweenZones": {
+        "zones_path": "zones.geojson",
+        "csv_path": "od.csv"
+      }
+    },
     "origins_path": "buildings.geojson",
-    "destinations_path": "schools.geojson"
+    "destinations_path": "buildings.geojson"
   },
   "cost": {
     "OsmHighwayType": {
