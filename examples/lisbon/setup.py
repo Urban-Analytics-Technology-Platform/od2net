@@ -38,11 +38,21 @@ def makeOrigins():
 
 
 def makeDestinations():
-    # School centroids as destinations
-    extractCentroids(
-        osmInput="input/input.osm.pbf",
-        geojsonOutput="input/schools.geojson",
-        where=f"amenity = 'school'",
+    # Same as origins
+    pass
+
+
+def makeZones():
+    download(
+        url="https://github.com/U-Shift/biclar/releases/download/0.0.1/zones.geojson",
+        outputFilename="input/zones.geojson",
+    )
+
+
+def makeOD():
+    download(
+        url="https://github.com/U-Shift/biclar/releases/download/0.0.1/od.csv",
+        outputFilename="input/od.csv",
     )
 
 
@@ -53,3 +63,5 @@ if __name__ == "__main__":
     makeElevation()
     makeOrigins()
     makeDestinations()
+    makeZones()
+    makeOD()
