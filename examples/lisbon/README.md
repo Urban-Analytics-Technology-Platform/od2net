@@ -7,7 +7,6 @@ For the R implemenation run the following commands in the R console from the inp
 ```r
 # Generates the function definitions in the R environment:
 source("setup.R")
-main()
 system("cargo run --release config.json")
 ```
 

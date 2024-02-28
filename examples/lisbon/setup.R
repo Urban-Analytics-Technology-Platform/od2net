@@ -103,3 +103,5 @@ main = function() {
     make_zones()
     make_od()
 }
+
+main()
