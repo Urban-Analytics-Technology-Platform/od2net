@@ -1,31 +1,6 @@
 # Aim: generate input data for od2net with R
 
-# Python implementation (commented out)
-
-# import csv
-# import json
-
-# from utils import *
-
-
-# def makeOSM():
-#     download(
-#         url="https://download.geofabrik.de/europe/portugal-latest.osm.pbf",
-#         outputFilename="input/portugal-latest.osm.pbf",
-#     )
-#     # Clip to Lisbon
-#     run(
-#         [
-#             "osmium",
-#             "extract",
-#             "-b",
-#             "-9.291687,38.673717,-9.080887,38.831685",
-#             "input/portugal-latest.osm.pbf",
-#             "-o",
-#             "input/input.osm.pbf",
-#         ]
-#     )
-
+# TODO: neaten this up:
 check_and_change_directory = function(name) {
     if (!file.exists("input")) {
         if (dir.exists(name)) {
@@ -49,17 +24,11 @@ make_osm = function() {
       )
     }
     # Clip to Lisbon:
+    # TODO: use bbox from input/zones.geojson 
     system(
         "osmium extract -b -9.291687,38.673717,-9.080887,38.831685 input/portugal-latest.osm.pbf -o input/input.osm.pbf --overwrite"
     )
 }
-make_osm()
-
-# def makeElevation():
-#     download(
-#         url="https://assets.od2net.org/input/LisboaIST_10m_4326.tif",
-#         outputFilename="input/LisboaIST_10m_4326.tif",
-#     )
 
 make_elevation = function() {
     # Check you're in the right working directory and if not cd
@@ -73,43 +42,27 @@ make_elevation = function() {
     }
 }
 
-
-# def makeOrigins():
-#     # Use building centroids as origins
-#     extractCentroids(
-#         osmInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
-#     )
-
-# def extractCentroids(osmInput, geojsonOutput, where="building IS NOT NULL"):
-#     run(
-#         [
-#             "ogr2ogr",
-#             "-f",
-#             "GeoJSON",
-#             "-dialect",
-#             "sqlite",
-#             "-sql",
-#             f"SELECT ST_Centroid(geometry) FROM multipolygons WHERE {where}",
-#             geojsonOutput,
-#             osmInput,
-#         ]
-#     )
-
 extract_centroids = function(osmInput, geojsonOutput, where="building IS NOT NULL") {
     # Check you're in the right working directory and if not cd
     check_and_change_directory("examples/lisbon")
     # Use building centroids as origins
-    system(
-        paste(
-            "ogr2ogr -f GeoJSON -dialect sqlite -sql",
-            paste0(
-                "SELECT ST_Centroid(geometry) FROM multipolygons WHERE ",
-                where
-            ),
-            geojsonOutput,
-            osmInput
-        )
+    command = paste(
+        "ogr2ogr",
+        "-f",
+        "GeoJSON",
+        "-dialect",
+        "sqlite",
+        "-sql",
+        paste0(
+            r"("SELECT ST_Centroid(geometry) FROM multipolygons WHERE )",
+            where,
+            r"(")"
+        ),
+        geojsonOutput,
+        osmInput
     )
+
+    system(command)
 }
 make_origins = function() {
     extract_centroids(
@@ -117,18 +70,6 @@ make_origins = function() {
         geojsonOutput = "input/buildings.geojson"
     )
 }
-
-
-# def makeDestinations():
-#     # Same as origins
-#     pass
-
-
-# def makeZones():
-#     download(
-#         url="https://github.com/U-Shift/biclar/releases/download/0.0.1/zones.geojson",
-#         outputFilename="input/zones.geojson",
-#     )
 
 make_zones = function() {
     # Check you're in the right working directory and if not cd
@@ -142,11 +83,6 @@ make_zones = function() {
     }
 }
 
-# def makeOD():
-#     download(
-#         url="https://github.com/U-Shift/biclar/releases/download/0.0.1/od.csv",
-#         outputFilename="input/od.csv",
-#     )
 make_od = function() {
     # Check you're in the right working directory and if not cd
     check_and_change_directory("examples/lisbon")
@@ -167,14 +103,3 @@ main = function() {
     make_zones()
     make_od()
 }
-
-
-# if __name__ == "__main__":
-#     checkDependencies()
-#     run(["mkdir", "-p", "input"])
-#     makeOSM()
-#     makeElevation()
-#     makeOrigins()
-#     makeDestinations()
-#     makeZones()
-#     makeOD()
