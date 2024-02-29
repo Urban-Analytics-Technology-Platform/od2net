@@ -83,6 +83,8 @@ pub fn generate_requests(
         ODPattern::BetweenZones {
             zones_path,
             csv_path,
+            origin_zone_centroid_fallback,
+            destination_zone_centroid_fallback,
         } => {
             let zones_path = format!("{input_directory}/{zones_path}");
             let csv_path = format!("{input_directory}/{csv_path}");
@@ -91,9 +93,14 @@ pub fn generate_requests(
             let zones = load_zones(&zones_path)?;
             timer.stop();
             timer.start("Matching points to zones");
-            let origins_per_zone = points_per_polygon("origin", origins, &zones, false)?;
-            let destinations_per_zone =
-                points_per_polygon("destination", destinations, &zones, false)?;
+            let origins_per_zone =
+                points_per_polygon("origin", origins, &zones, *origin_zone_centroid_fallback)?;
+            let destinations_per_zone = points_per_polygon(
+                "destination",
+                destinations,
+                &zones,
+                *destination_zone_centroid_fallback,
+            )?;
             timer.stop();
 
             timer.start(format!("Generating requests from {csv_path}"));
