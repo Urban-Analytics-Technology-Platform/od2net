@@ -1,12 +1,12 @@
 {
   "requests": {
-    "description": "2011 home to work trips made by driving (or being a passenger) in England from MSOA-level census data. Origins and destinations are all buildings.",
+    "description": "2021 home to work trips in England, for any mode of commuting. From OA-level data from ODWP01EW. Origins and destinations are all buildings.",
     "pattern": {
       "BetweenZones": {
         "zones_path": "zones.geojson",
         "csv_path": "od.csv",
-	"origin_zone_centroid_fallback": false,
-	"destination_zone_centroid_fallback": false
+	"origin_zone_centroid_fallback": true,
+	"destination_zone_centroid_fallback": true
       }
     },
     "origins_path": "buildings.geojson",

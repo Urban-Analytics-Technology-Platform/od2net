@@ -4,7 +4,9 @@
     "pattern": {
       "BetweenZones": {
         "zones_path": "zones.geojson",
-        "csv_path": "od.csv"
+        "csv_path": "od.csv",
+	"origin_zone_centroid_fallback": false,
+	"destination_zone_centroid_fallback": false
       }
     },
     "origins_path": "buildings.geojson",
