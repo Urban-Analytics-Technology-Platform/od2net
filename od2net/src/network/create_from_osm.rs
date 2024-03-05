@@ -191,6 +191,7 @@ fn scrape_elements(
             // double-tagged?
             // https://www.openstreetmap.org/relation/14875126
         }
+        Element::Bounds { .. } => {}
     })?;
 
     Ok((nodes, ways, amenity_positions, greenspace_polygons))
