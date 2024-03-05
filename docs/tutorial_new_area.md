@@ -39,10 +39,12 @@ See [the Rust definitions](https://github.com/Urban-Analytics-Technology-Platfor
 
 ## Step 4: Running od2net
 
-As before, either:
+If you're working your own repo, you'll need the od2net executable installed somewhere. If you're building it yourself, then do `cargo install --locked https://github.com/Urban-Analytics-Technology-Platform/od2net`, then the `od2net` command should be added to your shell path. Or you can use Docker.
+
+So either run:
 
 ```shell
-cargo run --release config.json
+od2net config.json
 ```
 
 or:
