@@ -34,11 +34,17 @@ struct Args {
     #[clap(long)]
     output_metadata: bool,
 
-    /// Instead of doing what this tool normally does, instead calculate this many routes and write
-    /// a separate GeoJSON file for each of them, with full segment-level detail. This will be slow
-    /// and take lots of disk if you specify a large number.
+    // TODO These two should maybe be subcommands
+    /// Instead of running normally, instead calculate this many routes and write a separate
+    /// GeoJSON file for each of them, with full segment-level detail. This will be slow and take
+    /// lots of disk if you specify a large number.
     #[clap(long)]
     detailed_routes: Option<usize>,
+
+    /// Instead of running normally, just write a `network.geojson` with the OSM tags, LTS, and
+    /// cost for every edge in a network. No counts are calculated or included.
+    #[clap(long)]
+    dump_network: bool,
 }
 
 fn main() -> Result<()> {
@@ -105,6 +111,12 @@ fn main() -> Result<()> {
         }
     };
     timer.stop();
+
+    if args.dump_network {
+        println!("Dumping network to network.geojson");
+        fs_err::write("network.geojson", &network.to_debug_geojson()?)?;
+        return Ok(());
+    }
 
     timer.start("Loading or generating requests");
     let requests = od2net::od::generate_requests(
