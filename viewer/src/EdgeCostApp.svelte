@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { PolygonToolLayer } from "maplibre-draw-polygon";
   import type { FeatureCollection } from "geojson";
   import initLts from "lts";
   import type {
@@ -314,6 +315,7 @@
           </Popup>
         </LineLayer>
       </GeoJSON>
+      <PolygonToolLayer />
     </MapLibre>
   </div>
 </Layout>

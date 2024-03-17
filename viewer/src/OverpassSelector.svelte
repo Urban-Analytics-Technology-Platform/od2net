@@ -1,9 +1,8 @@
 <script lang="ts">
-  import MapboxDraw from "@mapbox/mapbox-gl-draw";
   import type { Feature, Polygon } from "geojson";
-  import type { IControl, LngLat, Map } from "maplibre-gl";
-  import { createEventDispatcher, onDestroy } from "svelte";
-  import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
+  import type { LngLat, Map } from "maplibre-gl";
+  import { createEventDispatcher } from "svelte";
+  import { PolygonTool, PolygonControls } from "maplibre-draw-polygon";
 
   export let map: Map | null;
 
@@ -13,39 +12,7 @@
     error: string;
   }>();
 
-  let drawControls: MapboxDraw | null = null;
-
-  $: if (map && !drawControls) {
-    // TODO Hack from https://github.com/maplibre/maplibre-gl-js/issues/2601.
-    // Remove dependency on this entirely.
-    // @ts-ignore
-    MapboxDraw.constants.classes.CONTROL_BASE = "maplibregl-ctrl";
-    // @ts-ignore
-    MapboxDraw.constants.classes.CONTROL_PREFIX = "maplibregl-ctrl-";
-    // @ts-ignore
-    MapboxDraw.constants.classes.CONTROL_GROUP = "maplibregl-ctrl-group";
-
-    drawControls = new MapboxDraw({
-      displayControlsDefault: false,
-      controls: {
-        polygon: true,
-      },
-    });
-    // Hack around TS errors that don't matter at runtime
-    map.addControl(drawControls as unknown as IControl);
-
-    map.on("draw.create", async (e) => {
-      let boundaryGj = e.features[0];
-      drawControls!.deleteAll();
-      await importPolygon(boundaryGj);
-    });
-  }
-
-  onDestroy(() => {
-    if (map?.loaded() && drawControls) {
-      map.removeControl(drawControls as unknown as IControl);
-    }
-  });
+  let polygonTool: PolygonTool | null = null;
 
   async function importPolygon(boundaryGj: Feature<Polygon>) {
     try {
@@ -106,19 +73,33 @@
     }
     await importPolygon(mapBoundsToGeojson());
   }
+
+  function startPolygonTool() {
+    if (!map) {
+      return;
+    }
+    polygonTool = new PolygonTool(map);
+    polygonTool.startNew();
+    polygonTool.addEventListenerSuccess(async (f) => {
+      polygonTool = null;
+      await importPolygon(f);
+    });
+    polygonTool.addEventListenerFailure(() => {
+      polygonTool = null;
+    });
+  }
 </script>
 
-<button type="button" on:click={importCurrentView}>Import current view</button>
+{#if polygonTool}
+  <PolygonControls {polygonTool} />
+{:else}
+  <button type="button" on:click={importCurrentView}>
+    Import current view
+  </button>
 
-<style>
-  /* TODO: These really do belong here, but getting a warning */
+  <i>or...</i>
 
-  :global(.mapboxgl-ctrl-group > button) {
-    width: 60px;
-    height: 60px;
-  }
-
-  :global(.mapbox-gl-draw_polygon) {
-    background-size: 50px;
-  }
-</style>
+  <button type="button" on:click={startPolygonTool}>
+    Draw an area to import on the map
+  </button>
+{/if}

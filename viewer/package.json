@@ -27,9 +27,9 @@
     "vite-plugin-wasm-pack": "0.1.11"
   },
   "dependencies": {
-    "@mapbox/mapbox-gl-draw": "^1.4.3",
     "chart.js": "^4.4.2",
     "chartjs-plugin-dragdata": "^2.2.5",
+    "maplibre-draw-polygon": "github:dabreegster/maplibre-draw-polygon",
     "pmtiles": "^3.0.4",
     "svelte-maplibre": "^0.8.1"
   }
