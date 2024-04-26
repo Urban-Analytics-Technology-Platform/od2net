@@ -19,7 +19,7 @@
     makeColorRamp,
   } from "./common";
   import Popup from "./Popup.svelte";
-  import PropertiesTable from "./PropertiesTable.svelte";
+  import { PropertiesTable } from "svelte-utils";
   import {
     showSlope,
     showDestinations,

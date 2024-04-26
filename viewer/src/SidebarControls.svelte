@@ -7,7 +7,7 @@
     ltsNames,
     type LayersControls,
   } from "./common";
-  import Legend from "./Legend.svelte";
+  import { Legend } from "svelte-utils";
   import SequentialLegend from "./SequentialLegend.svelte";
   import {
     showSlope,

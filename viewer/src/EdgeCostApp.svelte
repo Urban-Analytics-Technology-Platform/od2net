@@ -27,11 +27,10 @@
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
-  import Legend from "./Legend.svelte";
   import Loading from "./Loading.svelte";
   import OverpassSelector from "./OverpassSelector.svelte";
   import Popup from "./Popup.svelte";
-  import PropertiesTable from "./PropertiesTable.svelte";
+  import { Legend, PropertiesTable } from "svelte-utils";
   import SequentialLegend from "./SequentialLegend.svelte";
 
   onMount(async () => {
