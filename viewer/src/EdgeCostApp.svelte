@@ -27,11 +27,14 @@
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
-  import Loading from "./Loading.svelte";
   import OverpassSelector from "./OverpassSelector.svelte";
   import Popup from "./Popup.svelte";
-  import { Legend, PropertiesTable } from "svelte-utils";
-  import SequentialLegend from "./SequentialLegend.svelte";
+  import {
+    Loading,
+    SequentialLegend,
+    Legend,
+    PropertiesTable,
+  } from "svelte-utils";
 
   onMount(async () => {
     await init();
@@ -50,7 +53,7 @@
   let cost: Cost = "Distance";
   let colorBy: ColorBy = "cost";
   let showNotAllowed = false;
-  let loading = false;
+  let loading = "";
   // Note the 0th entry is "not allowed"; it won't be filled out at all
   let percentByLength = [0, 0, 0, 0, 0];
   let maxCostRatio = 1.0;
@@ -59,7 +62,7 @@
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
     example = "";
-    loading = true;
+    loading = "Loading file";
     loadBytes(await fileInput.files![0].arrayBuffer());
   }
 
@@ -80,12 +83,12 @@
     } catch (err) {
       window.alert(`Problem importing osm.pbf file: ${err}`);
     }
-    loading = false;
+    loading = "";
   }
 
   async function loadExample(example: string) {
     if (example != "") {
-      loading = true;
+      loading = `Loading ${example}`;
       let resp = await fetch(
         `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`,
       );
@@ -191,12 +194,11 @@
     return result;
   }
 
-  let overpassMessage = "";
   function gotXml(e: CustomEvent<string>) {
-    overpassMessage = "Parsing XML";
+    loading = "Parsing XML";
     // TODO Can we avoid turning into bytes?
     loadBytes(new TextEncoder().encode(e.detail));
-    overpassMessage = "";
+    loading = "";
   }
 
   function updateCost(cost: Cost) {
@@ -220,12 +222,9 @@
     <OverpassSelector
       {map}
       on:gotXml={gotXml}
-      on:loading={(e) => (overpassMessage = e.detail)}
-      on:error={(e) => (overpassMessage = e.detail)}
+      on:loading={(e) => (loading = e.detail)}
+      on:error={(e) => (loading = e.detail)}
     />
-    {#if overpassMessage}
-      <p>{overpassMessage}</p>
-    {/if}
 
     {#if network}
       <hr />
@@ -274,6 +273,7 @@
         <SequentialLegend
           {colorScale}
           limits={limitsFor(colorBy, maxCostRatio, maxNearbyAmenities)}
+          decimalPlaces={1}
         />
       {/if}
       <div>
@@ -318,4 +318,5 @@
     </MapLibre>
   </div>
 </Layout>
+
 <Loading {loading} />

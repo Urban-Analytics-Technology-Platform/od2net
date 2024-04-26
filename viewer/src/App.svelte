@@ -28,6 +28,7 @@
     streetviewOn: false,
   };
 
+  // TODO Add Loading screen
   let fileInput: HTMLInputElement;
   function fileLoaded(e: Event) {
     try {

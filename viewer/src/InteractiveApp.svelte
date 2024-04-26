@@ -13,7 +13,7 @@
   import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
-  import Loading from "./Loading.svelte";
+  import { Loading } from "svelte-utils";
   import OverpassSelector from "./OverpassSelector.svelte";
   import SidebarControls from "./SidebarControls.svelte";
 
@@ -30,7 +30,7 @@
     type: "FeatureCollection",
     features: [],
   };
-  let loading = false;
+  let loading = "";
 
   let maxRequests = 1000;
   let cost: Cost = "Distance";
@@ -44,7 +44,7 @@
   let fileInput: HTMLInputElement;
   async function fileLoaded(e: Event) {
     example = "";
-    loading = true;
+    loading = "Loading file";
     loadBytes(await fileInput.files![0].arrayBuffer());
   }
 
@@ -67,12 +67,12 @@
     } catch (err) {
       window.alert(`Problem importing osm.pbf file: ${err}`);
     }
-    loading = false;
+    loading = "";
   }
 
   async function loadExample(example: string) {
     if (example != "") {
-      loading = true;
+      loading = `Loading ${example}`;
       let resp = await fetch(
         `https://assets.od2net.org/pbf_clips/${example}.osm.pbf`,
       );
@@ -101,12 +101,11 @@
   }
   $: onUpdate(cost, maxRequests);
 
-  let overpassMessage = "";
   function gotXml(e: CustomEvent<string>) {
-    overpassMessage = "Parsing XML";
+    loading = "Parsing XML";
     // TODO Can we avoid turning into bytes?
     loadBytes(new TextEncoder().encode(e.detail));
-    overpassMessage = "";
+    loading = "";
   }
 </script>
 
@@ -122,12 +121,9 @@
     <OverpassSelector
       {map}
       on:gotXml={gotXml}
-      on:loading={(e) => (overpassMessage = e.detail)}
-      on:error={(e) => (overpassMessage = e.detail)}
+      on:loading={(e) => (loading = e.detail)}
+      on:error={(e) => (loading = e.detail)}
     />
-    {#if overpassMessage}
-      <p>{overpassMessage}</p>
-    {/if}
 
     {#if network}
       <div>
@@ -162,4 +158,5 @@
     </MapLibre>
   </div>
 </Layout>
+
 <Loading {loading} />
