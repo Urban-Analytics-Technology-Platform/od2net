@@ -18,8 +18,7 @@
     type LayersControls,
     makeColorRamp,
   } from "./common";
-  import Popup from "./Popup.svelte";
-  import { PropertiesTable } from "svelte-utils";
+  import { Popup, PropertiesTable } from "svelte-utils";
   import {
     showSlope,
     showDestinations,

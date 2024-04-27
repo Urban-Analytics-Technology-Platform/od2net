@@ -28,8 +28,8 @@
   import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
   import OverpassSelector from "./OverpassSelector.svelte";
-  import Popup from "./Popup.svelte";
   import {
+    Popup,
     Loading,
     SequentialLegend,
     Legend,
