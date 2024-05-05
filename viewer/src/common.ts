@@ -1,7 +1,4 @@
-import type {
-  DataDrivenPropertyValueSpecification,
-  ExpressionSpecification,
-} from "maplibre-gl";
+import type { ExpressionSpecification } from "maplibre-gl";
 
 export interface LayersControls {
   maxCount: number;
@@ -48,6 +45,7 @@ export let colors = {
   lts_not_allowed: "red",
 };
 
+// TODO constructMatchExpression isn't working for some reason; numeric keys?
 export let colorByLts: ExpressionSpecification = [
   "match",
   ["get", "lts"],
@@ -64,24 +62,6 @@ export let colorByLts: ExpressionSpecification = [
   // Shouldn't happen
   "red",
 ];
-
-// Helper for https://maplibre.org/maplibre-style-spec/expressions/#step.
-export function makeColorRamp(
-  input: DataDrivenPropertyValueSpecification<number>,
-  limits: number[],
-  colorScale: string[],
-): DataDrivenPropertyValueSpecification<string> {
-  let step: any[] = ["step", input];
-  for (let i = 1; i < limits.length; i++) {
-    step.push(colorScale[i - 1]);
-    step.push(limits[i]);
-  }
-  // Repeat the last color. The upper limit is exclusive, meaning a value
-  // exactly equal to it will use this fallback. For things like percentages,
-  // we want to set 100 as the cap.
-  step.push(colorScale[colorScale.length - 1]);
-  return step as DataDrivenPropertyValueSpecification<string>;
-}
 
 // Sequential (low-to-high) color ramp from https://www.ons.gov.uk/census/maps/choropleth
 export let colorScale = ["#CDE594", "#80C6A3", "#1F9EB7", "#186290", "#080C54"];

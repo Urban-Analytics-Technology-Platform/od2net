@@ -21,7 +21,6 @@
     colors,
     colorScale,
     ltsNames,
-    makeColorRamp,
     type Cost,
   } from "./common";
   import CostFunction from "./CostFunction.svelte";
@@ -34,6 +33,7 @@
     Legend,
     OverpassSelector,
     PropertiesTable,
+    makeColorRamp,
   } from "svelte-utils";
 
   onMount(async () => {
@@ -137,7 +137,7 @@
         "case",
         ["==", 0, ["get", "lts"]],
         colors.lts_not_allowed,
-        // @ts-ignore Not sure the problem
+        // @ts-expect-error TODO Not sure the problem
         makeColorRamp(
           ["/", ["get", "forward_cost"], ["get", "length"]],
           limitsFor(colorBy, maxCostRatio, maxNearbyAmenities),
