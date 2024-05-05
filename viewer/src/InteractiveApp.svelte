@@ -13,8 +13,7 @@
   import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
   import Layout from "./Layout.svelte";
-  import { Loading } from "svelte-utils";
-  import OverpassSelector from "./OverpassSelector.svelte";
+  import { Loading, OverpassSelector } from "svelte-utils";
   import SidebarControls from "./SidebarControls.svelte";
 
   onMount(async () => {

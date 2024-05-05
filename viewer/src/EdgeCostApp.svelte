@@ -27,12 +27,12 @@
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
-  import OverpassSelector from "./OverpassSelector.svelte";
   import {
     Popup,
     Loading,
     SequentialLegend,
     Legend,
+    OverpassSelector,
     PropertiesTable,
   } from "svelte-utils";
 
