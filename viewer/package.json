@@ -30,7 +30,7 @@
     "chart.js": "^4.4.2",
     "chartjs-plugin-dragdata": "^2.2.5",
     "pmtiles": "^3.0.4",
-    "svelte-maplibre": "^0.8.1",
+    "svelte-maplibre": "^0.9.7",
     "svelte-utils": "github:a-b-street/svelte-utils"
   }
 }
