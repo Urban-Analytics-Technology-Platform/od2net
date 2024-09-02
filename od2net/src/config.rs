@@ -45,6 +45,10 @@ pub enum ODPattern {
         /// Path to a CSV file that must have 3 columns "from", "to", and "count". The first
         /// two must match zone names. "count" must be an integer.
         csv_path: String,
+        /// If an origin zone doesn't have any matching origin points, use the zone's centroid instead.
+        origin_zone_centroid_fallback: bool,
+        /// If a destination zone doesn't have any matching origin points, use the zone's centroid instead.
+        destination_zone_centroid_fallback: bool,
     },
     ZoneToPoint {
         /// Path to a GeoJSON file containing Polygons and MultiPolygons with a "name" property

@@ -59,6 +59,7 @@ run_example lisbon
 
 # Huge
 run_example england_2011_home_to_work
+run_example england_2021_home_to_work
 run_example seattle
 
 python3 summarize_results.py */output/metadata.json
