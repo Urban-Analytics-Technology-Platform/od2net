@@ -5,36 +5,46 @@
   // TODO Merge apps into one page, or detect what the user's loading?
   export let app: string;
 
-  let show = false;
-
-  function switchApp() {
-    if (app == "main") {
-      window.location.href = "index.html";
-    } else if (app == "interactive") {
-      window.location.href = "interactive.html";
-    } else if (app == "costs") {
-      window.location.href = "edge_cost.html";
-    }
-  }
+  let showAbout = false;
 </script>
 
-<div style="display: flex; justify-content: space-between">
-  <img src={logoUrl} width="100" alt="od2net logo by Hadrien Salat" />
+<div style="display: flex">
+  <button class="outline" on:click={() => (showAbout = true)}>
+    <img src={logoUrl} width="100" alt="od2net logo by Hadrien Salat" />
+  </button>
 
-  <select bind:value={app} on:change={switchApp}>
-    <option value="main">Pre-built route networks</option>
-    <option value="interactive">Interactively generate route networks</option>
-    <option value="costs">Explore edge costs</option>
-  </select>
+  <nav>
+    <ul>
+      <li>
+        <button
+          on:click={() => (window.location.href = "index.html")}
+          disabled={app == "main"}
+        >
+          Pre-built route networks
+        </button>
+      </li>
+      <li>
+        <button
+          on:click={() => (window.location.href = "interactive.html")}
+          disabled={app == "interactive"}
+        >
+          Interactively generate route networks
+        </button>
+      </li>
+      <li>
+        <button
+          on:click={() => (window.location.href = "edge_cost.html")}
+          disabled={app == "costs"}
+        >
+          Explore edge costs
+        </button>
+      </li>
+    </ul>
+  </nav>
 </div>
 
-<button on:click={() => (show = true)}>About</button>
-
-<br />
-<br />
-
-{#if show}
-  <Modal on:close={() => (show = false)} let:dialog>
+{#if showAbout}
+  <Modal on:close={() => (showAbout = false)} let:dialog>
     <div style="display: flex; justify-content: space-between">
       <h1>About od2net</h1>
       <button on:click={() => dialog.close()}>Close</button>

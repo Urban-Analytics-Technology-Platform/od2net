@@ -26,7 +26,7 @@
   } from "./common";
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
-  import Layout from "./Layout.svelte";
+  import { Layout } from "svelte-utils/top_bar_layout";
   import { Popup, makeColorRamp } from "svelte-utils/map";
   import {
     Loading,
@@ -211,8 +211,10 @@
 </script>
 
 <Layout>
-  <div slot="left">
+  <div slot="top">
     <Header app="costs" />
+  </div>
+  <div slot="left">
     <label>
       Open an <i>.osm.pbf</i>
       file

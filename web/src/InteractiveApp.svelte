@@ -13,7 +13,7 @@
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
-  import Layout from "./Layout.svelte";
+  import { Layout } from "svelte-utils/top_bar_layout";
   import { Loading } from "svelte-utils";
   import { OverpassSelector } from "svelte-utils/overpass";
   import SidebarControls from "./SidebarControls.svelte";
@@ -111,8 +111,10 @@
 </script>
 
 <Layout>
-  <div slot="left">
+  <div slot="top">
     <Header app="interactive" />
+  </div>
+  <div slot="left">
     <label>
       Open an <i>.osm.pbf</i>
       file

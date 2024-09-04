@@ -9,7 +9,7 @@
   import { type LayersControls } from "./common";
   import Header from "./Header.svelte";
   import Layers from "./Layers.svelte";
-  import Layout from "./Layout.svelte";
+  import { Layout } from "svelte-utils/top_bar_layout";
   import Loader from "./Loader.svelte";
   import SidebarControls from "./SidebarControls.svelte";
 
@@ -51,8 +51,10 @@
 </script>
 
 <Layout>
-  <div slot="left">
+  <div slot="top">
     <Header app="main" />
+  </div>
+  <div slot="left">
     <label>
       {#if pmtiles == null}
         Open a <i>.pmtiles</i>
@@ -83,7 +85,7 @@
       <SidebarControls {outputMetadata} {map} bind:controls />
     {/if}
   </div>
-  <div slot="main" style="position:relative; width: 100%; height: 100vh;">
+  <div slot="main" style="position:relative; width: 100%; height: 100%;">
     <MapLibre
       style="https://api.maptiler.com/maps/dataviz/style.json?key=MZEJTanw3WpxRvt7qDfo"
       standardControls
