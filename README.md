@@ -1,6 +1,6 @@
 # od2net
 
-![Logo](viewer/assets/logo.png)
+![Logo](web/assets/logo.png)
 
 WARNING: This repo is not ready for general use. The API and input/output formats will keep changing. There are big limitations not yet documented.
 
