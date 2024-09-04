@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { Modal } from "svelte-utils";
   import { ltsNames, type Cost } from "./common";
   import TradeoffRadar from "./TradeoffRadar.svelte";
 
   export let cost: Cost;
-  let dialog: HTMLDialogElement;
+
+  let showJson = false;
 
   type Choice = "Distance" | "Generalized" | "ByLTS" | "OsmHighwayType";
 
@@ -84,15 +86,18 @@
   </label>
 </div>
 
-<dialog bind:this={dialog}>
-  <button on:click={() => dialog.close()}>Close</button>
-  <p>
-    Copy this into a <i>config.json</i>
-    file
-  </p>
-  <pre>"cost": {JSON.stringify(cost, null, 2)}</pre>
-</dialog>
-<button on:click={() => dialog.showModal()}>See cost function JSON</button>
+<button on:click={() => (showJson = true)}>See cost function JSON</button>
+
+{#if showJson}
+  <Modal on:close={() => (showJson = false)} let:dialog>
+    <p>
+      Copy this into a <i>config.json</i>
+      file
+    </p>
+    <pre>"cost": {JSON.stringify(cost, null, 2)}</pre>
+    <button on:click={() => dialog.close()}>Close</button>
+  </Modal>
+{/if}
 
 {#if costChoice == "OsmHighwayType"}
   <ul>

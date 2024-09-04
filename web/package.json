@@ -27,6 +27,7 @@
     "vite-plugin-wasm-pack": "0.1.11"
   },
   "dependencies": {
+    "@picocss/pico": "^2.0.6",
     "chart.js": "^4.4.2",
     "chartjs-plugin-dragdata": "^2.2.5",
     "pmtiles": "^3.0.4",

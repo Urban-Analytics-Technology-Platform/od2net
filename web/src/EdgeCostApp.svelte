@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "@picocss/pico/css/pico.jade.min.css";
   import { PolygonToolLayer } from "maplibre-draw-polygon";
   import type { FeatureCollection } from "geojson";
   import initLts from "lts";
@@ -319,3 +320,14 @@
 </Layout>
 
 <Loading {loading} />
+
+<style>
+  :global(.maplibregl-popup-content) {
+    background-color: var(--pico-background-color);
+  }
+
+  /* picocss messes up maplibre controls; workaround */
+  :global(.maplibregl-ctrl > button) {
+    margin-bottom: 0px;
+  }
+</style>
