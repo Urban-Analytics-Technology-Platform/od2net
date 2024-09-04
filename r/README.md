@@ -1,0 +1,65 @@
+# Preparing OD data for network generation with od2net
+
+
+This R package provides functions to prepare OD data for network
+generation with the `od2net` tool, as illustrated in the example below.
+
+``` r
+source("R/setup.R")
+dir.create("input", showWarnings = FALSE)
+make_zones("https://github.com/acteng/netgen/raw/main/input/zones_york.geojson")
+make_osm()
+make_origins()
+make_elevation()
+destinations = destinations_york # Provided in the R package
+names(destinations)[1] = "name"
+destinations = destinations[1]
+class(destinations$name) = "character"
+sf::write_sf(destinations, "https://github.com/acteng/netgen/raw/main/input/destinations.geojson", delete_dsn = TRUE)
+# Save the OD dataset:
+od = od_geo |>
+  sf::st_drop_geometry() |>
+  transmute(from = O, to = as.character(D), count = round(trips_modelled))
+readr::write_csv(od, "input/od.csv", quote = "all")
+```
+
+Then create a config.json file, e.g. with the following content:
+
+``` json
+{
+  "requests": {
+    "description": "Test data for SchoolRoutes project.",
+    "pattern": {
+      "ZoneToPoint": {
+        "zones_path": "zones.geojson",
+        "destinations_path": "destinations.geojson",
+        "csv_path": "od.csv",
+         "origin_zone_centroid_fallback": false
+      }
+    },
+    "origins_path": "buildings.geojson",
+    "destinations_path": "destinations.geojson"
+  },
+  "cost": "Distance",
+  "uptake": "Identity",
+  "lts": "BikeOttawa",
+  "elevation_geotiff": "elevation.tif"
+}
+```
+
+Then run the following code to generate the network:
+
+Run the tool with Docker as follows:
+
+``` bash
+# On Linux:
+sudo docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json
+# or in Windows:
+sudo docker run -v ${pwd}:/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json
+```
+
+After that you should see the following in the output folder:
+
+``` r
+fs::dir_tree("output")
+```

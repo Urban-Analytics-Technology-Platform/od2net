@@ -1,0 +1,23 @@
+Package: od2net
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: 
+    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: What the package does (one paragraph).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    dplyr,
+    osmextract,
+    R.utils,
+    readr,
+    sf
+Suggests:
+    simodels (>= 0.1.0)
+Depends: 
+    R (>= 2.10)
+LazyData: true
+URL: https://acteng.github.io/od2net/
