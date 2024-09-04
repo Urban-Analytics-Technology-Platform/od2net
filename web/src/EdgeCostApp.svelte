@@ -26,15 +26,14 @@
   import CostFunction from "./CostFunction.svelte";
   import Header from "./Header.svelte";
   import Layout from "./Layout.svelte";
+  import { Popup, makeColorRamp } from "svelte-utils/map";
   import {
-    Popup,
     Loading,
     SequentialLegend,
     Legend,
-    OverpassSelector,
     PropertiesTable,
-    makeColorRamp,
   } from "svelte-utils";
+  import { OverpassSelector } from "svelte-utils/overpass";
 
   onMount(async () => {
     await init();
