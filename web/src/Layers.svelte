@@ -17,7 +17,6 @@
     colors,
     type LayersControls,
   } from "./common";
-  import { PropertiesTable } from "svelte-utils";
   import { makeColorRamp, Popup } from "svelte-utils/map";
   import {
     showSlope,
@@ -88,7 +87,29 @@
 >
   {#if enableControls}
     <Popup let:props>
-      <PropertiesTable properties={props} />
+      <h2>Count: {props.count.toFixed(1)}</h2>
+      <p>
+        LTS: <b>{props.lts}</b>
+      </p>
+      <p>
+        Nearby amenities: <b>{props.nearby_amenities}</b>
+      </p>
+      {#if props.slope}
+        <p>
+          Slope: <b>{props.slope.toFixed(1)}%</b>
+        </p>
+      {/if}
+      {#if props.forward_cost}
+        <p>
+          Cost forwards: <b>{props.forward_cost}</b>
+        </p>
+      {/if}
+      {#if props.backward_cost}
+        <p>
+          Cost backwards: <b>{props.backward_cost}</b>
+        </p>
+      {/if}
+      <p>Click to open OSM</p>
     </Popup>
   {/if}
 </LineLayer>

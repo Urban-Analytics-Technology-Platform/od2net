@@ -310,7 +310,9 @@
           on:click={openOSM}
         >
           <Popup let:props>
-            <PropertiesTable properties={props} />
+            <div style="max-width: 30vw; max-height: 60vh; overflow: auto;">
+              <PropertiesTable properties={props} />
+            </div>
           </Popup>
         </LineLayer>
       </GeoJSON>
