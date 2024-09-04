@@ -74,17 +74,15 @@
   $: setCost(costChoice);
 </script>
 
-<div>
-  <label>
-    Cost function:
-    <select bind:value={costChoice}>
-      <option value="Distance">Distance</option>
-      <option value="Generalized">Generalized cost function</option>
-      <option value="ByLTS">Weight per LTS</option>
-      <option value="OsmHighwayType">Set a weight per OSM highway type</option>
-    </select>
-  </label>
-</div>
+<label>
+  Cost function:
+  <select bind:value={costChoice}>
+    <option value="Distance">Distance</option>
+    <option value="Generalized">Generalized cost function</option>
+    <option value="ByLTS">Weight per LTS</option>
+    <option value="OsmHighwayType">Set a weight per OSM highway type</option>
+  </select>
+</label>
 
 <button on:click={() => (showJson = true)}>See cost function JSON</button>
 
@@ -156,15 +154,13 @@
     {/each}
   </ul>
 
-  <div>
-    <label>
-      Give roads a good score if they have at least this many nearby amenities:
-      <input
-        type="number"
-        min="0"
-        bind:value={generalized.minimum_amenities}
-        on:change={() => (cost = cost)}
-      />
-    </label>
-  </div>
+  <label>
+    Give roads a good score if they have at least this many nearby amenities:
+    <input
+      type="number"
+      min="0"
+      bind:value={generalized.minimum_amenities}
+      on:change={() => (cost = cost)}
+    />
+  </label>
 {/if}

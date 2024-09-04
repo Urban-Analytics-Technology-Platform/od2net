@@ -53,14 +53,12 @@
   StreetView
 </label>
 {#if enabled}
-  <div>
-    <label>
-      <input type="radio" bind:group={source} value="google" />
-      Google StreetView
-    </label>
-    <label>
-      <input type="radio" bind:group={source} value="bing" />
-      Bing Streetside
-    </label>
-  </div>
+  <label>
+    <input type="radio" bind:group={source} value="google" />
+    Google StreetView
+  </label>
+  <label>
+    <input type="radio" bind:group={source} value="bing" />
+    Bing Streetside
+  </label>
 {/if}

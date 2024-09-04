@@ -215,31 +215,32 @@
     <Header app="costs" />
   </div>
   <div slot="left">
-    <label>
-      Open an <i>.osm.pbf</i>
-      file
-      <input bind:this={fileInput} on:change={fileLoaded} type="file" />
-    </label>
-    <ClippedPBFs bind:example />
-    <OverpassSelector
-      {map}
-      on:gotXml={gotXml}
-      on:loading={(e) => (loading = e.detail)}
-      on:error={(e) => (loading = e.detail)}
-    />
+    <details open={!network}>
+      <summary role="button" class="secondary">Change areas</summary>
+      <label>
+        Open an <i>.osm.pbf</i>
+        file
+        <input bind:this={fileInput} on:change={fileLoaded} type="file" />
+      </label>
+      <ClippedPBFs bind:example />
+      <OverpassSelector
+        {map}
+        on:gotXml={gotXml}
+        on:loading={(e) => (loading = e.detail)}
+        on:error={(e) => (loading = e.detail)}
+      />
+    </details>
 
     {#if network}
-      <hr />
-      <div>
-        <label>
-          Color edges by:
-          <select bind:value={colorBy}>
-            <option value="lts">LTS</option>
-            <option value="cost">Edge cost (relative to length)</option>
-            <option value="nearby_amenities">Nearby amenities</option>
-          </select>
-        </label>
-      </div>
+      <label>
+        Color edges by:
+        <select bind:value={colorBy}>
+          <option value="lts">LTS</option>
+          <option value="cost">Edge cost (relative to length)</option>
+          <option value="nearby_amenities">Nearby amenities</option>
+        </select>
+      </label>
+
       {#if colorBy == "lts"}
         <Legend
           rows={[
@@ -263,6 +264,7 @@
             ],
           ]}
         />
+
         <p>
           Note: LTS model from <a
             href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
@@ -278,13 +280,12 @@
           decimalPlaces={1}
         />
       {/if}
-      <div>
-        <label style:color={colors.lts_not_allowed}>
-          <input type="checkbox" bind:checked={showNotAllowed} />
-          Show cyclists not allowed
-        </label>
-      </div>
-      <hr />
+
+      <label style:color={colors.lts_not_allowed}>
+        <input type="checkbox" bind:checked={showNotAllowed} />
+        Show cyclists not allowed
+      </label>
+
       <CostFunction bind:cost />
     {/if}
   </div>

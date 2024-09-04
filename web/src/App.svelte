@@ -55,15 +55,17 @@
     <Header app="main" />
   </div>
   <div slot="left">
-    <label>
-      {#if pmtiles == null}
-        Open a <i>.pmtiles</i>
-        file produced by the tool. Note this file stays in your browser; it doesn't
-        get uploaded anywhere.
-      {/if}
-      <input bind:this={fileInput} on:change={fileLoaded} type="file" />
-    </label>
-    <div>
+    <details open={!outputMetadata}>
+      <summary role="button" class="secondary">Load a file</summary>
+      <label>
+        {#if pmtiles == null}
+          Open a <i>.pmtiles</i>
+          file produced by the tool. Note this file stays in your browser; it doesn't
+          get uploaded anywhere.
+        {/if}
+        <input bind:this={fileInput} on:change={fileLoaded} type="file" />
+      </label>
+
       <label>
         Or load an example:
         <select bind:value={example}>
@@ -80,7 +82,8 @@
           <option value="lisbon">Lisbon</option>
         </select>
       </label>
-    </div>
+    </details>
+
     {#if outputMetadata}
       <SidebarControls {outputMetadata} {map} bind:controls />
     {/if}

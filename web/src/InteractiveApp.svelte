@@ -115,27 +115,28 @@
     <Header app="interactive" />
   </div>
   <div slot="left">
-    <label>
-      Open an <i>.osm.pbf</i>
-      file
-      <input bind:this={fileInput} on:change={fileLoaded} type="file" />
-    </label>
-    <ClippedPBFs bind:example />
-    <OverpassSelector
-      {map}
-      on:gotXml={gotXml}
-      on:loading={(e) => (loading = e.detail)}
-      on:error={(e) => (loading = e.detail)}
-    />
+    <details open={!network}>
+      <summary role="button" class="secondary">Change areas</summary>
+      <label>
+        Open an <i>.osm.pbf</i>
+        file
+        <input bind:this={fileInput} on:change={fileLoaded} type="file" />
+      </label>
+      <ClippedPBFs bind:example />
+      <OverpassSelector
+        {map}
+        on:gotXml={gotXml}
+        on:loading={(e) => (loading = e.detail)}
+        on:error={(e) => (loading = e.detail)}
+      />
+    </details>
 
     {#if network}
-      <div>
-        <label>
-          Max requests (limit for faster updates):
-          <br />
-          <input type="number" bind:value={maxRequests} min={1} />
-        </label>
-      </div>
+      <label>
+        Max requests (limit for faster updates):
+        <br />
+        <input type="number" bind:value={maxRequests} min={1} />
+      </label>
       <CostFunction bind:cost />
     {/if}
 

@@ -27,20 +27,20 @@
 </script>
 
 <p>{outputMetadata.config.requests.description}</p>
-<div>
-  <button
-    on:click={() => window.alert(JSON.stringify(outputMetadata, null, "  "))}
-  >
-    See all output details
-  </button>
-</div>
-<div>
+<button
+  on:click={() => window.alert(JSON.stringify(outputMetadata, null, "  "))}
+>
+  See all output details
+</button>
+
+<details>
+  <summary role="button" class="secondary">Route network layer</summary>
+
   <label>
     <input type="checkbox" bind:checked={$showRouteNetwork} />
     Route network
   </label>
-</div>
-<div>
+
   <label>
     Max for line width styling:
     <br />
@@ -51,17 +51,14 @@
       on:change={() => (controls = controls)}
     />
   </label>
-</div>
 
-<div>
   <label>
     <input type="checkbox" bind:checked={$showOrigins} />
     <span style="color: {colors.origins}">
       Origins ({outputMetadata.num_origins.toLocaleString()})
     </span>
   </label>
-</div>
-<div>
+
   <label>
     Change origin point size:
     <br />
@@ -72,17 +69,14 @@
       on:change={() => (controls = controls)}
     />
   </label>
-</div>
 
-<div>
   <label>
     <input type="checkbox" bind:checked={$showDestinations} />
     <span style="color: {colors.destinations}">
       Destinations ({outputMetadata.num_destinations.toLocaleString()})
     </span>
   </label>
-</div>
-<div>
+
   <label>
     Change destination point size:
     <br />
@@ -93,57 +87,54 @@
       on:change={() => (controls = controls)}
     />
   </label>
-</div>
 
-{#if outputMetadata.config.elevation_geotiff}
-  <div>
+  {#if outputMetadata.config.elevation_geotiff}
     <label>
       <input type="checkbox" bind:checked={$showSlope} />
       Visualize slope
     </label>
-  </div>
-{/if}
+  {/if}
 
-{#if $showSlope}
-  <SequentialLegend colorScale={slopeColors} limits={slopeLimits} />
-{:else}
-  <hr />
-  <Legend
-    rows={[
-      [
-        `${ltsNames.lts1}: ${total(outputMetadata.total_meters_lts1)}`,
-        colors.lts1,
-      ],
-      [
-        `${ltsNames.lts2}: ${total(outputMetadata.total_meters_lts2)}`,
-        colors.lts2,
-      ],
-      [
-        `${ltsNames.lts3}: ${total(outputMetadata.total_meters_lts3)}`,
-        colors.lts3,
-      ],
-      [
-        `${ltsNames.lts4}: ${total(outputMetadata.total_meters_lts4)}`,
-        colors.lts4,
-      ],
-      // Shouldn't happen
-      [
-        `${ltsNames.lts_not_allowed}: ${total(
-          outputMetadata.total_meters_not_allowed,
-        )}`,
-        colors.lts_not_allowed,
-      ],
-    ]}
-  />
-  <p>
-    Note: LTS model from <a
-      href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
-      target="_blank"
-    >
-      BikeOttawa
-    </a>
-  </p>
-{/if}
+  {#if $showSlope}
+    <SequentialLegend colorScale={slopeColors} limits={slopeLimits} />
+  {:else}
+    <Legend
+      rows={[
+        [
+          `${ltsNames.lts1}: ${total(outputMetadata.total_meters_lts1)}`,
+          colors.lts1,
+        ],
+        [
+          `${ltsNames.lts2}: ${total(outputMetadata.total_meters_lts2)}`,
+          colors.lts2,
+        ],
+        [
+          `${ltsNames.lts3}: ${total(outputMetadata.total_meters_lts3)}`,
+          colors.lts3,
+        ],
+        [
+          `${ltsNames.lts4}: ${total(outputMetadata.total_meters_lts4)}`,
+          colors.lts4,
+        ],
+        // Shouldn't happen
+        [
+          `${ltsNames.lts_not_allowed}: ${total(
+            outputMetadata.total_meters_not_allowed,
+          )}`,
+          colors.lts_not_allowed,
+        ],
+      ]}
+    />
+    <p>
+      Note: LTS model from <a
+        href="https://github.com/BikeOttawa/stressmodel/blob/master/stressmodel.js"
+        target="_blank"
+      >
+        BikeOttawa
+      </a>
+    </p>
+  {/if}
+</details>
 
 <hr />
 <StreetView {map} bind:enabled={controls.streetviewOn} />
