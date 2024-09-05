@@ -160,8 +160,8 @@ impl Network {
                 .get(&(*node1, *node2))
                 .or_else(|| self.edges.get(&(*node2, *node1)))
             {
-                let way = edge.way_id;
-                writeln!(file, "{way},{node1},{node2},{count}")?;
+                let way = edge.way_id.0;
+                writeln!(file, "{way},{},{},{count}", node1.0, node2.0)?;
             } else {
                 skipped += 1;
             }
