@@ -10,10 +10,18 @@ execute:
 
 This R package provides functions to prepare OD data for network generation with the `od2net` tool, as illustrated in the example below.
 
+## Example
+
+Imagine you want to generate a route network with values on the links representing the number of pupils/parents on their way to school each school day. The following code shows how to prepare the data for the `od2net` tool.
+
 
 ```{r}
 #| eval: false
-source("R/setup.R")
+# Install pak if not already installed:
+if (!requireNamespace("pak", quietly = TRUE)) {
+  install.packages("pak")
+}
+pak::pkg_install("robinlovelace/od2net/r@67-r-port")
 dir.create("input", showWarnings = FALSE)
 make_zones("https://github.com/acteng/netgen/raw/main/input/zones_york.geojson")
 make_osm()
@@ -80,5 +88,24 @@ After that you should see the following in the output folder:
 #| eval: false
 fs::dir_tree("output")
 ```
+
+Helper functions
+
+```{r}
+# Aim: generate input data for od2net with R
+
+#' Generate a 'zones.geojson' file
+#' 
+#' This function requires a zones file, e.g.
+#' "https://raw.githubusercontent.com/nptscot/npt/main/data-raw/zones_edinburgh.geojson"
+#' or a file on your computer.
+#' It will generate a file in the input/ folder
+#' 
+#' @param file Location or URL of zones file
+make_zones = function(file) {
+  zones = sf::read_sf(file)[1]
+  names(zones)[1] = "name"
+  sf::write_sf(zones, "input/zones.geojson", delete_dsn = TRUE)
+}
 
 
