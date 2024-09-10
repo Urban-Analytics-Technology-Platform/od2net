@@ -43,6 +43,7 @@ jobs:
         with:
           extra-packages: any::pkgdown, local::.
           needs: website
+          working-directory: r
 
       - name: Build R docs
         run: pkgdown::build_site_github_pages(pkg = "r", new_process = FALSE, install = FALSE)
