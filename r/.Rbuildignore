@@ -3,3 +3,6 @@
 ^LICENSE\.md$
 ^\.quarto$
 ^\.devcontainer$
+^output$
+^intermediate$
+^config\.json$
