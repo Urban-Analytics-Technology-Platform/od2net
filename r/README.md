@@ -116,28 +116,28 @@ readr::write_csv(od, "input/od.csv", quote = "all")
 Then create a config.json file, e.g. with the following content:
 
 ``` r
-readLines("config.json")
+readLines("config.json") |> cat(sep = "\n")
 ```
 
-\[1\] “{”  
-\[2\] ” "requests": {”  
-\[3\] ” "description": "Test data for SchoolRoutes project.",” \[4\] ”
-"pattern": {”  
-\[5\] ” "ZoneToPoint": {”  
-\[6\] ” "zones_path": "zones.geojson",”  
-\[7\] ” "destinations_path": "destinations.geojson",”  
-\[8\] ” "csv_path": "od.csv",”  
-\[9\] ” "origin_zone_centroid_fallback": false”  
-\[10\] ” }”  
-\[11\] ” },”  
-\[12\] ” "origins_path": "buildings.geojson",”  
-\[13\] ” "destinations_path": "destinations.geojson"”  
-\[14\] ” },”  
-\[15\] ” "cost": "Distance",”  
-\[16\] ” "uptake": "Identity",”  
-\[17\] ” "lts": "BikeOttawa",”  
-\[18\] ” "elevation_geotiff": "elevation.tif"”  
-\[19\] “}”
+    {
+        "requests": {
+          "description": "Test data for SchoolRoutes project.",
+          "pattern": {
+            "ZoneToPoint": {
+              "zones_path": "zones.geojson",
+              "destinations_path": "destinations.geojson",
+              "csv_path": "od.csv",
+               "origin_zone_centroid_fallback": false
+            }
+          },
+          "origins_path": "buildings.geojson",
+          "destinations_path": "destinations.geojson"
+        },
+        "cost": "Distance",
+        "uptake": "Identity",
+        "lts": "BikeOttawa",
+        "elevation_geotiff": "elevation.tif"
+    }
 
 Then run the following code to generate the network:
 
