@@ -18,27 +18,27 @@ getbbox_from_zones = function(zones_file = "input/zones.geojson") {
 #'
 #' @param force_download A logical value indicating whether to force the download of OSM data even if it already exists. Default is \code{FALSE}.
 #' @param zones_file The file path or name of the zones file in GeoJSON format. Default is \code{"input/zones.geojson"}.
+#' @param output_file The file path or name of the output OSM file in PBF format. Default is "input/input.osm.pbf".
 #'
 #' @return This function does not return any value. It downloads and extracts OSM data based on the specified zones.
 #'
 #' @examples
-#' make_osm(force_download = TRUE, zones_file = "input/zones.geojson")
-#'
-#' @import sf
-#' @import osmextract
-#' @importFrom osmextract oe_match oe_download
-#' @importFrom osmium getbbox_from_zones
-#' @importFrom base system
-#'
+#' if (file.exists("input/zones.geojson")) {
+#'   make_osm(force_download = TRUE, zones_file = "input/zones.geojson")
+#' }
 #' @export
-make_osm = function(force_download = FALSE, zones_file = "input/zones.geojson") {
+make_osm = function(
+  force_download = FALSE,
+  zones_file = "input/zones.geojson",
+  output_file = "input/input.osm.pbf"
+  ) {
   zones = sf::read_sf(zones_file)
   zones_union = sf::st_union(zones)
   osmextract_match = osmextract::oe_match(place = zones_union)
   osmextract::oe_download(file_url = osmextract_match$url, download_directory = "input", force_download = force_download)
   input_pbf = list.files(path = "input", pattern = basename(osmextract_match$url), full.names = TRUE)
   bb = getbbox_from_zones()
-  msg = paste0("osmium extract -b ", bb, " ", input_pbf, " -o input/input.osm.pbf --overwrite")
+  msg = paste0("osmium extract -b ", bb, " ", input_pbf, " -o ", output_file, " --overwrite")
   system(msg)
 }
 
