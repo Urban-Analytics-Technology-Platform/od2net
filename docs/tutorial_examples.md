@@ -4,6 +4,10 @@
 you how to generate these yourself, then modify the cost function. This is a
 good tutorial to complete before trying to create your own od2net input.
 
+It's based on Python scripts.
+See the [R package README](https://urban-analytics-technology-platform.github.io/od2net/r/) for a basic example in R.
+<!-- TODO: generate the same examples in R and test results are the same. -->
+
 ## Setup
 
 I'm assuming some familiarity running commands in a terminal (through Mac or
