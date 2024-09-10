@@ -1,8 +1,12 @@
+import sys
+import os
 import csv
 import json
 
-from utils import *
+# Add the parent directory to the system path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from utils import *
 
 def makeOSM():
     download(
