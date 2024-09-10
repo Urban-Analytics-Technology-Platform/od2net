@@ -31,26 +31,15 @@ getbbox_from_zones = function(zones_file = "input/zones.geojson") {
 #' @importFrom base system
 #'
 #' @export
-make_osm = function(force_download = FALSE, zones_file = "input/zones.geojson") {  # Function coderl}
-    file = "UK-dem-50m-4326.tif.gz",
-    base_url = "https://play.abstreet.org/dev/data/input/shared/elevation/") {
-  if (is.null(url)) {
-    url = paste0(base_url, file)
-  }
-  is_gzip = grepl(pattern = "gz", url)
-  # Download the file
-  if (!file.exists("input/elevation.tif") && is_gzip) {
-    download.file(
-      url = url,
-      destfile = "input/elevation.tif.gz"
-    )
-    R.utils::gunzip("input/elevation.tif.gz", destname = "input/elevation.tif")
-  } else {
-    download.file(
-      url = url,
-      destfile = "input/elevation.tif"
-    )
-  }
+make_osm = function(force_download = FALSE, zones_file = "input/zones.geojson") {
+  zones = sf::read_sf(zones_file)
+  zones_union = sf::st_union(zones)
+  osmextract_match = osmextract::oe_match(place = zones_union)
+  osmextract::oe_download(file_url = osmextract_match$url, download_directory = "input", force_download = force_download)
+  input_pbf = list.files(path = "input", pattern = basename(osmextract_match$url), full.names = TRUE)
+  bb = getbbox_from_zones()
+  msg = paste0("osmium extract -b ", bb, " ", input_pbf, " -o input/input.osm.pbf --overwrite")
+  system(msg)
 }
 
 make_origins = function() {
