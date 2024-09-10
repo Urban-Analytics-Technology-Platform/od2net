@@ -33,6 +33,24 @@ jobs:
           npm run wasm
           npm run build --if-present
 
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgdown, local::.
+          needs: website
+
+      - name: Build R docs
+        run: pkgdown::build_site_github_pages(pkg = "r", new_process = FALSE, install = FALSE)
+        shell: Rscript {0}
+
+      - name: Copy R docs
+        run: mv docs web/dist/r/
+
       - name: Publish
         uses: peaceiris/actions-gh-pages@v3
         with:
