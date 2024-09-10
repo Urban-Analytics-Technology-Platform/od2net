@@ -1,32 +1,29 @@
 Package: od2net
 Title: Convert 'Origin-Destination' Data to Route Networks
 Version: 0.0.0.9000
-Authors@R: 
-Authors@R: 
-    c(
-     person(given = "Robin",
-             family = "Lovelace",
-             role = c("aut", "cre"),
-             email = "rob00x@gmail.com",
-             comment = c(ORCID = "0000-0001-5679-6536")),
-      person(given = "Dustin",
-             family = "Carlino",
-             role = "aut"))
-Description: Functions and documentation to support route network generation.
+Authors@R: c(
+    person("Robin", "Lovelace", , "rob00x@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-5679-6536")),
+    person("Dustin", "Carlino", role = "aut")
+  )
+Description: Functions and documentation to support route network
+    generation.
 License: Apache License (>= 2)
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+URL: https://urban-analytics-technology-platform.github.io/od2net/r/,
+    https://github.com/urban-analytics-technology-platform/od2net
+BugReports: 
+    https:/github.com/urban-analytics-technology-platform/od2net/issues
+Depends: 
+    R (>= 2.10)
 Imports: 
     osmextract,
     sf
 Suggests:
-    simodels (>= 0.1.0),
-    readr,
     dplyr,
     R.utils,
-Depends: 
-    R (>= 2.10)
+    readr,
+    simodels (>= 0.1.0)
+Encoding: UTF-8
 LazyData: true
-URL: https://urban-analytics-technology-platform.github.io/od2net/r/, https://github.com/urban-analytics-technology-platform/od2net
-BugReports: https:/github.com/urban-analytics-technology-platform/od2net/issues
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
