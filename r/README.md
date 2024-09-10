@@ -1,4 +1,4 @@
-# Preparing OD data for network generation with od2net
+# od2net R package: prepare datasets for network generation with od2net
 
 
 This R package provides functions to prepare OD data for network
