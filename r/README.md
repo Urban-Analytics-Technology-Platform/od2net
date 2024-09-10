@@ -4,6 +4,16 @@
 This R package provides functions to prepare OD data for network
 generation with the `od2net` tool, as illustrated in the example below.
 
+## Installation
+
+``` r
+# Install pak if not already installed:
+if (!requireNamespace("pak", quietly = TRUE)) {
+  install.packages("pak")
+}
+pak::pkg_install("Urban-Analytics-Technology-Platform/od2net/r")
+```
+
 ## Example
 
 Imagine you want to generate a route network with values on the links
@@ -78,11 +88,6 @@ make_elevation = function(
 </details>
 
 ``` r
-# Install pak if not already installed:
-if (!requireNamespace("pak", quietly = TRUE)) {
-  install.packages("pak")
-}
-pak::pkg_install("robinlovelace/od2net/r@67-r-port")
 dir.create("input", showWarnings = FALSE)
 # Get some zones from a URL:
 uz = "https://github.com/acteng/netgen/raw/main/input/zones_york.geojson"
