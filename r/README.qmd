@@ -121,8 +121,8 @@ readr::write_csv(od, "input/od.csv", quote = "all")
 Then create a config.json file, e.g. with the following content:
 
 ```{r}
-#| output: asis
-readLines("config.json")
+#| warning: false
+readLines("config.json") |> cat(sep = "\n")
 ```
 
 Then run the following code to generate the network:
