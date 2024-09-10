@@ -20,4 +20,4 @@ Suggests:
 Depends: 
     R (>= 2.10)
 LazyData: true
-URL: https://acteng.github.io/od2net/
+URL: https://urban-analytics-technology-platform.github.io/od2net/r/, https://github.com/urban-analytics-technology-platform/od2net
