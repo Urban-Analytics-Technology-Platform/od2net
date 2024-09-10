@@ -1,33 +1,37 @@
-getbbox_from_zones = function() {
-  zones = sf::st_read("input/zones.geojson")
+#' Get bounding box from zones
+#'
+#' This function reads a GeoJSON file containing zones and calculates the bounding box of the zones.
+#' 
+#' @param zones_file Path to the GeoJSON file containing zones. Default is 'input/zones.geojson'.
+#'
+#' @return A character string representing the bounding box in the format "xmin, ymin, xmax, ymax".
+#' @export
+getbbox_from_zones = function(zones_file = "input/zones.geojson") {
+  zones = sf::st_read(zones_file)
   bbox = sf::st_bbox(zones)
   paste0(bbox, collapse = ",")
 }
 
-make_osm = function(force_download = FALSE, zones_file = "input/zones.geojson") {
-  zones = sf::read_sf(zones_file)
-  zones_union = sf::st_union(zones)
-  osmextract_match = osmextract::oe_match(place = zones_union)
-  osmextract::oe_download(file_url = osmextract_match$url, download_directory = "input", force_download = force_download)
-  input_pbf = list.files(path = "input", pattern = basename(osmextract_match$url), full.names = TRUE)
-  bb = getbbox_from_zones()
-  msg = paste0("osmium extract -b ", bb, " ", input_pbf, " -o input/input.osm.pbf --overwrite")
-  system(msg)
-}
-
-#' Get elevation data
+#' make_osm Function
 #'
-#' This function downloads elevation data from a source such as
-#' https://play.abstreet.org/dev/data/input/shared/elevation/UK-dem-50m-4326.tif.gz
-#' or https://assets.od2net.org/input/LisboaIST_10m_4326.tif
+#' This function is used to download and extract OpenStreetMap (OSM) data based on specified zones.
 #'
-#' @param url Full URL of the elevation dataset if available
-#' @param file File name if hosted on a known site
-#' @param base_url Base URL associated with the 'file' argument
-#' @return NULL
+#' @param force_download A logical value indicating whether to force the download of OSM data even if it already exists. Default is \code{FALSE}.
+#' @param zones_file The file path or name of the zones file in GeoJSON format. Default is \code{"input/zones.geojson"}.
+#'
+#' @return This function does not return any value. It downloads and extracts OSM data based on the specified zones.
+#'
+#' @examples
+#' make_osm(force_download = TRUE, zones_file = "input/zones.geojson")
+#'
+#' @import sf
+#' @import osmextract
+#' @importFrom osmextract oe_match oe_download
+#' @importFrom osmium getbbox_from_zones
+#' @importFrom base system
+#'
 #' @export
-make_elevation = function(
-    url = NULL,
+make_osm = function(force_download = FALSE, zones_file = "input/zones.geojson") {  # Function coderl}
     file = "UK-dem-50m-4326.tif.gz",
     base_url = "https://play.abstreet.org/dev/data/input/shared/elevation/") {
   if (is.null(url)) {
