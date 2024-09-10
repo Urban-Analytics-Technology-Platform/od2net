@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 
 use lts::{Tags, LTS};
 
+use super::requests::Request;
+
 #[derive(Serialize, Deserialize)]
 pub struct Network {
     // TODO Doesn't handle multiple edges between the same node pair
@@ -27,7 +29,11 @@ pub struct Network {
 pub struct Counts {
     // TODO Don't use f64 -- we'll end up rounding somewhere anyway, so pick a precision upfront.
     pub count_per_edge: HashMap<(NodeID, NodeID), f64>,
-    pub errors: u64,
+
+    /// These requests failed because the start and end snapped to the same intersection
+    pub errors_same_endpoints: Vec<Request>,
+    /// These requests failed because there's no path
+    pub errors_no_path: Vec<Request>,
 
     // Count how many times a point is used successfully as an origin or destination
     pub count_per_origin: HashMap<Position, f64>,
@@ -41,7 +47,8 @@ impl Counts {
     pub fn new() -> Self {
         Self {
             count_per_edge: HashMap::new(),
-            errors: 0,
+            errors_same_endpoints: Vec::new(),
+            errors_no_path: Vec::new(),
 
             count_per_origin: HashMap::new(),
             count_per_destination: HashMap::new(),
@@ -52,7 +59,10 @@ impl Counts {
 
     /// Adds other to this one
     pub fn combine(&mut self, other: Counts) {
-        self.errors += other.errors;
+        self.errors_same_endpoints
+            .extend(other.errors_same_endpoints);
+        self.errors_no_path.extend(other.errors_no_path);
+
         for (key, count) in other.count_per_edge {
             *self.count_per_edge.entry(key).or_insert(0.0) += count;
         }
@@ -65,6 +75,10 @@ impl Counts {
         for i in 0..5 {
             self.total_distance_by_lts[i] += other.total_distance_by_lts[i];
         }
+    }
+
+    pub fn num_errors(&self) -> usize {
+        self.errors_same_endpoints.len() + self.errors_no_path.len()
     }
 }
 

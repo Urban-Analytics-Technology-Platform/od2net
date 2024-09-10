@@ -96,7 +96,7 @@ pub fn handle_request(
         .unwrap()
         .data;
     if start == end {
-        counts.errors += 1;
+        counts.errors_same_endpoints.push(req);
         return;
     }
 
@@ -112,48 +112,48 @@ pub fn handle_request(
         );
     }
 
-    if let Some(path) = path_calc.calc_path(&prepared_ch.ch, start, end) {
-        // fast_paths returns the total cost, but it's not necessarily the right unit.
-        // Calculate how long this route is.
-        let mut total_distance = 0.0;
-        for pair in path.get_nodes().windows(2) {
-            let i1 = prepared_ch.node_map.translate_id(pair[0]);
-            let i2 = prepared_ch.node_map.translate_id(pair[1]);
-            let edge = network
-                .edges
-                .get(&(i1, i2))
-                .or_else(|| network.edges.get(&(i2, i1)))
-                .unwrap();
-            total_distance += edge.length_meters;
+    let Some(path) = path_calc.calc_path(&prepared_ch.ch, start, end) else {
+        counts.errors_no_path.push(req);
+        return;
+    };
+    // fast_paths returns the total cost, but it's not necessarily the right unit. Calculate how
+    // long this route is.
+    let mut total_distance = 0.0;
+    for pair in path.get_nodes().windows(2) {
+        let i1 = prepared_ch.node_map.translate_id(pair[0]);
+        let i2 = prepared_ch.node_map.translate_id(pair[1]);
+        let edge = network
+            .edges
+            .get(&(i1, i2))
+            .or_else(|| network.edges.get(&(i2, i1)))
+            .unwrap();
+        total_distance += edge.length_meters;
 
-            counts.total_distance_by_lts[edge.lts as u8 as usize] += edge.length_meters;
-        }
-
-        let count = uptake::calculate_uptake(uptake, total_distance);
-        // TODO Pick an epsilon based on the final rounding we do... though it's possible 1e6 trips
-        // cross a segment each with probability 1e-6?
-        if count == 0.0 {
-            return;
-        }
-
-        for pair in path.get_nodes().windows(2) {
-            // TODO Actually, don't do this translation until the very end
-            let i1 = prepared_ch.node_map.translate_id(pair[0]);
-            let i2 = prepared_ch.node_map.translate_id(pair[1]);
-            *counts.count_per_edge.entry((i1, i2)).or_insert(0.0) += count;
-        }
-
-        *counts
-            .count_per_origin
-            .entry(Position::from_degrees(req.x1, req.y1))
-            .or_insert(0.0) += count;
-        *counts
-            .count_per_destination
-            .entry(Position::from_degrees(req.x2, req.y2))
-            .or_insert(0.0) += count;
-    } else {
-        counts.errors += 1;
+        counts.total_distance_by_lts[edge.lts as u8 as usize] += edge.length_meters;
     }
+
+    let count = uptake::calculate_uptake(uptake, total_distance);
+    // TODO Pick an epsilon based on the final rounding we do... though it's possible 1e6 trips
+    // cross a segment each with probability 1e-6?
+    if count == 0.0 {
+        return;
+    }
+
+    for pair in path.get_nodes().windows(2) {
+        // TODO Actually, don't do this translation until the very end
+        let i1 = prepared_ch.node_map.translate_id(pair[0]);
+        let i2 = prepared_ch.node_map.translate_id(pair[1]);
+        *counts.count_per_edge.entry((i1, i2)).or_insert(0.0) += count;
+    }
+
+    *counts
+        .count_per_origin
+        .entry(Position::from_degrees(req.x1, req.y1))
+        .or_insert(0.0) += count;
+    *counts
+        .count_per_destination
+        .entry(Position::from_degrees(req.x2, req.y2))
+        .or_insert(0.0) += count;
 }
 
 #[derive(Serialize, Deserialize)]

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use fs_err::File;
 
-use geojson::{FeatureReader, Geometry, Value};
+use geojson::{Feature, FeatureReader, Geometry, Value};
 
 #[derive(Debug)]
 pub struct Request {
@@ -18,6 +18,13 @@ impl Request {
             vec![self.x2, self.y2],
         ]));
         serde_json::to_string(&geometry).unwrap()
+    }
+
+    pub fn as_feature(&self) -> Feature {
+        Feature::from(Geometry::new(Value::LineString(vec![
+            vec![self.x1, self.y1],
+            vec![self.x2, self.y2],
+        ])))
     }
 
     pub fn load_from_geojson(path: String) -> Result<Vec<Self>> {

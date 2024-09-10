@@ -19,6 +19,9 @@ struct Args {
     /// Don't output a CSV file with each edge's counts.
     #[clap(long)]
     no_output_csv: bool,
+    /// Don't output a GeoJSON file with failed requests.
+    #[clap(long)]
+    no_output_failed_requests: bool,
     /// Don't output origin and destination points in the GeoJSON output, to reduce file size.
     #[clap(long)]
     no_output_od_points: bool,
@@ -157,8 +160,8 @@ fn main() -> Result<()> {
     );
     println!(
         "{} succeeded, and {} failed",
-        HumanCount(num_requests as u64 - counts.errors),
-        HumanCount(counts.errors),
+        HumanCount(num_requests as u64 - counts.num_errors() as u64),
+        HumanCount(counts.num_errors() as u64),
     );
     let routing_time = Instant::now().duration_since(routing_start);
     timer.stop();
@@ -166,6 +169,15 @@ fn main() -> Result<()> {
     if !args.no_output_csv {
         timer.start("Writing output CSV");
         network.write_csv(&format!("{directory}/output/counts.csv"), &counts)?;
+        timer.stop();
+    }
+
+    if !args.no_output_failed_requests {
+        timer.start("Writing failed requests GJ");
+        write_failed_requests(
+            format!("{directory}/output/failed_requests.geojson"),
+            &counts,
+        )?;
         timer.stop();
     }
 
@@ -223,4 +235,20 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn write_failed_requests(path: String, counts: &od2net::network::Counts) -> Result<()> {
+    let mut writer =
+        geojson::FeatureWriter::from_writer(std::io::BufWriter::new(fs_err::File::create(path)?));
+    for req in &counts.errors_same_endpoints {
+        let mut f = req.as_feature();
+        f.set_property("reason", "same endpoints");
+        writer.write_feature(&f)?;
+    }
+    for req in &counts.errors_no_path {
+        let mut f = req.as_feature();
+        f.set_property("reason", "no path");
+        writer.write_feature(&f)?;
+    }
+    Ok(writer.finish()?)
 }

@@ -29,7 +29,8 @@ pub struct OutputMetadata {
     pub num_destinations: usize,
     pub num_requests: usize,
     pub num_succeeded_requests: usize,
-    pub num_failed_requests: usize,
+    pub num_failed_requests_same_endpoints: usize,
+    pub num_failed_requests_no_path: usize,
     pub num_edges_with_count: usize,
     pub routing_time_seconds: f32,
     pub total_meters_not_allowed: f64,
@@ -55,8 +56,9 @@ impl OutputMetadata {
             num_origins: counts.count_per_origin.len(),
             num_destinations: counts.count_per_destination.len(),
             num_requests,
-            num_succeeded_requests: num_requests - (counts.errors as usize),
-            num_failed_requests: counts.errors as usize,
+            num_succeeded_requests: num_requests - counts.num_errors(),
+            num_failed_requests_same_endpoints: counts.errors_same_endpoints.len(),
+            num_failed_requests_no_path: counts.errors_no_path.len(),
             num_edges_with_count: counts.count_per_edge.len(),
             routing_time_seconds: routing_time.as_secs_f32(),
             total_time_seconds: None,
@@ -76,7 +78,14 @@ impl OutputMetadata {
             ("Destinations", self.num_destinations),
             ("Requests", self.num_requests),
             ("Requests (succeeded)", self.num_succeeded_requests),
-            ("Requests (failed)", self.num_failed_requests),
+            (
+                "Requests (failed because same endpoints)",
+                self.num_failed_requests_same_endpoints,
+            ),
+            (
+                "Requests (failed because no path)",
+                self.num_failed_requests_no_path,
+            ),
             ("Edges with a count", self.num_edges_with_count),
         ] {
             println!("- {label}: {}", HumanCount(count as u64));
