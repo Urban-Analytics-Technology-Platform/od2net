@@ -1,5 +1,5 @@
 ---
-title: Preparing OD data for network generation with od2net
+title: "od2net R package: prepare datasets for network generation with od2net"
 #| eval: false
 #| echo: false
 format: gfm
