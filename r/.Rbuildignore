@@ -1,0 +1,8 @@
+^README\.qmd$
+^input$
+^LICENSE\.md$
+^\.quarto$
+^\.devcontainer$
+^output$
+^intermediate$
+^config\.json$

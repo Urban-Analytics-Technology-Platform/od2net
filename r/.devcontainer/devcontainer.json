@@ -1,0 +1,39 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/debian
+{
+	"name": "Debian",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "ghcr.io/geocompx/docker:rust",
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+		  // Add the IDs of extensions you want installed when the container is created.
+		  // Including reditorsupport.r and the quarto extension.
+		  "extensions": [
+			"reditor-support.r",
+			"quarto.quarto",
+			"ms-python.python",
+			"ms-toolsai.jupyter"
+		  ]
+		}
+	  }
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+
+	// These are now set in the Dockerfile:
+	// https://github.com/geocompx/docker/blob/master/rust/Dockerfile
+	// "postCreateCommand": [
+	// 	"bash .devcontainer/install-additional-dependencies.sh"
+	// ]
+
+}
