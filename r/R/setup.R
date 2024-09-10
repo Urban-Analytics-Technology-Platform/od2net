@@ -24,7 +24,8 @@ make_osm = function(force_download = FALSE, zones_file = "input/zones.geojson") 
 #' @param url Full URL of the elevation dataset if available
 #' @param file File name if hosted on a known site
 #' @param base_url Base URL associated with the 'file' argument
-#'
+#' @return NULL
+#' @export
 make_elevation = function(
     url = NULL,
     file = "UK-dem-50m-4326.tif.gz",
@@ -54,20 +55,4 @@ make_origins = function() {
   centroids = sf::st_centroid(buildings)
   sf::sf_use_s2(use_sf)
   sf::write_sf(centroids, "input/buildings.geojson", delete_dsn = TRUE)
-}
-
-make_od = function() {
-  od = readr::read_csv("https://raw.githubusercontent.com/nptscot/npt/main/data-raw/od_subset.csv")
-  od = od |>
-    dplyr::transmute(from = geo_code1, to = geo_code2, count = bicycle)
-  readr::write_csv(od, "input/od.csv")
-}
-
-main = function() {
-  dir.create("input", showWarnings = FALSE)
-  make_zones()
-  make_osm()
-  # make_elevation()
-  make_origins()
-  make_od()
 }
