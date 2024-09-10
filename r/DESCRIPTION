@@ -5,18 +5,18 @@ Authors@R:
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: What the package does (one paragraph).
-License: MIT + file LICENSE
+License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: 
-    dplyr,
     osmextract,
-    R.utils,
-    readr,
     sf
 Suggests:
-    simodels (>= 0.1.0)
+    simodels (>= 0.1.0),
+    readr,
+    dplyr,
+    R.utils,
 Depends: 
     R (>= 2.10)
 LazyData: true
