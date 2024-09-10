@@ -20,6 +20,14 @@ You can quickly try out od2net without installing anything:
 
 Once you're ready to run in a large area with your own origin/destination data, then start with the [tutorial](docs/tutorial_examples.md) and see [all documentation](https://github.com/Urban-Analytics-Technology-Platform/od2net/tree/main/docs). Again note this project status is still pre-alpha; docs are not all written yet.
 
+### With Python
+
+See Python scripts in the [examples](examples) directory, as described in the [tutorial](docs/tutorial_examples.md).
+
+### R package
+
+There is a small [R package](https://github.com/Urban-Analytics-Technology-Platform/od2net/tree/main/r) with functions to help generate the input files needed by od2net. See documentation [here](https://urban-analytics-technology-platform.github.io/od2net/r/).
+
 ## Contributing
 
 We'd love contributions of all sorts -- developers, designers, data scientists, and applying it somewhere new! Check out [GitHub Issues](https://github.com/Urban-Analytics-Technology-Platform/od2net/issues), file a new one, or email <dabreegster@gmail.com> to get started.
