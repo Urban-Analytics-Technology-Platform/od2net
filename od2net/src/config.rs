@@ -45,9 +45,11 @@ pub enum ODPattern {
         /// Path to a CSV file that must have 3 columns "from", "to", and "count". The first
         /// two must match zone names. "count" must be an integer.
         csv_path: String,
-        /// If a zone doesn't have any matching origin points, use the zone's centroid instead.
+        /// If a zone doesn't have any matching origin points, use the zone's centroid instead. The
+        /// centroid weight will be 1.
         origin_zone_centroid_fallback: bool,
-        /// If a zone doesn't have any matching destination points, use the zone's centroid instead.
+        /// If a zone doesn't have any matching destination points, use the zone's centroid
+        /// instead. The centroid weight will be 1.
         destination_zone_centroid_fallback: bool,
     },
     ZoneToPoint {
@@ -58,7 +60,8 @@ pub enum ODPattern {
         csv_path: String,
         /// Path to a GeoJSON file containing Points with a "name" property
         destinations_path: String,
-        /// If a zone doesn't have any matching origin points, use the zone's centroid instead.
+        /// If a zone doesn't have any matching origin points, use the zone's centroid instead. The
+        /// centroid weight will be 1.
         origin_zone_centroid_fallback: bool,
     },
     /// Just read GeoJSON LineStrings from this path
