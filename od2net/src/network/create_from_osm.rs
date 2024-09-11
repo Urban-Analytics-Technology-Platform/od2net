@@ -255,8 +255,7 @@ fn split_edges(nodes: HashMap<NodeID, Position>, ways: HashMap<WayID, Way>) -> N
 }
 
 fn calculate_length_meters(pts: &[Position]) -> f64 {
-    let line_string =
-        LineString::<f64>::from(pts.iter().map(|pt| pt.to_degrees()).collect::<Vec<_>>());
+    let line_string = LineString::from(pts.iter().map(|pt| pt.to_degrees()).collect::<Vec<_>>());
     line_string.haversine_length()
 }
 
