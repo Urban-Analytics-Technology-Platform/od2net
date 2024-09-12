@@ -21,9 +21,6 @@ echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.profile
 # Ensure cargo command is available
 command -v cargo
 
-# Install odjitter using cargo
-cargo install --git https://github.com/dabreegster/odjitter --rev 32fb58bf7f0d68afd3b76b88cf6b1272c5c66828
-
 # Ensure apt repository is up-to-date and install necessary packages
 sudo apt-get update
 sudo apt-get install -y software-properties-common python3 python3-pip
@@ -48,9 +45,6 @@ if [ ! -L /usr/local/bin/odjitter ]; then
 else
     echo "Symbolic link /usr/local/bin/odjitter already exists."
 fi
-
-# Verify odjitter installation
-ls -hal ~/.cargo/bin/odjitter
 
 # Install GitHub CLI
 sudo apt install -y gh
