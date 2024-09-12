@@ -39,13 +39,6 @@ make -j$(nproc)
 sudo make install
 tippecanoe --version
 
-# Add local instance of odjitter to the /usr/local/bin directory:
-if [ ! -L /usr/local/bin/odjitter ]; then
-    sudo ln -s ~/.cargo/bin/odjitter /usr/local/bin/odjitter
-else
-    echo "Symbolic link /usr/local/bin/odjitter already exists."
-fi
-
 # Install GitHub CLI
 sudo apt install -y gh
 

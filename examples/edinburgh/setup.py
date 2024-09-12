@@ -3,7 +3,8 @@ import os
 import csv
 import json
 
-# Add the parent directory to the system path
+# utils.py is symlinked, but this appears broken in dev containers, so add the
+# parent directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from utils import *
