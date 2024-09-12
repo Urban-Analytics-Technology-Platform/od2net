@@ -1,0 +1,36 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/debian
+{
+	"name": "Debian",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "ghcr.io/geocompx/docker:suggests",
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+		  // Add the IDs of extensions you want installed when the container is created.
+		  "extensions": ["reditorsupport.r",
+		  "GitHub.copilot-chat",
+		  "GitHub.copilot-labs",
+		  "GitHub.copilot",
+		  "yzhang.markdown-all-in-one",
+		  "quarto.quarto"
+		   ]
+		}
+	  },
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+
+	// Run the script install-additional-dependencies.sh:
+	"postCreateCommand": "bash .devcontainer/postCreateCommand.sh"
+
+}

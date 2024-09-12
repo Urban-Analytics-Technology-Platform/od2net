@@ -1,8 +1,13 @@
+import sys
+import os
 import csv
 import json
 
-from utils import *
+# utils.py is symlinked, but this appears broken in dev containers, so add the
+# parent directory
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from utils import *
 
 def makeOSM():
     download(
