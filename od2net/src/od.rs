@@ -6,7 +6,7 @@ use fs_err::File;
 use geo::{BoundingRect, Centroid, Contains, MultiPolygon, Point};
 use geojson::{FeatureReader, Value};
 use indicatif::HumanCount;
-use nanorand::{Rng, WyRand};
+use rand::{prelude::SliceRandom, rngs::StdRng, SeedableRng};
 use rstar::{PointDistance, RTree, RTreeObject, AABB};
 use serde::Deserialize;
 
@@ -104,23 +104,23 @@ pub fn generate_requests(
             timer.stop();
 
             timer.start(format!("Generating requests from {csv_path}"));
-            let mut rng = WyRand::new_seed(rng_seed);
+            let mut rng = StdRng::seed_from_u64(rng_seed);
 
             for rec in csv::Reader::from_reader(File::open(csv_path)?).deserialize() {
                 let row: BetweenZonesRow = rec?;
+                let Some(from_points) = origins_per_zone.get(&row.from) else {
+                    bail!("Unknown zone {}", row.from);
+                };
+                let Some(to_points) = destinations_per_zone.get(&row.to) else {
+                    bail!("Unknown zone {}", row.to);
+                };
                 for _ in 0..row.count {
-                    let from = match origins_per_zone.get(&row.from) {
-                        Some(points) => points[rng.generate_range(0..points.len())],
-                        None => {
-                            bail!("Unknown zone {}", row.from);
-                        }
-                    };
-                    let to = match destinations_per_zone.get(&row.to) {
-                        Some(points) => points[rng.generate_range(0..points.len())],
-                        None => {
-                            bail!("Unknown zone {}", row.to);
-                        }
-                    };
+                    // TODO choose_weighted is O(n); there are alternatives if this ever becomes a
+                    // problem.
+                    let from = from_points
+                        .choose_weighted(&mut rng, |pt| pt.weight)
+                        .unwrap();
+                    let to = to_points.choose_weighted(&mut rng, |pt| pt.weight).unwrap();
                     requests.push(Request {
                         x1: from.lon,
                         y1: from.lat,
@@ -154,23 +154,20 @@ pub fn generate_requests(
             timer.stop();
 
             timer.start(format!("Generating requests from {csv_path}"));
-            let mut rng = WyRand::new_seed(rng_seed);
+            let mut rng = StdRng::seed_from_u64(rng_seed);
 
             for rec in csv::Reader::from_reader(File::open(csv_path)?).deserialize() {
                 let row: BetweenZonesRow = rec?;
+                let Some(from_points) = origins_per_zone.get(&row.from) else {
+                    bail!("Unknown zone {}", row.from);
+                };
+                let Some(to) = destinations.get(&row.to) else {
+                    bail!("Unknown destination {}", row.to);
+                };
                 for _ in 0..row.count {
-                    let from = match origins_per_zone.get(&row.from) {
-                        Some(points) => points[rng.generate_range(0..points.len())],
-                        None => {
-                            bail!("Unknown zone {}", row.from);
-                        }
-                    };
-                    let to = match destinations.get(&row.to) {
-                        Some(pt) => *pt,
-                        None => {
-                            bail!("Unknown destination {}", row.to);
-                        }
-                    };
+                    let from = from_points
+                        .choose_weighted(&mut rng, |pt| pt.weight)
+                        .unwrap();
                     requests.push(Request {
                         x1: from.lon,
                         y1: from.lat,

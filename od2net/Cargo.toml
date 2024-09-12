@@ -19,8 +19,8 @@ itertools = "0.12.1"
 log = "0.4.21"
 lts = { path = "../lts" }
 osm-reader = { git = "https://github.com/a-b-street/osm-reader", features = ["serde"] }
-nanorand = { version = "0.7.0", default-features = false, features = ["wyrand"] }
 num_cpus = "1.16.0"
+rand = { version = "0.8.5", default-features = false, features = ["alloc", "std_rng"] }
 rayon = "1.9.0"
 rstar = "0.12.0"
 serde = { version = "1.0.197", features = ["derive"] }
