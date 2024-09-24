@@ -5,18 +5,52 @@ format: gfm
 The setup information is contained within the `setup.py` file, which generates minimal input files.
 
 ```{bash}
+#| eval: false
 python setup.py
+```
+
+We'll get a sample of 2 schools in York (York High School and Huntington School) using the `osmextract` package.
+
+```{r}
+library(osmextract)
+q = "SELECT * FROM multipolygons WHERE amenity='school'"
+schools_york = osmextract::oe_get("York", query = q, extra_tags = "amenity")
+# schools_york$name
+schools_york_minimal = dplyr::filter(
+    schools_york,
+    name %in% c("York High School", "Huntington School")
+)
+schools_york_minimal$name
+# Remove columns that only contain NA:
+schools_york_minimal = schools_york_minimal[, colSums(is.na(schools_york_minimal)) < nrow(schools_york_minimal)]
+sf::write_sf(schools_york_minimal, "input/destinations.geojson", delete_dsn = TRUE)
+```
+
+We'll also create a sample of subpoints in York, taking 3 random points from each zone.
+
+```{r}
+zones = sf::st_read("input/zones.geojson")
+set.seed(123)
+subpoints = sf::st_sample(zones, size = rep(3, nrow(zones))) |>
+    sf::st_sf()
+# Let's add provide the subpoints with values representing their importance:
+subpoints$size = runif(nrow(subpoints), 1, 10) |>
+    round(1)
+sf::write_sf(subpoints, "input/subpoints.geojson", delete_dsn = TRUE)
 ```
 
 We can visualise these as follows:
 
-
 ```{python}
+#| label: origins_destinations_plot
 import geopandas as gpd
 import pandas as pd
 zones = gpd.read_file("input/zones.geojson")
 destinations = gpd.read_file("input/destinations.geojson")
+subpoints = gpd.read_file("input/subpoints.geojson")
 od = pd.read_csv("input/od.csv")
 ax = zones.plot()
 destinations.plot(ax=ax, color='red')
+subpoints.plot(ax=ax, color='blue', markersize=subpoints['size'] * 3)
+ax.set_title("Origins and Destinations")
 ```

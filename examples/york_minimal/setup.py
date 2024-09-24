@@ -27,13 +27,6 @@ def makeOrigins():
     )
 
 
-def makeDestinations():
-    writeFixedOutputFile(
-        "input/destinations.geojson",
-        """{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"name":"poppleton"},"geometry":{"coordinates":[-2.141025,53.988014],"type":"Point"}},{"type":"Feature","properties":{"name":"corndogs"},"geometry":{"coordinates":[-1.080074,53.959366],"type":"Point"}}]}""",
-    )
-
-
 def makeZones():
     writeFixedOutputFile(
         "input/zones.geojson",
@@ -45,12 +38,12 @@ def makeOD():
     writeFixedOutputFile(
         "input/od.csv",
         """from,to,count
-south,poppleton,500
-center,poppleton,100
-north,poppleton,200
-south,corndogs,800
-center,corndogs,300
-north,corndogs,600""",
+south,York High School,500
+center,York High School,100
+north,York High School,200
+south,Huntington School,800
+center,Huntington School,300
+north,Huntington School,600""",
     )
 
 
