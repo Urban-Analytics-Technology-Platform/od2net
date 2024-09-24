@@ -1,6 +1,6 @@
 {
   "requests": {
-    "description": "Manually drawn zones and flows to a few named destination points",
+    "description": "Manually drawn zones and flows to schools, demonstrating weighted subpoints",
     "pattern": {
       "ZoneToPoint": {
         "zones_path": "zones.geojson",
@@ -9,7 +9,7 @@
         "origin_zone_centroid_fallback": false
       }
     },
-    "origins_path": "buildings.geojson",
+    "origins_path": "subpoints.geojson",
     "destinations_path": "destinations.geojson"
   },
   "uptake": "Identity",
