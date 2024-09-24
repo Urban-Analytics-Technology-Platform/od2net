@@ -54,3 +54,11 @@ destinations.plot(ax=ax, color='red')
 subpoints.plot(ax=ax, color='blue', markersize=subpoints['size'] * 3)
 ax.set_title("Origins and Destinations")
 ```
+
+We can then run the od2net command as follows:
+
+
+```{bash}
+#| eval: false
+docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json
+```
