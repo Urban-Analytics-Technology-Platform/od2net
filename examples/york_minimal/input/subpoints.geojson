@@ -1,0 +1,16 @@
+{
+"type": "FeatureCollection",
+"name": "subpoints",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "size": 7.2 }, "geometry": { "type": "Point", "coordinates": [ -1.084948428827924, 53.959860019753116 ] } },
+{ "type": "Feature", "properties": { "size": 8.2 }, "geometry": { "type": "Point", "coordinates": [ -1.065675923641903, 53.968255508127534 ] } },
+{ "type": "Feature", "properties": { "size": 1.2 }, "geometry": { "type": "Point", "coordinates": [ -1.08027588725639, 53.960397590493173 ] } },
+{ "type": "Feature", "properties": { "size": 5.3 }, "geometry": { "type": "Point", "coordinates": [ -1.048145775760174, 53.988466436780065 ] } },
+{ "type": "Feature", "properties": { "size": 7.8 }, "geometry": { "type": "Point", "coordinates": [ -1.055372173407674, 54.009228087733909 ] } },
+{ "type": "Feature", "properties": { "size": 2.9 }, "geometry": { "type": "Point", "coordinates": [ -1.077859414261401, 53.998822595720604 ] } },
+{ "type": "Feature", "properties": { "size": 3.9 }, "geometry": { "type": "Point", "coordinates": [ -1.11062851182091, 53.93422678953317 ] } },
+{ "type": "Feature", "properties": { "size": 3.1 }, "geometry": { "type": "Point", "coordinates": [ -1.107718347978171, 53.929568710302227 ] } },
+{ "type": "Feature", "properties": { "size": 2.3 }, "geometry": { "type": "Point", "coordinates": [ -1.116778858632627, 53.956331735484653 ] } }
+]
+}

@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "destinations",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "York High School", "osm_way_id": "29110900", "amenity": "school", "other_tags": "\"addr:city\"=>\"York\",\"addr:country\"=>\"GB\",\"addr:postcode\"=>\"YO24 3WZ\",\"addr:street\"=>\"Cornlands Road\",\"addr:suburb\"=>\"Acomb\",\"capacity\"=>\"991\",\"email\"=>\"reception@yorkhigh.southbank.academy\",\"isced:level\"=>\"2\",\"max_age\"=>\"16\",\"min_age\"=>\"11\",\"phone\"=>\"+44 1904 555500\",\"ref:GB:uprn\"=>\"100052163540\",\"ref:edubase\"=>\"144652\",\"ref:edubase:group\"=>\"16073\",\"school:trust\"=>\"yes\",\"school:trust:name\"=>\"South Bank Multi Academy Trust\",\"school:trust:type\"=>\"multi_academy\",\"school:type\"=>\"academy\",\"website\"=>\"https://www.yorkhighschool.co.uk/\",\"wikidata\"=>\"Q8055461\",\"wikipedia\"=>\"en:York High School, York\"" }, "geometry": { "type": "Point", "coordinates": [ -1.128900930965928, 53.947613356147485 ] } },
+{ "type": "Feature", "properties": { "name": "Huntington School", "osm_way_id": "122135723", "amenity": "school", "other_tags": "\"addr:country\"=>\"GB\",\"addr:postcode\"=>\"YO32 9WT\",\"addr:street\"=>\"Huntington Road\",\"capacity\"=>\"1545\",\"email\"=>\"mail@huntington-ed.org.uk\",\"isced:level\"=>\"2;3\",\"max_age\"=>\"18\",\"min_age\"=>\"11\",\"phone\"=>\"+44 1904 752100\",\"ref:GB:uprn\"=>\"100052170371\",\"ref:edubase\"=>\"121673\",\"school:trust\"=>\"no\",\"school:type\"=>\"community\",\"website\"=>\"https://huntingtonschool.co.uk/\"" }, "geometry": { "type": "Point", "coordinates": [ -1.063642017028779, 53.990093958328686 ] } }
+]
+}

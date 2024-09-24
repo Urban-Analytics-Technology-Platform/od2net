@@ -44,19 +44,26 @@ schools_york = osmextract::oe_get("York", query = q, extra_tags = "amenity")
 
 ``` r
 # schools_york$name
-schools_york_minimal = dplyr::filter(
+destinations = dplyr::filter(
     schools_york,
     name %in% c("York High School", "Huntington School")
-)
-schools_york_minimal$name
+) |>
+  dplyr::select(name, everything())
+destinations$name
 ```
 
     [1] "York High School"  "Huntington School"
 
 ``` r
 # Remove columns that only contain NA:
-schools_york_minimal = schools_york_minimal[, colSums(is.na(schools_york_minimal)) < nrow(schools_york_minimal)]
-sf::write_sf(schools_york_minimal, "input/destinations.geojson", delete_dsn = TRUE)
+destinations = destinations[, colSums(is.na(destinations)) < nrow(destinations)]
+destinations = sf::st_centroid(destinations)
+```
+
+    Warning: st_centroid assumes attributes are constant over geometries
+
+``` r
+sf::write_sf(destinations, "input/destinations.geojson", delete_dsn = TRUE)
 ```
 
 We’ll also create a sample of subpoints in York, taking 3 random points
@@ -101,3 +108,43 @@ ax.set_title("Origins and Destinations")
 ```
 
 ![](README_files/figure-commonmark/origins_destinations_plot-1.png)
+
+Let’s visualise the flows between the origins and destinations:
+
+``` r
+library(ggplot2)
+od = readr::read_csv("input/od.csv")
+```
+
+    Rows: 6 Columns: 3
+    ── Column specification ────────────────────────────────────────────────────────
+    Delimiter: ","
+    chr (2): from, to
+    dbl (1): count
+
+    ℹ Use `spec()` to retrieve the full column specification for this data.
+    ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+od_geo = od::od_to_sf(od, zones, destinations)
+```
+
+    0 origins with no match in zone ids
+    0 destinations with no match in zone ids
+     points not in od data removed.
+
+``` r
+ggplot() +
+  geom_sf(data = zones, fill = "grey") +
+  geom_sf(data = subpoints, aes(size = size), color = "blue") +
+  geom_sf(data = destinations, color = "red") +
+  geom_sf(data = od_geo, aes(size = count), color = "black")
+```
+
+![](README_files/figure-commonmark/flows_plot-3.png)
+
+We can then run the od2net command as follows:
+
+``` bash
+docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json
+```

@@ -17,15 +17,9 @@ def makeOSM():
             "input/north-yorkshire-latest.osm.pbf",
             "-o",
             "input/input.osm.pbf",
+            "--overwrite",
         ]
     )
-
-
-def makeOrigins():
-    extractCentroids(
-        osmInput="input/input.osm.pbf", geojsonOutput="input/buildings.geojson"
-    )
-
 
 def makeZones():
     writeFixedOutputFile(
@@ -51,7 +45,5 @@ if __name__ == "__main__":
     checkDependencies()
     run(["mkdir", "-p", "input"])
     makeOSM()
-    makeOrigins()
-    makeDestinations()
     makeZones()
     makeOD()
