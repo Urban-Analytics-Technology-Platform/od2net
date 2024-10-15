@@ -20,6 +20,20 @@ You can quickly try out od2net without installing anything:
 
 Once you're ready to run in a large area with your own origin/destination data, then start with the [tutorial](docs/tutorial_examples.md) and see [all documentation](https://github.com/Urban-Analytics-Technology-Platform/od2net/tree/main/docs). Again note this project status is still pre-alpha; docs are not all written yet.
 
+### Installation
+
+```shell
+cargo install --locked --git https://github.com/Urban-Analytics-Technology-Platform/od2net
+```
+
+### Docker
+
+You can run the application with Docker, e.g. as follows:
+
+```shell
+sudo docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json
+```
+
 ### With Python
 
 See Python scripts in the [examples](examples) directory, as described in the [tutorial](docs/tutorial_examples.md).
