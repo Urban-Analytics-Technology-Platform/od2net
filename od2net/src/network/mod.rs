@@ -4,8 +4,7 @@ mod greenspace;
 mod output;
 
 use std::collections::HashMap;
-use std::io::BufReader;
-use std::io::{Read, Seek};
+use std::io::{BufReader, BufWriter, Read, Seek, Write};
 
 use anyhow::Result;
 use elevation::GeoTiffElevation;
@@ -39,6 +38,10 @@ pub struct Counts {
     pub count_per_origin: HashMap<Position, f64>,
     pub count_per_destination: HashMap<Position, f64>,
 
+    /// When both origins and destinations are named, sum the uptake and distance in meters, broken
+    /// down by LTS (indexed as u8)
+    pub count_per_od: HashMap<(String, String), (f64, [f64; 5])>,
+
     // In meters. Indexed by LTS as u8
     pub total_distance_by_lts: [f64; 5],
 }
@@ -52,6 +55,8 @@ impl Counts {
 
             count_per_origin: HashMap::new(),
             count_per_destination: HashMap::new(),
+
+            count_per_od: HashMap::new(),
 
             total_distance_by_lts: [0.0; 5],
         }
@@ -75,10 +80,35 @@ impl Counts {
         for i in 0..5 {
             self.total_distance_by_lts[i] += other.total_distance_by_lts[i];
         }
+
+        for (key, (count, distances)) in other.count_per_od {
+            let pair = self
+                .count_per_od
+                .entry(key)
+                .or_insert_with(|| (0.0, [0.0; 5]));
+            pair.0 += count;
+            for i in 0..5 {
+                pair.1[i] += distances[i];
+            }
+        }
     }
 
     pub fn num_errors(&self) -> usize {
         self.errors_same_endpoints.len() + self.errors_no_path.len()
+    }
+
+    pub fn write_od_csv(&self, path: &str) -> Result<()> {
+        let mut file = BufWriter::new(File::create(path)?);
+        writeln!(file, "origin,destination,count,not_allowed_distance,lts1_distance,lts2_distance,lts3_distance,lts4_distance")?;
+        for ((origin, destination), (count, distance_per_lts)) in &self.count_per_od {
+            let not_allowed_distance = distance_per_lts[LTS::NotAllowed as u8 as usize];
+            let lts1_distance = distance_per_lts[LTS::LTS1 as u8 as usize];
+            let lts2_distance = distance_per_lts[LTS::LTS2 as u8 as usize];
+            let lts3_distance = distance_per_lts[LTS::LTS3 as u8 as usize];
+            let lts4_distance = distance_per_lts[LTS::LTS4 as u8 as usize];
+            writeln!(file, "{origin},{destination},{count},{not_allowed_distance},{lts1_distance},{lts2_distance},{lts3_distance},{lts4_distance}")?;
+        }
+        Ok(())
     }
 }
 

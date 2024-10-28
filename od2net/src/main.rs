@@ -167,8 +167,12 @@ fn main() -> Result<()> {
     timer.stop();
 
     if !args.no_output_csv {
-        timer.start("Writing output CSV");
+        timer.start("Writing per-edge output CSV");
         network.write_csv(&format!("{directory}/output/counts.csv"), &counts)?;
+        timer.stop();
+
+        timer.start("Writing per-OD output CSV");
+        counts.write_od_csv(&format!("{directory}/output/od.csv"))?;
         timer.stop();
     }
 

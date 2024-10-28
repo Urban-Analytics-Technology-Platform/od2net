@@ -9,6 +9,9 @@ pub struct Request {
     pub y1: f64,
     pub x2: f64,
     pub y2: f64,
+    // Retain optional information about the named origin and destination
+    pub origin: Option<String>,
+    pub destination: Option<String>,
 }
 
 impl Request {
@@ -42,6 +45,8 @@ impl Request {
                         y1: line_string[0][1],
                         x2: line_string[1][0],
                         y2: line_string[1][1],
+                        origin: None,
+                        destination: None,
                     });
                 }
             }

@@ -190,7 +190,14 @@ impl JsNetwork {
         let mut requests = Vec::new();
         for i in self.network.intersections.values() {
             let (x1, y1) = i.to_degrees();
-            requests.push(Request { x1, y1, x2, y2 });
+            requests.push(Request {
+                x1,
+                y1,
+                x2,
+                y2,
+                origin: None,
+                destination: None,
+            });
             if requests.len() == max_requests {
                 break;
             }

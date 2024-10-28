@@ -116,6 +116,19 @@ pub fn handle_request(
         counts.errors_no_path.push(req);
         return;
     };
+
+    let mut per_od_counts = if let (Some(origin), Some(destination)) = (req.origin, req.destination)
+    {
+        Some(
+            counts
+                .count_per_od
+                .entry((origin, destination))
+                .or_insert_with(|| (0.0, [0.0; 5])),
+        )
+    } else {
+        None
+    };
+
     // fast_paths returns the total cost, but it's not necessarily the right unit. Calculate how
     // long this route is.
     let mut total_distance = 0.0;
@@ -129,7 +142,11 @@ pub fn handle_request(
             .unwrap();
         total_distance += edge.length_meters;
 
+        // TODO Is it weird to update this if the uptake is 0?
         counts.total_distance_by_lts[edge.lts as u8 as usize] += edge.length_meters;
+        if let Some(ref mut per_od) = per_od_counts {
+            per_od.1[edge.lts as u8 as usize] += edge.length_meters;
+        }
     }
 
     let count = uptake::calculate_uptake(uptake, total_distance);
@@ -154,6 +171,10 @@ pub fn handle_request(
         .count_per_destination
         .entry(Position::from_degrees(req.x2, req.y2))
         .or_insert(0.0) += count;
+
+    if let Some(per_od) = per_od_counts {
+        per_od.0 += count;
+    }
 }
 
 #[derive(Serialize, Deserialize)]

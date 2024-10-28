@@ -57,6 +57,8 @@ pub fn generate_requests(
                     y1: pt.lat,
                     x2: destinations[0].lon,
                     y2: destinations[0].lat,
+                    origin: None,
+                    destination: None,
                 });
             }
             timer.stop();
@@ -76,6 +78,8 @@ pub fn generate_requests(
                     y1: pt.lat,
                     x2: goto.lon,
                     y2: goto.lat,
+                    origin: None,
+                    destination: None,
                 });
             }
             timer.stop();
@@ -126,6 +130,8 @@ pub fn generate_requests(
                         y1: from.lat,
                         x2: to.lon,
                         y2: to.lat,
+                        origin: Some(row.from.clone()),
+                        destination: Some(row.to.clone()),
                     });
                 }
             }
@@ -173,6 +179,8 @@ pub fn generate_requests(
                         y1: from.lat,
                         x2: to.0,
                         y2: to.1,
+                        origin: Some(row.from.clone()),
+                        destination: Some(row.to.clone()),
                     });
                 }
             }
@@ -188,7 +196,14 @@ pub fn generate_requests(
                 let (x1, y1) = from.to_degrees();
                 for to in network.intersections.values() {
                     let (x2, y2) = to.to_degrees();
-                    requests.push(Request { x1, y1, x2, y2 });
+                    requests.push(Request {
+                        x1,
+                        y1,
+                        x2,
+                        y2,
+                        origin: None,
+                        destination: None,
+                    });
                 }
             }
         }
