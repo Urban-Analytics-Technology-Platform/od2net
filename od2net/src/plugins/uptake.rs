@@ -190,4 +190,17 @@ mod tests {
             }
         }
     }
+
+    // #' uptake_pct_govtarget_school2(3.51, 1.11)
+    // #' [1] 0.05584607
+
+   // #' # pcycle = exp(1.953)/(1 + exp(1.953)) = .8758, or 87.58%.
+   // #' uptake_pct_godutch_school2(3.51, 1.11)
+    // #' [1] 0.875 # to 3 dp
+    #[test]
+    fn test_school() {
+        assert!((pct_gov_target_school(3.51 * 1000.0, 1.11) - 0.05584607).abs() < 1e-4);
+        assert!((pct_go_dutch_school(3.51 * 1000.0, 1.11) - 0.875).abs() < 1e-4);
+    }     
+    
 }
