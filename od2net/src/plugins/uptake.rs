@@ -16,6 +16,10 @@ pub fn calculate_uptake(uptake: &Uptake, total_distance_meters: f64) -> f64 {
         }
         Uptake::GovTargetPCT => pct_gov_target(total_distance_meters, gradient),
         Uptake::GoDutchPCT => pct_go_dutch(total_distance_meters, gradient),
+        Uptake::WalkToSchool {
+            upper_limit,
+            exponent,
+        } => walk_to_school(total_distance_meters, *upper_limit, *exponent),
     }
 }
 
@@ -76,6 +80,12 @@ fn inverse_logit(p: f64) -> f64 {
         panic!("inverse_logit({p}) = {result}, which isn't between 0 and 1");
     }
     result
+}
+
+fn walk_to_school(distance_meters: f64, upper_limit: f64, exponent: f64) -> f64 {
+    let distance_km = distance_meters / 1000.0;
+    let p = (-distance_km * exponent).exp();
+    p.min(upper_limit)
 }
 
 #[cfg(test)]

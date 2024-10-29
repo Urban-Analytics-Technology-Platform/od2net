@@ -150,6 +150,11 @@ pub enum Uptake {
     GovTargetPCT,
     /// Defined by https://github.com/ITSLeeds/pct/blob/HEAD/R/uptake.R
     GoDutchPCT,
+    // TODO describe
+    WalkToSchool {
+        upper_limit: f64,
+        exponent: f64,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
