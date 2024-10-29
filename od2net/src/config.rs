@@ -155,6 +155,8 @@ pub enum Uptake {
         upper_limit: f64,
         exponent: f64,
     },
+    GovTargetSchool,
+    GoDutchSchool,
 }
 
 #[derive(Serialize, Deserialize)]

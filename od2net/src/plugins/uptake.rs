@@ -16,6 +16,8 @@ pub fn calculate_uptake(uptake: &Uptake, total_distance_meters: f64) -> f64 {
         }
         Uptake::GovTargetPCT => pct_gov_target(total_distance_meters, gradient),
         Uptake::GoDutchPCT => pct_go_dutch(total_distance_meters, gradient),
+        Uptake::GovTargetSchool => pct_gov_target_school(total_distance_meters, gradient),
+        Uptake::GoDutchSchool => pct_go_dutch_school(total_distance_meters, gradient),
         Uptake::WalkToSchool {
             upper_limit,
             exponent,
