@@ -16,6 +16,8 @@ pub fn calculate_uptake(uptake: &Uptake, total_distance_meters: f64) -> f64 {
         }
         Uptake::GovTargetPCT => pct_gov_target(total_distance_meters, gradient),
         Uptake::GoDutchPCT => pct_go_dutch(total_distance_meters, gradient),
+        Uptake::GovTargetSchool => pct_gov_target_school(total_distance_meters, gradient),
+        Uptake::GoDutchSchool => pct_go_dutch_school(total_distance_meters, gradient),
         Uptake::WalkToSchool {
             upper_limit,
             exponent,
@@ -30,16 +32,33 @@ pub fn calculate_uptake(uptake: &Uptake, total_distance_meters: f64) -> f64 {
 // TODO What does gradient represent -- an average or total or something over the entire route?
 // gradient should be in [0, 100]
 // This returns [0.0, 1.0]
+// alpha = -4.018,
+// d1 = -0.6369,
+// d2 = 1.988,
+// d3 = 0.008775,
+// h1 = -0.2555,
+// h2 = -0.78,
+// i1 = 0.02006,
+// i2 = -0.1234,
+// # logit (pcycle)= -4.018 +  (-0.6369 *  distance)  +
+// #   (1.988  * distancesqrt)  +  (0.008775* distancesq) +
+// #   (-0.2555* gradient) + (0.02006* distance*gradient) +
+// #   (-0.1234* distancesqrt*gradient)
 fn pct_gov_target(distance_meters: f64, gradient_percent: f64) -> f64 {
-    let alpha = -3.959;
-    let d1 = -0.5963;
-    let d2 = 1.866;
-    let d3 = 0.008050;
-    let h1 = -0.2710;
-    let i1 = 0.009394;
-    let i2 = -0.05135;
+    let alpha = -4.018;
+    let d1 = -0.6369;
+    let d2 = 1.988;
+    let d3 = 0.008775;
+    let h1 = -0.2555;
+    let h2 = -0.78;
+    let i1 = 0.02006;
+    let i2 = -0.1234;
 
-    // TODO Why clamp to 30km?
+    // gradient = gradient + h2
+    let gradient_percent = gradient_percent + h2;
+
+    // Clamp to 30km to prevent cycling potential increasing with distance
+    // This happens because the polynomial function reaches a minimal value at around 30km
     let distance_km = (distance_meters / 1000.0).min(30.0);
 
     let p = alpha
@@ -52,16 +71,36 @@ fn pct_gov_target(distance_meters: f64, gradient_percent: f64) -> f64 {
     inverse_logit(p)
 }
 
+// gradient,
+// alpha = -4.018 + 2.550,
+// d1 = -0.6369 - 0.08036,
+// d2 = 1.988,
+// d3 = 0.008775,
+// h1 = -0.2555,
+// h2 = -0.78,
+// i1 = 0.02006,
+// i2 = -0.1234,
+// verbose = FALSE) {
+// distance_gradient = check_distance_gradient(distance, gradient, verbose)
+// distance = distance_gradient$distance
+// gradient = distance_gradient$gradient
+// # Uptake formula from manual:
+// # logit_pcycle = -4.018  +  (-0.6369  *  distance)  +  (1.988  *  distancesqrt) +
+// # (0.008775  * distancesq) + (-0.2555 * gradient) + (0.02006 * distance*gradient) +
+// # (-0.1234 * distancesqrt*gradient) + (2.550 * dutch) +  (-0.08036* dutch * distance) +
+// # (0.05509* ebike * distance) + (-0.0002950* ebike * distancesq) + (0.1812* ebike * gradient)
+// gradient = gradient + h2
 fn pct_go_dutch(distance_meters: f64, gradient_percent: f64) -> f64 {
-    let alpha = -3.959 + 2.523;
-    let d1 = -0.5963 - 0.07626;
-    let d2 = 1.866;
-    let d3 = 0.008050;
-    let h1 = -0.2710;
-    let i1 = 0.009394;
-    let i2 = -0.05135;
+    let alpha = -4.018 + 2.550;
+    let d1 = -0.6369 - 0.08036;
+    let d2 = 1.988;
+    let d3 = 0.008775;
+    let h1 = -0.2555;
+    let h2 = -0.78;
+    let i1 = 0.02006;
+    let i2 = -0.1234;
 
-    // TODO Why clamp to 30km?
+    let gradient_percent = gradient_percent + h2;
     let distance_km = (distance_meters / 1000.0).min(30.0);
 
     let p = alpha
@@ -71,6 +110,46 @@ fn pct_go_dutch(distance_meters: f64, gradient_percent: f64) -> f64 {
         + (h1 * gradient_percent)
         + (i1 * distance_km * gradient_percent)
         + (i2 * distance_km.sqrt() * gradient_percent);
+    inverse_logit(p)
+}
+
+// Cycle to school
+// alpha = -7.178,
+// d1 = -1.870,
+// d2 = 5.961,
+// # d3 = -0.2401,
+// h1 = -0.5290,
+// h2 = -0.63
+fn pct_gov_target_school(distance_meters: f64, gradient_percent: f64) -> f64 {
+    let alpha = -7.178;
+    let d1 = -1.870;
+    let d2 = 5.961;
+    let h1 = -0.5290;
+    let h2 = -0.63;
+
+    let gradient_percent = gradient_percent + h2;
+    let distance_km = (distance_meters / 1000.0).min(30.0);
+
+    let p = alpha + (d1 * distance_km) + (d2 * distance_km.sqrt()) + (h1 * gradient_percent);
+    inverse_logit(p)
+}
+
+// alpha = -7.178 + 3.574,
+// d1 = -1.870 + 0.3438,
+// d2 = 5.961,
+// h1 = -0.5290,
+// h2 = -0.63,
+fn pct_go_dutch_school(distance_meters: f64, gradient_percent: f64) -> f64 {
+    let alpha = -7.178 + 3.574;
+    let d1 = -1.870 + 0.3438;
+    let d2 = 5.961;
+    let h1 = -0.5290;
+    let h2 = -0.63;
+
+    let gradient_percent = gradient_percent + h2;
+    let distance_km = (distance_meters / 1000.0).min(30.0);
+
+    let p = alpha + (d1 * distance_km) + (d2 * distance_km.sqrt()) + (h1 * gradient_percent);
     inverse_logit(p)
 }
 
@@ -113,4 +192,17 @@ mod tests {
             }
         }
     }
+
+    // #' uptake_pct_govtarget_school2(3.51, 1.11)
+    // #' [1] 0.05584607
+
+   // #' # pcycle = exp(1.953)/(1 + exp(1.953)) = .8758, or 87.58%.
+   // #' uptake_pct_godutch_school2(3.51, 1.11)
+    // #' [1] 0.875
+    #[test]
+    fn test_school() {
+        assert!((pct_gov_target_school(3.51 * 1000.0, 1.11) - 0.05584607).abs() < 1e-4);
+        assert!((pct_go_dutch_school(3.51 * 1000.0, 1.11) - 0.8758).abs() < 1e-4);
+    }
+    
 }
