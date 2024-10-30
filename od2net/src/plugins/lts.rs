@@ -17,6 +17,10 @@ pub fn calculate_lts_batch(lts: &LtsMapping, tags_batch: Vec<&Tags>) -> Vec<LTS>
             .into_iter()
             .map(|tags| lts::bike_ottawa(tags).0)
             .collect(),
+        LtsMapping::Walking => tags_batch
+            .into_iter()
+            .map(|tags| lts::walking(tags).0)
+            .collect(),
         LtsMapping::ExternalCommand(command) => external_command(command, tags_batch).unwrap(),
     }
 }

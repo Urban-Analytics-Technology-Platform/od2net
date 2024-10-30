@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
-use crate::{bike_ottawa, speed_limit_only, Tags, LTS};
+use crate::{bike_ottawa, speed_limit_only, walking, Tags, LTS};
 
 #[derive(Deserialize)]
 struct Input {
@@ -29,6 +29,8 @@ pub fn calculate(input: JsValue) -> Result<JsValue, JsValue> {
         speed_limit_only::speed_limit_only(&tags)
     } else if input.method == "bike_ottawa" {
         bike_ottawa::bike_ottawa(&tags)
+    } else if input.method == "walking" {
+        walking::walking(&tags)
     } else {
         (
             LTS::NotAllowed,
