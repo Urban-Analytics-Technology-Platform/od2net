@@ -1,0 +1,96 @@
+---
+format: gfm
+---
+
+The setup information is contained within the `setup.py` file, which generates minimal input files.
+
+```{bash}
+#| eval: false
+python setup.py
+```
+
+We'll get a sample of 2 schools in York (York High School and Huntington School) using the `osmextract` package.
+
+```{r}
+library(osmextract)
+q = "SELECT * FROM multipolygons WHERE amenity='school'"
+schools_york = osmextract::oe_get("York", query = q, extra_tags = "amenity")
+# schools_york$name
+destinations = dplyr::filter(
+    schools_york,
+    name %in% c("York High School", "Huntington School")
+) |>
+  dplyr::select(name, everything())
+destinations$name
+# Remove columns that only contain NA:
+destinations = destinations[, colSums(is.na(destinations)) < nrow(destinations)]
+destinations = sf::st_centroid(destinations)
+sf::write_sf(destinations, "input/destinations.geojson", delete_dsn = TRUE)
+```
+
+We'll also create a sample of subpoints in York, taking 3 random points from each zone.
+
+```{r}
+zones = sf::st_read("input/zones.geojson")
+set.seed(123)
+subpoints = sf::st_sample(zones, size = rep(3, nrow(zones))) |>
+    sf::st_sf()
+# Let's add provide the subpoints with values representing their importance:
+subpoints$size = runif(nrow(subpoints), 1, 10) |>
+    round(1)
+sf::write_sf(subpoints, "input/subpoints.geojson", delete_dsn = TRUE)
+```
+
+We can visualise these as follows:
+
+```{python}
+#| label: origins_destinations_plot
+import geopandas as gpd
+import pandas as pd
+zones = gpd.read_file("input/zones.geojson")
+destinations = gpd.read_file("input/destinations.geojson")
+subpoints = gpd.read_file("input/subpoints.geojson")
+od = pd.read_csv("input/od.csv")
+ax = zones.plot()
+destinations.plot(ax=ax, color='red')
+subpoints.plot(ax=ax, color='blue', markersize=subpoints['size'] * 3)
+ax.set_title("Origins and Destinations")
+```
+
+Let's visualise the flows between the origins and destinations:
+
+```{r}
+#| label: flows_plot
+library(ggplot2)
+od = readr::read_csv("input/od.csv")
+od_geo = od::od_to_sf(od, zones, destinations)
+ggplot() +
+  geom_sf(data = zones, fill = "grey") +
+  geom_sf(data = subpoints, aes(size = size), color = "blue") +
+  geom_sf(data = destinations, color = "red") +
+  geom_sf(data = od_geo, aes(size = count), color = "black")
+```
+
+```{r}
+#| eval: false
+#| echo: false
+library(tmap)
+tmap_mode("view")
+m = qtm(zones) +
+  tm_shape(subpoints) +
+  tm_dots(size = "size", col = "blue") +
+  tm_shape(destinations) +
+  tm_dots(fill = "red", size = 5) +
+  tm_shape(od_geo) +
+  tm_lines(lwd = "count", col = "black", scale = 9)
+tmap_save(m, "input/inputs.html")
+browseURL("input/inputs.html")
+```
+
+We can then run the od2net command as follows:
+
+
+```{bash}
+#| eval: false
+docker run -v $(pwd):/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json
+```

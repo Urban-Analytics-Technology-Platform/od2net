@@ -1,0 +1,22 @@
+{
+  "requests": {
+    "description": "Manually drawn zones and flows to schools, demonstrating weighted subpoints",
+    "pattern": {
+      "ZoneToPoint": {
+        "zones_path": "zones.geojson",
+        "destinations_path": "destinations.geojson",
+        "csv_path": "od.csv",
+        "origin_zone_centroid_fallback": false
+      }
+    },
+    "origins_path": "subpoints.geojson",
+    "destinations_path": "destinations.geojson"
+  },
+  "uptake": "Identity",
+  "cost": {
+    "ExternalCommand": "python3 cost.py"
+  },
+  "lts": {
+    "ExternalCommand": "python3 lts.py"
+  }
+}
