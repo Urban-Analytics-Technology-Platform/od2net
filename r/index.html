@@ -70,18 +70,22 @@
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Install pak if not already installed:</span></span>
+<code class="sourceCode R"><span><span class="co"># With pak:</span></span>
+<span><span class="co"># Install pak if not already installed:</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"pak"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"Urban-Analytics-Technology-Platform/od2net/r"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># With remotes:</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"Urban-Analytics-Technology-Platform/od2net/r"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
 <p>Imagine you want to generate a route network with values on the links representing the number of pupils/parents on their way to school each school day. The following code shows how to prepare the data for the <code>od2net</code> tool.</p>
 <p>The following functions could be useful when you’re preparing the data, and show the kind of data preparation that is required.</p>
-<details><!-- TODO: consider adding these functions to the package at some stage? --><div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<details><!-- TODO: consider adding these functions to the package at some stage? --><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Aim: generate input data for od2net with R</span></span>
 <span></span>
 <span><span class="co">#' Generate a 'zones.geojson' file</span></span>
@@ -137,7 +141,7 @@
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">}</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-</details><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+</details><div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="st">"input"</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co"># Get some zones from a URL:</span></span>
 <span><span class="va">uz</span> <span class="op">=</span> <span class="st">"https://github.com/acteng/netgen/raw/main/input/zones_york.geojson"</span></span>
@@ -162,35 +166,35 @@
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/transmute.html" class="external-link">transmute</a></span><span class="op">(</span>from <span class="op">=</span> <span class="va">O</span>, to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">D</span><span class="op">)</span>, count <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">trips_modelled</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/write_delim.html" class="external-link">write_csv</a></span><span class="op">(</span><span class="va">od</span>, <span class="st">"input/od.csv"</span>, quote <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></code></pre></div>
 <p>Then create a config.json file, e.g. with the following content:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"config.json"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span>sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>{</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>    <span class="st">"requests"</span><span class="sc">:</span> {</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>      <span class="st">"description"</span><span class="sc">:</span> <span class="st">"Test data for SchoolRoutes project."</span>,</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>      <span class="st">"pattern"</span><span class="sc">:</span> {</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>        <span class="st">"ZoneToPoint"</span><span class="sc">:</span> {</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>          <span class="st">"zones_path"</span><span class="sc">:</span> <span class="st">"zones.geojson"</span>,</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>          <span class="st">"destinations_path"</span><span class="sc">:</span> <span class="st">"destinations.geojson"</span>,</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>          <span class="st">"csv_path"</span><span class="sc">:</span> <span class="st">"od.csv"</span>,</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>           <span class="st">"origin_zone_centroid_fallback"</span><span class="sc">:</span> false</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>        }</span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>      },</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>      <span class="st">"origins_path"</span><span class="sc">:</span> <span class="st">"buildings.geojson"</span>,</span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>      <span class="st">"destinations_path"</span><span class="sc">:</span> <span class="st">"destinations.geojson"</span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    },</span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    <span class="st">"cost"</span><span class="sc">:</span> <span class="st">"Distance"</span>,</span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>    <span class="st">"uptake"</span><span class="sc">:</span> <span class="st">"Identity"</span>,</span>
-<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>    <span class="st">"lts"</span><span class="sc">:</span> <span class="st">"BikeOttawa"</span>,</span>
-<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>    <span class="st">"elevation_geotiff"</span><span class="sc">:</span> <span class="st">"elevation.tif"</span></span>
-<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>{</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>    <span class="st">"requests"</span><span class="sc">:</span> {</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>      <span class="st">"description"</span><span class="sc">:</span> <span class="st">"Test data for SchoolRoutes project."</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>      <span class="st">"pattern"</span><span class="sc">:</span> {</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>        <span class="st">"ZoneToPoint"</span><span class="sc">:</span> {</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>          <span class="st">"zones_path"</span><span class="sc">:</span> <span class="st">"zones.geojson"</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>          <span class="st">"destinations_path"</span><span class="sc">:</span> <span class="st">"destinations.geojson"</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>          <span class="st">"csv_path"</span><span class="sc">:</span> <span class="st">"od.csv"</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>           <span class="st">"origin_zone_centroid_fallback"</span><span class="sc">:</span> false</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>        }</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>      },</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>      <span class="st">"origins_path"</span><span class="sc">:</span> <span class="st">"buildings.geojson"</span>,</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>      <span class="st">"destinations_path"</span><span class="sc">:</span> <span class="st">"destinations.geojson"</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>    },</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>    <span class="st">"cost"</span><span class="sc">:</span> <span class="st">"Distance"</span>,</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>    <span class="st">"uptake"</span><span class="sc">:</span> <span class="st">"Identity"</span>,</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>    <span class="st">"lts"</span><span class="sc">:</span> <span class="st">"BikeOttawa"</span>,</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>    <span class="st">"elevation_geotiff"</span><span class="sc">:</span> <span class="st">"elevation.tif"</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>}</span></code></pre></div>
 <p>Then run the following code to generate the network:</p>
 <p>Run the tool with Docker as follows:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># On Linux:</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">sudo</span> docker run <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>:/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co"># or in Windows:</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="fu">sudo</span> docker run <span class="at">-v</span> <span class="va">${pwd}</span>:/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># On Linux:</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">sudo</span> docker run <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>:/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co"># or in Windows:</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">sudo</span> docker run <span class="at">-v</span> <span class="va">${pwd}</span>:/app ghcr.io/urban-analytics-technology-platform/od2net:main /app/config.json</span></code></pre></div>
 <p>After that you should see something like the following in the output folder:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_tree.html" class="external-link">dir_tree</a></span><span class="op">(</span><span class="st">"output"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
