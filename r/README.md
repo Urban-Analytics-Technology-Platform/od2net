@@ -7,11 +7,17 @@ generation with the `od2net` tool, as illustrated in the example below.
 ## Installation
 
 ``` r
+# With pak:
 # Install pak if not already installed:
 if (!requireNamespace("pak", quietly = TRUE)) {
   install.packages("pak")
 }
 pak::pkg_install("Urban-Analytics-Technology-Platform/od2net/r")
+```
+
+``` r
+# With remotes:
+remotes::install_github("Urban-Analytics-Technology-Platform/od2net/r")
 ```
 
 ## Example
